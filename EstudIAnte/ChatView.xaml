@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EstudIAnte.ChatView">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="24" RowSpacing="12">
+        <Label Grid.Row="0" Text="Chat Temático" FontSize="28" FontAttributes="Bold" TextColor="#E8ECFF" />
+
+        <Border Grid.Row="1" BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
+                StrokeShape="RoundRectangle 12" Padding="16">
+            <VerticalStackLayout Spacing="12">
+                <Label Text="🤖  ¡Hola! ¿Sobre qué tema quieres estudiar hoy?" TextColor="#E8ECFF" />
+                <Label Text="👤  Sobre la Revolución Industrial." TextColor="#22D3EE" HorizontalOptions="End" />
+                <Label Text="🤖  ¿Quieres un resumen, un cuestionario o un diagrama?" TextColor="#E8ECFF" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Entry Grid.Column="0" Placeholder="Escribe un mensaje..."
+                   BackgroundColor="#131B3F" TextColor="#E8ECFF" PlaceholderColor="#8B95C9" />
+            <Button Grid.Column="1" Text="Enviar" BackgroundColor="#22D3EE" TextColor="#0B1026" />
+        </Grid>
+    </Grid>
+</ContentView>
