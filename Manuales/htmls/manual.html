@@ -1,0 +1,5440 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="Asistente Virtual Educativo con Inteligencia Artificial">
+
+    <title>EduIA | Asistente Virtual Educativo</title>
+
+
+    <!-- =========================================================
+         FUENTES
+    ========================================================== -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+          rel="stylesheet">
+
+
+    <!-- =========================================================
+         ICONOS
+    ========================================================== -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+
+    <style>
+
+        /* =====================================================
+           VARIABLES
+        ===================================================== */
+
+        :root {
+
+            --background: #080a13;
+            --background-2: #0d1020;
+            --background-3: #11152a;
+
+            --sidebar: #0a0d18;
+
+            --panel: #111528;
+            --panel-2: #151a30;
+
+            --border: rgba(255,255,255,.075);
+
+            --text: #f4f5ff;
+            --muted: #8991aa;
+            --muted-2: #646d87;
+
+            --purple: #8b5cf6;
+            --purple-light: #a78bfa;
+
+            --blue: #4f8cff;
+            --cyan: #2dd4bf;
+
+            --green: #3ddc97;
+            --orange: #f5a524;
+            --red: #fb7185;
+
+            --radius: 18px;
+
+            --sidebar-width: 245px;
+
+        }
+
+
+        /* =====================================================
+           RESET
+        ===================================================== */
+
+        * {
+
+            margin: 0;
+            padding: 0;
+
+            box-sizing: border-box;
+
+            scroll-behavior: smooth;
+
+        }
+
+
+        body {
+
+            font-family: "DM Sans", sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 75% 10%,
+                    rgba(139,92,246,.09),
+                    transparent 25%
+                ),
+
+                radial-gradient(
+                    circle at 20% 80%,
+                    rgba(79,140,255,.07),
+                    transparent 25%
+                ),
+
+                var(--background);
+
+            color: var(--text);
+
+            min-height: 100vh;
+
+            overflow-x: hidden;
+
+        }
+
+
+        a {
+
+            text-decoration: none;
+            color: inherit;
+
+        }
+
+
+        button {
+
+            font-family: inherit;
+
+        }
+
+
+        ::selection {
+
+            background: var(--purple);
+            color: white;
+
+        }
+
+
+        /* =====================================================
+           BARRA LATERAL
+        ===================================================== */
+
+        .sidebar {
+
+            position: fixed;
+
+            left: 0;
+            top: 0;
+
+            width: var(--sidebar-width);
+            height: 100vh;
+
+            background:
+
+                linear-gradient(
+                    180deg,
+                    rgba(12,15,29,.98),
+                    rgba(7,9,17,.98)
+                );
+
+            border-right: 1px solid var(--border);
+
+            z-index: 1000;
+
+            display: flex;
+            flex-direction: column;
+
+            padding: 25px 17px;
+
+        }
+
+
+        .brand {
+
+            display: flex;
+            align-items: center;
+
+            gap: 12px;
+
+            padding: 0 10px;
+
+            margin-bottom: 35px;
+
+        }
+
+
+        .brand-icon {
+
+            width: 42px;
+            height: 42px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 13px;
+
+            background:
+
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            box-shadow:
+                0 0 30px rgba(139,92,246,.25);
+
+        }
+
+
+        .brand-name {
+
+            font-family:
+                "Space Grotesk",
+                sans-serif;
+
+            font-size: 18px;
+
+            font-weight: 700;
+
+        }
+
+
+        .brand-name span {
+
+            display: block;
+
+            color: var(--muted-2);
+
+            font-family: "DM Sans";
+
+            font-size: 9px;
+
+            font-weight: 500;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+
+        }
+
+
+        .menu-label {
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+            font-weight: 700;
+
+            letter-spacing: 1.5px;
+
+            text-transform: uppercase;
+
+            padding: 0 12px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .side-menu {
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 5px;
+
+        }
+
+
+        .side-link {
+
+            position: relative;
+
+            display: flex;
+            align-items: center;
+
+            gap: 13px;
+
+            padding: 12px;
+
+            border-radius: 11px;
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            transition: .25s;
+
+            cursor: pointer;
+
+        }
+
+
+        .side-link i {
+
+            width: 18px;
+
+            text-align: center;
+
+        }
+
+
+        .side-link:hover {
+
+            color: white;
+
+            background:
+                rgba(255,255,255,.045);
+
+        }
+
+
+        .side-link.active {
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(139,92,246,.18),
+                    rgba(139,92,246,.04)
+                );
+
+        }
+
+
+        .side-link.active::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: -17px;
+
+            width: 3px;
+            height: 24px;
+
+            border-radius: 0 5px 5px 0;
+
+            background:
+                linear-gradient(
+                    var(--purple),
+                    var(--blue)
+                );
+
+        }
+
+
+        .sidebar-bottom {
+
+            margin-top: auto;
+
+        }
+
+
+        .project-mini {
+
+            padding: 16px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,255,255,.025);
+
+        }
+
+
+        .project-mini-title {
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            font-size: 11px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .project-mini-title i {
+
+            color: var(--purple-light);
+
+        }
+
+
+        .mini-progress {
+
+            height: 5px;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            background:
+                rgba(255,255,255,.06);
+
+        }
+
+
+        .mini-progress div {
+
+            width: 68%;
+
+            height: 100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+        }
+
+
+        .project-mini small {
+
+            display: block;
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+            margin-top: 8px;
+
+        }
+
+
+        /* =====================================================
+           CONTENIDO PRINCIPAL
+        ===================================================== */
+
+        .main {
+
+            margin-left: var(--sidebar-width);
+
+            min-height: 100vh;
+
+        }
+
+
+        /* =====================================================
+           TOPBAR
+        ===================================================== */
+
+        .topbar {
+
+            height: 72px;
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 900;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 35px;
+
+            background:
+                rgba(8,10,19,.82);
+
+            backdrop-filter: blur(20px);
+
+            border-bottom:
+                1px solid var(--border);
+
+        }
+
+
+        .page-location {
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+        }
+
+
+        .page-location i {
+
+            color: var(--purple-light);
+
+        }
+
+
+        .top-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .top-btn {
+
+            width: 36px;
+            height: 36px;
+
+            display: grid;
+            place-items: center;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 10px;
+
+            background:
+                rgba(255,255,255,.025);
+
+            color: var(--muted);
+
+            cursor: pointer;
+
+            transition: .25s;
+
+        }
+
+
+        .top-btn:hover {
+
+            color: white;
+
+            background:
+                rgba(255,255,255,.06);
+
+        }
+
+
+        .status-pill {
+
+            display: flex;
+            align-items: center;
+
+            gap: 7px;
+
+            padding: 7px 11px;
+
+            border:
+                1px solid rgba(61,220,151,.14);
+
+            border-radius: 30px;
+
+            background:
+                rgba(61,220,151,.05);
+
+            color: var(--green);
+
+            font-size: 10px;
+
+        }
+
+
+        .status-dot {
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: var(--green);
+
+            box-shadow:
+                0 0 10px var(--green);
+
+        }
+
+
+        /* =====================================================
+           CONTENEDOR
+        ===================================================== */
+
+        .content {
+
+            max-width: 1450px;
+
+            margin: auto;
+
+            padding: 35px;
+
+        }
+
+
+        /* =====================================================
+           HERO TIPO DASHBOARD
+        ===================================================== */
+
+        .hero-dashboard {
+
+            min-height: 550px;
+
+            display: grid;
+
+            grid-template-columns:
+                1fr
+                1.15fr;
+
+            gap: 25px;
+
+            margin-bottom: 35px;
+
+        }
+
+
+        /* =====================================================
+           HERO IZQUIERDO
+        ===================================================== */
+
+        .hero-intro {
+
+            position: relative;
+
+            overflow: hidden;
+
+            padding: 45px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 25px;
+
+            background:
+
+                radial-gradient(
+                    circle at 90% 0%,
+                    rgba(139,92,246,.15),
+                    transparent 40%
+                ),
+
+                linear-gradient(
+                    145deg,
+                    #12162b,
+                    #0d1020
+                );
+
+            display: flex;
+            flex-direction: column;
+
+            justify-content: center;
+
+        }
+
+
+        .hero-intro::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 300px;
+            height: 300px;
+
+            right: -180px;
+            bottom: -170px;
+
+            border-radius: 50%;
+
+            border:
+                1px solid
+                rgba(139,92,246,.15);
+
+            box-shadow:
+                0 0 0 35px rgba(139,92,246,.025),
+                0 0 0 70px rgba(139,92,246,.015);
+
+        }
+
+
+        .system-tag {
+
+            width: fit-content;
+
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 7px 11px;
+
+            border:
+                1px solid rgba(139,92,246,.2);
+
+            border-radius: 30px;
+
+            color: var(--purple-light);
+
+            background:
+                rgba(139,92,246,.07);
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .system-tag i {
+
+            font-size: 9px;
+
+        }
+
+
+        .hero-intro h1 {
+
+            max-width: 700px;
+
+            font-family:
+                "Space Grotesk",
+                sans-serif;
+
+            font-size:
+                clamp(38px, 5vw, 68px);
+
+            line-height: 1.02;
+
+            letter-spacing: -3px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .gradient {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #a78bfa,
+                    #5d9cff,
+                    #45d9c7
+                );
+
+            -webkit-background-clip: text;
+
+            background-clip: text;
+
+            color: transparent;
+
+        }
+
+
+        .hero-intro p {
+
+            max-width: 650px;
+
+            color: var(--muted);
+
+            font-size: 14px;
+
+            line-height: 1.9;
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .hero-actions {
+
+            display: flex;
+            gap: 10px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .primary-btn {
+
+            border: 0;
+
+            padding: 12px 18px;
+
+            border-radius: 11px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 30px rgba(79,140,255,.18);
+
+            transition: .25s;
+
+        }
+
+
+        .primary-btn:hover {
+
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 15px 35px rgba(79,140,255,.28);
+
+        }
+
+
+        .secondary-btn {
+
+            padding: 12px 18px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 11px;
+
+            color: var(--muted);
+
+            background:
+                rgba(255,255,255,.025);
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+        }
+
+
+        .secondary-btn:hover {
+
+            color: white;
+
+            background:
+                rgba(255,255,255,.06);
+
+        }
+
+
+        /* =====================================================
+           IA CHAT PANEL
+        ===================================================== */
+
+        .ai-panel {
+
+            position: relative;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 25px;
+
+            overflow: hidden;
+
+            background:
+                #0d1120;
+
+            display: flex;
+            flex-direction: column;
+
+            box-shadow:
+                0 25px 80px rgba(0,0,0,.22);
+
+        }
+
+
+        .ai-top {
+
+            height: 65px;
+
+            padding: 0 20px;
+
+            display: flex;
+            align-items: center;
+
+            justify-content: space-between;
+
+            border-bottom:
+                1px solid var(--border);
+
+            background:
+                rgba(255,255,255,.018);
+
+        }
+
+
+        .ai-name {
+
+            display: flex;
+            align-items: center;
+
+            gap: 11px;
+
+        }
+
+
+        .ai-avatar {
+
+            width: 37px;
+            height: 37px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 11px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            box-shadow:
+                0 0 20px rgba(139,92,246,.22);
+
+        }
+
+
+        .ai-name strong {
+
+            display: block;
+
+            font-size: 12px;
+
+        }
+
+
+        .ai-name span {
+
+            display: block;
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+            margin-top: 2px;
+
+        }
+
+
+        .ai-top-right {
+
+            color: var(--muted-2);
+
+            font-size: 10px;
+
+        }
+
+
+        .chat-area {
+
+            flex: 1;
+
+            padding: 25px;
+
+            display: flex;
+            flex-direction: column;
+
+            justify-content: center;
+
+            gap: 17px;
+
+        }
+
+
+        .chat-row {
+
+            display: flex;
+
+            gap: 10px;
+
+            max-width: 88%;
+
+        }
+
+
+        .chat-row.user {
+
+            align-self: flex-end;
+
+            flex-direction: row-reverse;
+
+        }
+
+
+        .chat-small-avatar {
+
+            min-width: 29px;
+            height: 29px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 9px;
+
+            background:
+                rgba(139,92,246,.12);
+
+            color: var(--purple-light);
+
+            font-size: 9px;
+
+        }
+
+
+        .user .chat-small-avatar {
+
+            background:
+                rgba(79,140,255,.12);
+
+            color: var(--blue);
+
+        }
+
+
+        .chat-bubble {
+
+            padding: 12px 14px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                4px
+                14px
+                14px
+                14px;
+
+            background:
+                rgba(255,255,255,.035);
+
+            color: #b8bfd1;
+
+            font-size: 11px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .user .chat-bubble {
+
+            border-radius:
+                14px
+                4px
+                14px
+                14px;
+
+            background:
+                rgba(79,140,255,.09);
+
+            color: #c7d7ef;
+
+        }
+
+
+        .ai-suggestions {
+
+            display: flex;
+
+            gap: 7px;
+
+            flex-wrap: wrap;
+
+            padding-left: 39px;
+
+        }
+
+
+        .suggestion {
+
+            padding: 7px 9px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 8px;
+
+            color: var(--muted);
+
+            background:
+                rgba(255,255,255,.025);
+
+            font-size: 9px;
+
+        }
+
+
+        .chat-input {
+
+            padding: 15px 20px;
+
+            border-top:
+                1px solid var(--border);
+
+        }
+
+
+        .fake-input {
+
+            display: flex;
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 11px 13px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 11px;
+
+            background:
+                rgba(255,255,255,.025);
+
+            color: var(--muted-2);
+
+            font-size: 10px;
+
+        }
+
+
+        .send {
+
+            width: 28px;
+            height: 28px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 8px;
+
+            background:
+                var(--purple);
+
+            color: white;
+
+        }
+
+
+        /* =====================================================
+           TITULOS
+        ===================================================== */
+
+        .section-head {
+
+            display: flex;
+
+            align-items: flex-end;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .section-number {
+
+            color: var(--purple-light);
+
+            font-size: 9px;
+
+            font-weight: 800;
+
+            letter-spacing: 2px;
+
+            text-transform: uppercase;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .section-head h2 {
+
+            font-family:
+                "Space Grotesk",
+                sans-serif;
+
+            font-size: 30px;
+
+            letter-spacing: -1px;
+
+        }
+
+
+        .section-head p {
+
+            max-width: 500px;
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            line-height: 1.7;
+
+        }
+
+
+        .section {
+
+            margin-bottom: 90px;
+
+        }
+
+
+        /* =====================================================
+           ESTADISTICAS
+        ===================================================== */
+
+        .stats-line {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4,1fr);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            background:
+                rgba(255,255,255,.018);
+
+        }
+
+
+        .stat-block {
+
+            padding: 24px;
+
+            border-right:
+                1px solid var(--border);
+
+            position: relative;
+
+        }
+
+
+        .stat-block:last-child {
+
+            border-right: 0;
+
+        }
+
+
+        .stat-top {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .stat-top i {
+
+            color: var(--muted-2);
+
+        }
+
+
+        .stat-block strong {
+
+            display: block;
+
+            font-family:
+                "Space Grotesk";
+
+            font-size: 27px;
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .stat-block span {
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+        }
+
+
+        /* =====================================================
+           RUTA DE APRENDIZAJE
+        ===================================================== */
+
+        .learning-map {
+
+            position: relative;
+
+            padding: 35px 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    120deg,
+                    rgba(139,92,246,.035),
+                    rgba(79,140,255,.025)
+                );
+
+            overflow: hidden;
+
+        }
+
+
+        .learning-line {
+
+            position: absolute;
+
+            left: 10%;
+
+            right: 10%;
+
+            top: 95px;
+
+            height: 2px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--purple),
+                    var(--blue),
+                    var(--cyan)
+                );
+
+            opacity: .35;
+
+        }
+
+
+        .learning-items {
+
+            position: relative;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4,1fr);
+
+            gap: 20px;
+
+        }
+
+
+        .learning-item {
+
+            text-align: center;
+
+        }
+
+
+        .learning-circle {
+
+            position: relative;
+
+            width: 62px;
+            height: 62px;
+
+            margin: 0 auto 17px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 50%;
+
+            border:
+                1px solid rgba(255,255,255,.1);
+
+            background:
+                #11152a;
+
+            color: var(--muted);
+
+            z-index: 2;
+
+            transition: .3s;
+
+        }
+
+
+        .learning-item:hover
+        .learning-circle {
+
+            transform:
+                scale(1.08);
+
+            color: white;
+
+            border-color:
+                var(--purple);
+
+            box-shadow:
+                0 0 30px rgba(139,92,246,.2);
+
+        }
+
+
+        .learning-item.active
+        .learning-circle {
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            border: 0;
+
+        }
+
+
+        .learning-item h3 {
+
+            font-size: 13px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .learning-item p {
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            line-height: 1.6;
+
+            max-width: 190px;
+
+            margin: auto;
+
+        }
+
+
+        /* =====================================================
+           OBJETIVO
+        ===================================================== */
+
+        .objective-layout {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1.6fr;
+
+            gap: 25px;
+
+        }
+
+
+        .objective-main {
+
+            padding: 35px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(139,92,246,.08),
+                    rgba(255,255,255,.015)
+                );
+
+        }
+
+
+        .objective-icon {
+
+            width: 48px;
+            height: 48px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 13px;
+
+            background:
+                rgba(139,92,246,.1);
+
+            color:
+                var(--purple-light);
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .objective-main h3 {
+
+            font-family:
+                "Space Grotesk";
+
+            font-size: 23px;
+
+            margin-bottom: 13px;
+
+        }
+
+
+        .objective-main p {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            line-height: 1.9;
+
+        }
+
+
+        .objective-list {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2,1fr);
+
+            gap: 10px;
+
+        }
+
+
+        .objective-item {
+
+            padding: 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 16px;
+
+            background:
+                rgba(255,255,255,.02);
+
+            transition: .25s;
+
+        }
+
+
+        .objective-item:hover {
+
+            background:
+                rgba(255,255,255,.045);
+
+            transform:
+                translateY(-3px);
+
+        }
+
+
+        .objective-num {
+
+            color:
+                var(--purple-light);
+
+            font-family:
+                "Space Grotesk";
+
+            font-size: 10px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .objective-item p {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            line-height: 1.7;
+
+        }
+
+
+        /* =====================================================
+           MODULOS COMO NAVEGACIÓN
+        ===================================================== */
+
+        .module-interface {
+
+            display: grid;
+
+            grid-template-columns:
+                210px 1fr;
+
+            min-height: 390px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 22px;
+
+            overflow: hidden;
+
+            background:
+                #0e1221;
+
+        }
+
+
+        .module-tabs {
+
+            padding: 17px;
+
+            border-right:
+                1px solid var(--border);
+
+            background:
+                rgba(0,0,0,.12);
+
+        }
+
+
+        .module-tab {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            padding: 13px 12px;
+
+            border-radius: 10px;
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            cursor: pointer;
+
+            margin-bottom: 5px;
+
+            transition: .25s;
+
+        }
+
+
+        .module-tab i {
+
+            width: 20px;
+
+            text-align: center;
+
+        }
+
+
+        .module-tab:hover {
+
+            color: white;
+
+            background:
+                rgba(255,255,255,.035);
+
+        }
+
+
+        .module-tab.active {
+
+            color: white;
+
+            background:
+                rgba(139,92,246,.12);
+
+        }
+
+
+        .module-display {
+
+            padding: 30px;
+
+        }
+
+
+        .module-content {
+
+            display: none;
+
+            animation:
+                fade .35s ease;
+
+        }
+
+
+        .module-content.active {
+
+            display: block;
+
+        }
+
+
+        @keyframes fade {
+
+            from {
+
+                opacity: 0;
+                transform: translateY(7px);
+
+            }
+
+            to {
+
+                opacity: 1;
+                transform: translateY(0);
+
+            }
+
+        }
+
+
+        .module-display-head {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-start;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .module-display-head h3 {
+
+            font-family:
+                "Space Grotesk";
+
+            font-size: 22px;
+
+            margin-bottom: 5px;
+
+        }
+
+
+        .module-display-head p {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+        }
+
+
+        .module-badge {
+
+            padding: 6px 9px;
+
+            border-radius: 7px;
+
+            background:
+                rgba(61,220,151,.07);
+
+            color: var(--green);
+
+            font-size: 8px;
+
+        }
+
+
+        /* CHAT MODULE */
+
+        .module-chat {
+
+            max-width: 700px;
+
+            display: grid;
+
+            gap: 10px;
+
+        }
+
+
+        .demo-message {
+
+            max-width: 75%;
+
+            padding: 12px 15px;
+
+            border-radius: 12px;
+
+            background:
+                rgba(255,255,255,.035);
+
+            color: #aeb7ca;
+
+            font-size: 11px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .demo-message.student {
+
+            justify-self: end;
+
+            background:
+                rgba(79,140,255,.09);
+
+            color: #bfd2ec;
+
+        }
+
+
+        /* QUIZ */
+
+        .quiz-box {
+
+            max-width: 650px;
+
+            padding: 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,255,255,.02);
+
+        }
+
+
+        .quiz-question {
+
+            margin-bottom: 17px;
+
+            font-size: 13px;
+
+        }
+
+
+        .quiz-option {
+
+            padding: 10px 12px;
+
+            margin-bottom: 7px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 9px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            cursor: pointer;
+
+        }
+
+
+        .quiz-option:hover {
+
+            border-color:
+                rgba(139,92,246,.4);
+
+            color: white;
+
+        }
+
+
+        .quiz-option.correct {
+
+            border-color:
+                rgba(61,220,151,.3);
+
+            background:
+                rgba(61,220,151,.06);
+
+            color: var(--green);
+
+        }
+
+
+        /* DIAGRAM */
+
+        .diagram {
+
+            height: 230px;
+
+            position: relative;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        .diagram-node {
+
+            position: absolute;
+
+            padding: 12px 17px;
+
+            border:
+                1px solid rgba(139,92,246,.25);
+
+            border-radius: 10px;
+
+            background:
+                rgba(139,92,246,.07);
+
+            color: #b8b0e7;
+
+            font-size: 10px;
+
+            z-index: 2;
+
+        }
+
+
+        .node-1 {
+
+            top: 10px;
+            left: 45%;
+
+        }
+
+
+        .node-2 {
+
+            top: 105px;
+            left: 20%;
+
+        }
+
+
+        .node-3 {
+
+            top: 105px;
+            right: 20%;
+
+        }
+
+
+        .node-4 {
+
+            bottom: 5px;
+            left: 45%;
+
+        }
+
+
+        .diagram-line {
+
+            position: absolute;
+
+            height: 1px;
+
+            background:
+                rgba(139,92,246,.35);
+
+            transform-origin: left center;
+
+        }
+
+
+        .line-1 {
+
+            width: 125px;
+
+            top: 75px;
+            left: 48%;
+
+            transform:
+                rotate(125deg);
+
+        }
+
+
+        .line-2 {
+
+            width: 125px;
+
+            top: 75px;
+            left: 51%;
+
+            transform:
+                rotate(55deg);
+
+        }
+
+
+        .line-3 {
+
+            width: 120px;
+
+            top: 145px;
+            left: 29%;
+
+            transform:
+                rotate(25deg);
+
+        }
+
+
+        .line-4 {
+
+            width: 120px;
+
+            top: 145px;
+            right: 29%;
+
+            transform:
+                rotate(-25deg);
+
+        }
+
+
+        /* DOCUMENT */
+
+        .document-demo {
+
+            display: grid;
+
+            grid-template-columns:
+                180px 1fr;
+
+            gap: 20px;
+
+        }
+
+
+        .document-card {
+
+            padding: 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,255,255,.02);
+
+            text-align: center;
+
+        }
+
+
+        .document-card i {
+
+            font-size: 42px;
+
+            color:
+                var(--red);
+
+            margin: 15px 0;
+
+        }
+
+
+        .document-card strong {
+
+            display: block;
+
+            font-size: 11px;
+
+        }
+
+
+        .document-card span {
+
+            color: var(--muted-2);
+
+            font-size: 8px;
+
+        }
+
+
+        .analysis-result {
+
+            padding: 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,255,255,.02);
+
+        }
+
+
+        .analysis-result h4 {
+
+            margin-bottom: 10px;
+
+            font-size: 12px;
+
+        }
+
+
+        .analysis-result p {
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            line-height: 1.8;
+
+        }
+
+
+        .reference {
+
+            display: inline-block;
+
+            margin-top: 12px;
+
+            padding: 5px 8px;
+
+            border-radius: 6px;
+
+            background:
+                rgba(45,212,191,.06);
+
+            color: var(--cyan);
+
+            font-size: 8px;
+
+        }
+
+
+        /* =====================================================
+           ARQUITECTURA
+        ===================================================== */
+
+        .architecture {
+
+            position: relative;
+
+            padding: 35px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 22px;
+
+            background:
+                rgba(255,255,255,.018);
+
+            overflow: hidden;
+
+        }
+
+
+        .architecture-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3,1fr);
+
+            gap: 12px;
+
+        }
+
+
+        .architecture-column {
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 10px;
+
+        }
+
+
+        .architecture-label {
+
+            color: var(--muted-2);
+
+            font-size: 8px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1.5px;
+
+            margin-bottom: 4px;
+
+        }
+
+
+        .tech-node {
+
+            padding: 17px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 13px;
+
+            background:
+                #101426;
+
+            transition: .25s;
+
+        }
+
+
+        .tech-node:hover {
+
+            transform:
+                translateX(4px);
+
+            border-color:
+                rgba(139,92,246,.25);
+
+        }
+
+
+        .tech-node-icon {
+
+            width: 31px;
+            height: 31px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 8px;
+
+            background:
+                rgba(139,92,246,.08);
+
+            color:
+                var(--purple-light);
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .tech-node strong {
+
+            display: block;
+
+            font-size: 11px;
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .tech-node span {
+
+            color: var(--muted-2);
+
+            font-size: 8px;
+
+        }
+
+
+        /* =====================================================
+           METODOLOGIA
+        ===================================================== */
+
+        .scrum-track {
+
+            position: relative;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(5,1fr);
+
+            gap: 10px;
+
+            padding-top: 35px;
+
+        }
+
+
+        .scrum-track::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 49px;
+
+            left: 5%;
+
+            right: 5%;
+
+            height: 2px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--purple),
+                    var(--blue),
+                    var(--cyan)
+                );
+
+            opacity: .3;
+
+        }
+
+
+        .scrum-step {
+
+            position: relative;
+
+            text-align: center;
+
+        }
+
+
+        .scrum-dot {
+
+            width: 30px;
+            height: 30px;
+
+            display: grid;
+            place-items: center;
+
+            margin: 0 auto 20px;
+
+            border-radius: 50%;
+
+            background:
+                var(--background-3);
+
+            border:
+                2px solid var(--purple);
+
+            color: var(--purple-light);
+
+            font-size: 9px;
+
+            position: relative;
+
+            z-index: 2;
+
+        }
+
+
+        .scrum-step h3 {
+
+            font-size: 11px;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .scrum-step p {
+
+            color: var(--muted);
+
+            font-size: 9px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .sprint-label {
+
+            display: inline-block;
+
+            margin-top: 10px;
+
+            padding: 4px 7px;
+
+            border-radius: 5px;
+
+            background:
+                rgba(79,140,255,.07);
+
+            color:
+                #7fa8e7;
+
+            font-size: 7px;
+
+        }
+
+
+        /* =====================================================
+           LIMITACIONES
+        ===================================================== */
+
+        .warning-panel {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4,1fr);
+
+            gap: 10px;
+
+        }
+
+
+        .warning {
+
+            padding: 20px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,255,255,.02);
+
+        }
+
+
+        .warning i {
+
+            color:
+                var(--orange);
+
+            margin-bottom: 13px;
+
+        }
+
+
+        .warning h3 {
+
+            font-size: 11px;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .warning p {
+
+            color: var(--muted);
+
+            font-size: 9px;
+
+            line-height: 1.7;
+
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        footer {
+
+            margin-left:
+                var(--sidebar-width);
+
+            border-top:
+                1px solid var(--border);
+
+            padding:
+                30px 35px;
+
+            background:
+                rgba(0,0,0,.15);
+
+        }
+
+
+        .footer-inner {
+
+            max-width: 1450px;
+
+            margin: auto;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 20px;
+
+        }
+
+
+        .footer-copy {
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+        }
+
+
+        .footer-students {
+
+            display: flex;
+
+            gap: 7px;
+
+            flex-wrap: wrap;
+
+            justify-content: flex-end;
+
+        }
+
+
+        .student-tag {
+
+            padding: 6px 8px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 6px;
+
+            color: var(--muted);
+
+            font-size: 8px;
+
+        }
+
+
+        /* =====================================================
+           BOTÓN MÓVIL
+        ===================================================== */
+
+        .mobile-menu {
+
+            display: none;
+
+            position: fixed;
+
+            top: 16px;
+            left: 16px;
+
+            width: 40px;
+            height: 40px;
+
+            z-index: 2000;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 10px;
+
+            background:
+                #111528;
+
+            color: white;
+
+            cursor: pointer;
+
+        }
+
+
+        /* =====================================================
+           ANIMACIONES
+        ===================================================== */
+
+        .reveal {
+
+            opacity: 0;
+
+            transform:
+                translateY(20px);
+
+            transition:
+                .7s ease;
+
+        }
+
+
+        .reveal.show {
+
+            opacity: 1;
+
+            transform:
+                translateY(0);
+
+        }
+
+
+        .floating {
+
+            animation:
+                floating 5s ease-in-out infinite;
+
+        }
+
+
+        @keyframes floating {
+
+            0%,100% {
+
+                transform:
+                    translateY(0);
+
+            }
+
+            50% {
+
+                transform:
+                    translateY(-7px);
+
+            }
+
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media(max-width:1150px) {
+
+            :root {
+
+                --sidebar-width: 210px;
+
+            }
+
+
+            .hero-dashboard {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .hero-intro {
+
+                min-height: 450px;
+
+            }
+
+
+            .stats-line {
+
+                grid-template-columns:
+                    repeat(2,1fr);
+
+            }
+
+
+            .stat-block:nth-child(2) {
+
+                border-right: 0;
+
+            }
+
+
+            .stat-block:nth-child(-n+2) {
+
+                border-bottom:
+                    1px solid var(--border);
+
+            }
+
+
+            .warning-panel {
+
+                grid-template-columns:
+                    repeat(2,1fr);
+
+            }
+
+        }
+
+
+        @media(max-width:850px) {
+
+            :root {
+
+                --sidebar-width: 0px;
+
+            }
+
+
+            .sidebar {
+
+                transform:
+                    translateX(-100%);
+
+                transition:
+                    .3s;
+
+            }
+
+
+            .sidebar.open {
+
+                transform:
+                    translateX(0);
+
+            }
+
+
+            .mobile-menu {
+
+                display: grid;
+
+                place-items: center;
+
+            }
+
+
+            .topbar {
+
+                padding-left: 70px;
+
+            }
+
+
+            .content {
+
+                padding: 25px 18px;
+
+            }
+
+
+            footer {
+
+                margin-left: 0;
+
+            }
+
+
+            .objective-layout {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .module-interface {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .module-tabs {
+
+                display: grid;
+
+                grid-template-columns:
+                    repeat(4,1fr);
+
+                border-right: 0;
+
+                border-bottom:
+                    1px solid var(--border);
+
+            }
+
+
+            .module-tab {
+
+                justify-content: center;
+
+                flex-direction: column;
+
+                gap: 5px;
+
+                text-align: center;
+
+            }
+
+
+            .module-display {
+
+                min-height: 400px;
+
+            }
+
+
+            .architecture-grid {
+
+                grid-template-columns:
+                    1fr 1fr;
+
+            }
+
+
+            .scrum-track {
+
+                grid-template-columns:
+                    1fr;
+
+                gap: 25px;
+
+            }
+
+
+            .scrum-track::before {
+
+                top: 30px;
+                bottom: 30px;
+
+                left: 15px;
+                right: auto;
+
+                width: 2px;
+                height: auto;
+
+            }
+
+
+            .scrum-step {
+
+                text-align: left;
+
+                display: grid;
+
+                grid-template-columns:
+                    35px 1fr;
+
+                column-gap: 15px;
+
+            }
+
+
+            .scrum-dot {
+
+                margin: 0;
+
+                grid-row:
+                    span 3;
+
+            }
+
+        }
+
+
+        @media(max-width:600px) {
+
+            .top-actions .status-pill {
+
+                display: none;
+
+            }
+
+
+            .hero-intro {
+
+                padding: 30px 25px;
+
+            }
+
+
+            .hero-intro h1 {
+
+                font-size: 40px;
+
+                letter-spacing:
+                    -2px;
+
+            }
+
+
+            .stats-line {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .stat-block {
+
+                border-right: 0;
+
+                border-bottom:
+                    1px solid var(--border);
+
+            }
+
+
+            .stat-block:last-child {
+
+                border-bottom: 0;
+
+            }
+
+
+            .learning-items {
+
+                grid-template-columns:
+                    1fr 1fr;
+
+            }
+
+
+            .learning-line {
+
+                display: none;
+
+            }
+
+
+            .objective-list {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .module-tabs {
+
+                grid-template-columns:
+                    repeat(2,1fr);
+
+            }
+
+
+            .document-demo {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .architecture-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .warning-panel {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .footer-inner {
+
+                flex-direction:
+                    column;
+
+                text-align:
+                    center;
+
+            }
+
+
+            .footer-students {
+
+                justify-content:
+                    center;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     BOTÓN MÓVIL
+========================================================= -->
+
+<button class="mobile-menu" id="mobileMenu">
+
+    <i class="fa-solid fa-bars"></i>
+
+</button>
+
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside class="sidebar" id="sidebar">
+
+
+    <div class="brand">
+
+        <div class="brand-icon">
+
+            <i class="fa-solid fa-brain"></i>
+
+        </div>
+
+        <div class="brand-name">
+
+            EduIA
+
+            <span>
+                Virtual Learning System
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="menu-label">
+        Navegación
+    </div>
+
+
+    <nav class="side-menu">
+
+
+        <a class="side-link active"
+           href="#inicio">
+
+            <i class="fa-solid fa-grid-2"></i>
+
+            Inicio
+
+        </a>
+
+
+        <a class="side-link"
+           href="#objetivo">
+
+            <i class="fa-solid fa-bullseye"></i>
+
+            Objetivos
+
+        </a>
+
+
+        <a class="side-link"
+           href="#modulos">
+
+            <i class="fa-solid fa-layer-group"></i>
+
+            Módulos
+
+        </a>
+
+
+        <a class="side-link"
+           href="#arquitectura">
+
+            <i class="fa-solid fa-network-wired"></i>
+
+            Arquitectura
+
+        </a>
+
+
+        <a class="side-link"
+           href="#metodologia">
+
+            <i class="fa-solid fa-route"></i>
+
+            Metodología
+
+        </a>
+
+
+        <a class="side-link"
+           href="#limitaciones">
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+            Consideraciones
+
+        </a>
+
+    </nav>
+
+
+    <div class="menu-label"
+         style="margin-top:28px;">
+
+        Sistema
+
+    </div>
+
+
+    <nav class="side-menu">
+
+
+        <a class="side-link"
+           href="#flujo">
+
+            <i class="fa-solid fa-diagram-project"></i>
+
+            Flujo de aplicación
+
+        </a>
+
+
+        <a class="side-link"
+           href="#tecnologias">
+
+            <i class="fa-solid fa-code"></i>
+
+            Tecnologías
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <div class="project-mini">
+
+            <div class="project-mini-title">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <strong>
+                    Desarrollo del proyecto
+                </strong>
+
+            </div>
+
+
+            <div class="mini-progress">
+
+                <div></div>
+
+            </div>
+
+
+            <small>
+                Diseño conceptual · Versión 1.0
+            </small>
+
+        </div>
+
+    </div>
+
+
+</aside>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<div class="main">
+
+
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
+
+    <header class="topbar">
+
+        <div class="page-location">
+
+            <i class="fa-solid fa-house"></i>
+
+            <span>
+                Sistema / Asistente Virtual Educativo
+            </span>
+
+        </div>
+
+
+        <div class="top-actions">
+
+
+            <div class="status-pill">
+
+                <span class="status-dot"></span>
+
+                Proyecto activo
+
+            </div>
+
+
+            <button class="top-btn">
+
+                <i class="fa-regular fa-bell"></i>
+
+            </button>
+
+
+            <button class="top-btn">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         CONTENIDO
+    ====================================================== -->
+
+    <main class="content">
+
+
+        <!-- =================================================
+             INICIO
+        ================================================== -->
+
+        <section class="hero-dashboard"
+                 id="inicio">
+
+
+            <!-- HERO -->
+
+            <div class="hero-intro reveal">
+
+
+                <div class="system-tag">
+
+                    <i class="fa-solid fa-sparkles"></i>
+
+                    INTELIGENCIA ARTIFICIAL · EDUCACIÓN
+
+                </div>
+
+
+                <h1>
+
+                    Aprende.
+
+                    <br>
+
+                    Comprende.
+
+                    <br>
+
+                    <span class="gradient">
+                        Evoluciona.
+                    </span>
+
+                </h1>
+
+
+                <p>
+
+                    Asistente Virtual Educativo diseñado para
+                    personalizar el aprendizaje mediante inteligencia
+                    artificial, tutorías dinámicas, evaluaciones,
+                    recursos gráficos y análisis inteligente de
+                    documentos.
+
+                </p>
+
+
+                <div class="hero-actions">
+
+
+                    <a href="#modulos"
+                       class="primary-btn">
+
+                        Explorar sistema
+
+                        <i class="fa-solid fa-arrow-right"
+                           style="margin-left:7px;"></i>
+
+                    </a>
+
+
+                    <a href="#objetivo"
+                       class="secondary-btn">
+
+                        Ver objetivos
+
+                    </a>
+
+                    <!-- Cambia esta URL por el enlace directo a tu PDF en GitHub -->
+                    <a href="https://raw.githubusercontent.com/Manu-Castillo8-bit/EstudIAnte-nuevo/main/Manuales/pdf/Manual%20de%20sistema%20estudIAnte.pdf"
+                       class="secondary-btn"
+                       target="_blank"
+                       rel="noopener"
+                       download>
+
+                        <i class="fa-solid fa-file-pdf"
+                           style="margin-right:7px;color:#fb7185;"></i>
+                        Descargar PDF
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- PANEL IA -->
+
+            <div class="ai-panel floating reveal">
+
+
+                <div class="ai-top">
+
+
+                    <div class="ai-name">
+
+                        <div class="ai-avatar">
+
+                            <i class="fa-solid fa-brain"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                Asistente EduIA
+                            </strong>
+
+                            <span>
+                                Tutor virtual inteligente
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="ai-top-right">
+
+                        <i class="fa-solid fa-circle"
+                           style="color:#3ddc97;font-size:6px;"></i>
+
+                        En línea
+
+                    </div>
+
+                </div>
+
+
+                <div class="chat-area">
+
+
+                    <div class="chat-row">
+
+                        <div class="chat-small-avatar">
+
+                            IA
+
+                        </div>
+
+
+                        <div class="chat-bubble">
+
+                            Hola 👋. Soy tu asistente educativo.
+                            Puedo ayudarte a estudiar diferentes
+                            asignaturas y adaptar mis explicaciones
+                            a tu nivel.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chat-row user">
+
+                        <div class="chat-small-avatar">
+
+                            <i class="fa-solid fa-user"></i>
+
+                        </div>
+
+
+                        <div class="chat-bubble">
+
+                            Explícame programación de una forma
+                            sencilla.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chat-row">
+
+                        <div class="chat-small-avatar">
+
+                            IA
+
+                        </div>
+
+
+                        <div class="chat-bubble">
+
+                            Claro. Podemos comenzar desde los
+                            conceptos básicos y avanzar paso a paso.
+                            También puedo hacerte preguntas para
+                            comprobar lo aprendido.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="ai-suggestions">
+
+                        <span class="suggestion">
+                            Crear cuestionario
+                        </span>
+
+                        <span class="suggestion">
+                            Hacer resumen
+                        </span>
+
+                        <span class="suggestion">
+                            Crear diagrama
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chat-input">
+
+                    <div class="fake-input">
+
+                        Escribe una pregunta...
+
+                        <span class="send">
+
+                            <i class="fa-solid fa-arrow-up"></i>
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             ESTADÍSTICAS
+        ================================================== -->
+
+        <section class="section reveal">
+
+
+            <div class="stats-line">
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-comments"></i>
+
+                        <span style="color:#3ddc97;">
+                            ACTIVO
+                        </span>
+
+                    </div>
+
+                    <strong>
+                        04
+                    </strong>
+
+                    <span>
+                        Módulos principales
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-file-lines"></i>
+
+                    </div>
+
+                    <strong>
+                        25 MB
+                    </strong>
+
+                    <span>
+                        Capacidad de archivos contemplada
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-layer-group"></i>
+
+                    </div>
+
+                    <strong>
+                        07
+                    </strong>
+
+                    <span>
+                        Requerimientos funcionales
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-calendar"></i>
+
+                    </div>
+
+                    <strong>
+                        10
+                    </strong>
+
+                    <span>
+                        Sprints contemplados
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RUTA
+        ================================================== -->
+
+        <section class="section"
+                 id="flujo">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        01 · Flujo
+                    </div>
+
+                    <h2>
+                        Ruta del estudiante
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    El sistema organiza las principales herramientas
+                    para que el estudiante pueda acceder a ellas desde
+                    un mismo entorno.
+
+                </p>
+
+            </div>
+
+
+            <div class="learning-map reveal">
+
+
+                <div class="learning-line"></div>
+
+
+                <div class="learning-items">
+
+
+                    <div class="learning-item active">
+
+                        <div class="learning-circle">
+
+                            <i class="fa-solid fa-right-to-bracket"></i>
+
+                        </div>
+
+                        <h3>
+                            Acceso
+                        </h3>
+
+                        <p>
+                            Inicio de sesión y gestión de usuarios.
+                        </p>
+
+                    </div>
+
+
+                    <div class="learning-item">
+
+                        <div class="learning-circle">
+
+                            <i class="fa-solid fa-house"></i>
+
+                        </div>
+
+                        <h3>
+                            Panel
+                        </h3>
+
+                        <p>
+                            Punto central para acceder a las funciones.
+                        </p>
+
+                    </div>
+
+
+                    <div class="learning-item">
+
+                        <div class="learning-circle">
+
+                            <i class="fa-solid fa-comments"></i>
+
+                        </div>
+
+                        <h3>
+                            Tutoría
+                        </h3>
+
+                        <p>
+                            Conversaciones independientes por tema.
+                        </p>
+
+                    </div>
+
+
+                    <div class="learning-item">
+
+                        <div class="learning-circle">
+
+                            <i class="fa-solid fa-chart-line"></i>
+
+                        </div>
+
+                        <h3>
+                            Evaluación
+                        </h3>
+
+                        <p>
+                            Preguntas, resultados y retroalimentación.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             OBJETIVO
+        ================================================== -->
+
+        <section class="section"
+                 id="objetivo">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        02 · Propósito
+                    </div>
+
+                    <h2>
+                        ¿Qué pretende lograr?
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="objective-layout">
+
+
+                <div class="objective-main reveal">
+
+                    <div class="objective-icon">
+
+                        <i class="fa-solid fa-bullseye"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Objetivo general
+                    </h3>
+
+
+                    <p>
+
+                        Desarrollar e implementar una plataforma
+                        de asistencia educativa virtual basada en
+                        modelos de lenguaje de última generación
+                        y procesamiento de lenguaje natural,
+                        diseñada para personalizar el aprendizaje
+                        mediante tutorías dinámicas en chats
+                        focalizados, evaluación automatizada,
+                        generación de recursos gráficos y lectura
+                        inteligente de documentos.
+
+                    </p>
+
+                </div>
+
+
+                <div class="objective-list">
+
+
+                    <div class="objective-item reveal">
+
+                        <div class="objective-num">
+                            OBJETIVO · 01
+                        </div>
+
+                        <p>
+                            Implementar un sistema de diálogo temático
+                            e independiente para explorar contenidos
+                            específicos.
+                        </p>
+
+                    </div>
+
+
+                    <div class="objective-item reveal">
+
+                        <div class="objective-num">
+                            OBJETIVO · 02
+                        </div>
+
+                        <p>
+                            Desarrollar cuestionarios interactivos
+                            con retroalimentación inmediata.
+                        </p>
+
+                    </div>
+
+
+                    <div class="objective-item reveal">
+
+                        <div class="objective-num">
+                            OBJETIVO · 03
+                        </div>
+
+                        <p>
+                            Convertir textos educativos en diagramas,
+                            esquemas y mapas mentales.
+                        </p>
+
+                    </div>
+
+
+                    <div class="objective-item reveal">
+
+                        <div class="objective-num">
+                            OBJETIVO · 04
+                        </div>
+
+                        <p>
+                            Construir un mecanismo RAG con soporte
+                            OCR para procesar documentos.
+                        </p>
+
+                    </div>
+
+
+                    <div class="objective-item reveal">
+
+                        <div class="objective-num">
+                            OBJETIVO · 05
+                        </div>
+
+                        <p>
+                            Garantizar una experiencia intuitiva,
+                            accesible y responsive.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             MODULOS
+        ================================================== -->
+
+        <section class="section"
+                 id="modulos">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        03 · Sistema
+                    </div>
+
+                    <h2>
+                        Módulos principales
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    Selecciona una herramienta para visualizar
+                    una representación de cómo funcionaría dentro
+                    de la plataforma.
+
+                </p>
+
+            </div>
+
+
+            <div class="module-interface reveal">
+
+
+                <div class="module-tabs">
+
+
+                    <div class="module-tab active"
+                         data-module="chat">
+
+                        <i class="fa-solid fa-comments"></i>
+
+                        Tutoría
+
+                    </div>
+
+
+                    <div class="module-tab"
+                         data-module="quiz">
+
+                        <i class="fa-solid fa-clipboard-question"></i>
+
+                        Cuestionarios
+
+                    </div>
+
+
+                    <div class="module-tab"
+                         data-module="diagram">
+
+                        <i class="fa-solid fa-diagram-project"></i>
+
+                        Diagramas
+
+                    </div>
+
+
+                    <div class="module-tab"
+                         data-module="documents">
+
+                        <i class="fa-solid fa-file-lines"></i>
+
+                        Documentos
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="module-display">
+
+
+                    <!-- CHAT -->
+
+                    <div class="module-content active"
+                         id="module-chat">
+
+
+                        <div class="module-display-head">
+
+                            <div>
+
+                                <h3>
+                                    Tutoría personalizada
+                                </h3>
+
+                                <p>
+                                    Conversaciones independientes
+                                    organizadas por asignatura o tema.
+                                </p>
+
+                            </div>
+
+                            <span class="module-badge">
+                                IA ACTIVA
+                            </span>
+
+                        </div>
+
+
+                        <div class="module-chat">
+
+
+                            <div class="demo-message">
+
+                                <strong style="color:#fff;">
+                                    Asistente
+                                </strong>
+
+                                <br>
+
+                                Podemos estudiar el tema que
+                                necesites. También puedo adaptar
+                                la explicación a un nivel técnico,
+                                simplificado o mediante el método
+                                socrático.
+
+                            </div>
+
+
+                            <div class="demo-message student">
+
+                                Quiero entender este tema sin
+                                utilizar términos demasiado
+                                complicados.
+
+                            </div>
+
+
+                            <div class="demo-message">
+
+                                Perfecto. Empecemos con una
+                                explicación sencilla y después
+                                podemos profundizar progresivamente.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- QUIZ -->
+
+                    <div class="module-content"
+                         id="module-quiz">
+
+
+                        <div class="module-display-head">
+
+                            <div>
+
+                                <h3>
+                                    Evaluación interactiva
+                                </h3>
+
+                                <p>
+                                    Preguntas generadas automáticamente
+                                    y feedback inmediato.
+                                </p>
+
+                            </div>
+
+                            <span class="module-badge">
+                                03 / 05
+                            </span>
+
+                        </div>
+
+
+                        <div class="quiz-box">
+
+
+                            <div class="quiz-question">
+
+                                <strong>
+                                    ¿Cuál es una función de un
+                                    algoritmo?
+                                </strong>
+
+                            </div>
+
+
+                            <div class="quiz-option correct">
+
+                                <i class="fa-solid fa-check"></i>
+
+                                Resolver un problema mediante
+                                una serie de pasos.
+
+                            </div>
+
+
+                            <div class="quiz-option">
+
+                                <i class="fa-regular fa-circle"></i>
+
+                                Únicamente almacenar imágenes.
+
+                            </div>
+
+
+                            <div class="quiz-option">
+
+                                <i class="fa-regular fa-circle"></i>
+
+                                Crear contraseñas automáticamente.
+
+                            </div>
+
+
+                            <div class="quiz-option">
+
+                                <i class="fa-regular fa-circle"></i>
+
+                                Conectarse solamente a Internet.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DIAGRAMAS -->
+
+                    <div class="module-content"
+                         id="module-diagram">
+
+
+                        <div class="module-display-head">
+
+                            <div>
+
+                                <h3>
+                                    Generación de diagramas
+                                </h3>
+
+                                <p>
+                                    Transformación de explicaciones
+                                    en representaciones visuales.
+                                </p>
+
+                            </div>
+
+                            <span class="module-badge">
+                                MERMAID / SVG
+                            </span>
+
+                        </div>
+
+
+                        <div class="diagram">
+
+
+                            <div class="diagram-node node-1">
+                                Tema
+                            </div>
+
+                            <div class="diagram-node node-2">
+                                Concepto A
+                            </div>
+
+                            <div class="diagram-node node-3">
+                                Concepto B
+                            </div>
+
+                            <div class="diagram-node node-4">
+                                Resultado
+                            </div>
+
+
+                            <div class="diagram-line line-1"></div>
+
+                            <div class="diagram-line line-2"></div>
+
+                            <div class="diagram-line line-3"></div>
+
+                            <div class="diagram-line line-4"></div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DOCUMENTOS -->
+
+                    <div class="module-content"
+                         id="module-documents">
+
+
+                        <div class="module-display-head">
+
+                            <div>
+
+                                <h3>
+                                    Análisis de documentos
+                                </h3>
+
+                                <p>
+                                    RAG + OCR para consultar información
+                                    basada en los archivos cargados.
+                                </p>
+
+                            </div>
+
+                            <span class="module-badge">
+                                RAG + OCR
+                            </span>
+
+                        </div>
+
+
+                        <div class="document-demo">
+
+
+                            <div class="document-card">
+
+                                <i class="fa-solid fa-file-pdf"></i>
+
+                                <strong>
+                                    Documento.pdf
+                                </strong>
+
+                                <span>
+                                    Archivo procesado
+                                </span>
+
+                            </div>
+
+
+                            <div class="analysis-result">
+
+                                <h4>
+
+                                    <i class="fa-solid fa-wand-magic-sparkles"
+                                       style="color:#a78bfa;"></i>
+
+                                    Resultado del análisis
+
+                                </h4>
+
+
+                                <p>
+
+                                    El sistema puede extraer información
+                                    del documento y permitir consultas
+                                    específicas basadas en su contenido.
+                                    También contempla la generación de
+                                    resúmenes, guías de estudio y preguntas.
+
+                                </p>
+
+
+                                <span class="reference">
+
+                                    Referencia · Página 04
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ARQUITECTURA
+        ================================================== -->
+
+        <section class="section"
+                 id="arquitectura">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        04 · Arquitectura
+                    </div>
+
+                    <h2>
+                        Tecnología detrás del sistema
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    El manual contempla diferentes herramientas
+                    para construir la interfaz, backend, IA,
+                    búsqueda semántica, diagramas y OCR.
+
+                </p>
+
+            </div>
+
+
+            <div class="architecture reveal">
+
+
+                <div class="architecture-grid">
+
+
+                    <!-- FRONTEND -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Capa de interfaz
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-brands fa-react"></i>
+
+                            </div>
+
+                            <strong>
+                                React / Next.js
+                            </strong>
+
+                            <span>
+                                Interfaz web interactiva
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-wind"></i>
+
+                            </div>
+
+                            <strong>
+                                Tailwind CSS
+                            </strong>
+
+                            <span>
+                                Diseño responsive
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BACKEND -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Capa de servicios
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-brands fa-python"></i>
+
+                            </div>
+
+                            <strong>
+                                Python / FastAPI
+                            </strong>
+
+                            <span>
+                                Gestión de peticiones
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-server"></i>
+
+                            </div>
+
+                            <strong>
+                                Node.js
+                            </strong>
+
+                            <span>
+                                Comunicación asíncrona
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- IA -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Inteligencia
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-brain"></i>
+
+                            </div>
+
+                            <strong>
+                                Gemini / OpenAI
+                            </strong>
+
+                            <span>
+                                Modelos de lenguaje
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-link"></i>
+
+                            </div>
+
+                            <strong>
+                                LangChain
+                            </strong>
+
+                            <span>
+                                Orquestación y memoria
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- VECTOR -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Datos
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-database"></i>
+
+                            </div>
+
+                            <strong>
+                                Pinecone / ChromaDB
+                            </strong>
+
+                            <span>
+                                Base de datos vectorial
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-magnifying-glass"></i>
+
+                            </div>
+
+                            <strong>
+                                RAG
+                            </strong>
+
+                            <span>
+                                Búsqueda semántica
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DIAGRAMAS -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Visualización
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-diagram-project"></i>
+
+                            </div>
+
+                            <strong>
+                                Mermaid.js
+                            </strong>
+
+                            <span>
+                                Diagramas educativos
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-chart-line"></i>
+
+                            </div>
+
+                            <strong>
+                                D3.js
+                            </strong>
+
+                            <span>
+                                Gráficos interactivos
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OCR -->
+
+                    <div class="architecture-column">
+
+                        <div class="architecture-label">
+                            Lectura documental
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-eye"></i>
+
+                            </div>
+
+                            <strong>
+                                Tesseract / Vision API
+                            </strong>
+
+                            <span>
+                                Extracción mediante OCR
+                            </span>
+
+                        </div>
+
+
+                        <div class="tech-node">
+
+                            <div class="tech-node-icon">
+
+                                <i class="fa-solid fa-file-pdf"></i>
+
+                            </div>
+
+                            <strong>
+                                PyPDF2
+                            </strong>
+
+                            <span>
+                                Procesamiento de PDF
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TECNOLOGIAS
+        ================================================== -->
+
+        <section class="section"
+                 id="tecnologias">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        05 · Stack
+                    </div>
+
+                    <h2>
+                        Ecosistema tecnológico
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    Herramientas propuestas para construir cada
+                    parte de la plataforma.
+
+                </p>
+
+            </div>
+
+
+            <div class="stats-line reveal">
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-code"></i>
+
+                    </div>
+
+                    <strong>
+                        Frontend
+                    </strong>
+
+                    <span>
+                        Next.js · React · Tailwind CSS
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-server"></i>
+
+                    </div>
+
+                    <strong>
+                        Backend
+                    </strong>
+
+                    <span>
+                        FastAPI · Node.js
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-brain"></i>
+
+                    </div>
+
+                    <strong>
+                        IA
+                    </strong>
+
+                    <span>
+                        Gemini · OpenAI · LangChain
+                    </span>
+
+                </div>
+
+
+                <div class="stat-block">
+
+                    <div class="stat-top">
+
+                        <i class="fa-solid fa-database"></i>
+
+                    </div>
+
+                    <strong>
+                        Datos
+                    </strong>
+
+                    <span>
+                        Pinecone · ChromaDB · pgVector
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             METODOLOGIA
+        ================================================== -->
+
+        <section class="section"
+                 id="metodologia">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        06 · Desarrollo
+                    </div>
+
+                    <h2>
+                        Evolución del proyecto
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    El desarrollo está planteado bajo metodología
+                    ágil Scrum con Sprints de dos semanas.
+
+                </p>
+
+            </div>
+
+
+            <div class="scrum-track reveal">
+
+
+                <div class="scrum-step">
+
+                    <div class="scrum-dot">
+                        01
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Análisis
+                        </h3>
+
+                        <p>
+                            Requisitos, arquitectura y prototipos.
+                        </p>
+
+                        <span class="sprint-label">
+                            SPRINTS 1–2
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="scrum-step">
+
+                    <div class="scrum-dot">
+                        02
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Conversación
+                        </h3>
+
+                        <p>
+                            Chat e integración con LLM.
+                        </p>
+
+                        <span class="sprint-label">
+                            CORE
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="scrum-step">
+
+                    <div class="scrum-dot">
+                        03
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Evaluaciones
+                        </h3>
+
+                        <p>
+                            Quizzes y generación de diagramas.
+                        </p>
+
+                        <span class="sprint-label">
+                            SPRINTS 5–6
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="scrum-step">
+
+                    <div class="scrum-dot">
+                        04
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            RAG + OCR
+                        </h3>
+
+                        <p>
+                            Documentos e indexación vectorial.
+                        </p>
+
+                        <span class="sprint-label">
+                            SPRINTS 7–8
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="scrum-step">
+
+                    <div class="scrum-dot">
+                        05
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Despliegue
+                        </h3>
+
+                        <p>
+                            Pruebas, optimización y producción.
+                        </p>
+
+                        <span class="sprint-label">
+                            SPRINTS 9–10
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             LIMITACIONES
+        ================================================== -->
+
+        <section class="section"
+                 id="limitaciones">
+
+
+            <div class="section-head reveal">
+
+                <div>
+
+                    <div class="section-number">
+                        07 · Consideraciones
+                    </div>
+
+                    <h2>
+                        Límites conocidos
+                    </h2>
+
+                </div>
+
+                <p>
+
+                    El manual establece condiciones que deben
+                    considerarse durante la utilización del sistema.
+
+                </p>
+
+            </div>
+
+
+            <div class="warning-panel">
+
+
+                <div class="warning reveal">
+
+                    <i class="fa-solid fa-wifi"></i>
+
+                    <h3>
+                        Conectividad
+                    </h3>
+
+                    <p>
+
+                        El sistema requiere conexión continua
+                        a Internet para comunicarse con servicios
+                        de IA en la nube.
+
+                    </p>
+
+                </div>
+
+
+                <div class="warning reveal">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    <h3>
+                        Veracidad
+                    </h3>
+
+                    <p>
+
+                        Las respuestas dependen del contenido
+                        y del rendimiento probabilístico del
+                        modelo.
+
+                    </p>
+
+                </div>
+
+
+                <div class="warning reveal">
+
+                    <i class="fa-solid fa-file-image"></i>
+
+                    <h3>
+                        OCR
+                    </h3>
+
+                    <p>
+
+                        Documentos manuscritos o escaneados
+                        deteriorados pueden presentar
+                        imprecisiones.
+
+                    </p>
+
+                </div>
+
+
+                <div class="warning reveal">
+
+                    <i class="fa-solid fa-language"></i>
+
+                    <h3>
+                        Idiomas
+                    </h3>
+
+                    <p>
+
+                        La fase inicial contempla soporte
+                        optimizado principalmente para
+                        español e inglés.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer>
+
+
+    <div class="footer-inner">
+
+
+        <div class="footer-copy">
+
+            <strong style="color:#aab2c7;">
+                EduIA
+            </strong>
+
+            · Asistente Virtual Educativo
+
+            <br>
+
+            Instituto Nacional Cantón Lourdes · Tecnología III · 2026
+
+        </div>
+
+
+        <div class="footer-students">
+
+
+            <span class="student-tag">
+                Manuel Ernesto Castillo Guerra
+            </span>
+
+
+            <span class="student-tag">
+                René Antonio Orellana Garcia
+            </span>
+
+
+            <span class="student-tag">
+                Daniel Ernesto Claros Orellana
+            </span>
+
+
+            <span class="student-tag">
+                Mayeli Abigail Villalobos Guardado
+            </span>
+
+
+        </div>
+
+
+    </div>
+
+
+</footer>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+
+    /* =========================================================
+       MENÚ MÓVIL
+    ========================================================= */
+
+    const mobileMenu =
+        document.getElementById("mobileMenu");
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+
+    mobileMenu.addEventListener("click", () => {
+
+        sidebar.classList.toggle("open");
+
+        const icon =
+            mobileMenu.querySelector("i");
+
+
+        if(sidebar.classList.contains("open")) {
+
+            icon.className =
+                "fa-solid fa-xmark";
+
+        } else {
+
+            icon.className =
+                "fa-solid fa-bars";
+
+        }
+
+    });
+
+
+    /* =========================================================
+       CERRAR SIDEBAR AL SELECCIONAR
+    ========================================================= */
+
+    document
+        .querySelectorAll(".side-link")
+        .forEach(link => {
+
+            link.addEventListener("click", () => {
+
+                if(window.innerWidth <= 850) {
+
+                    sidebar.classList.remove("open");
+
+                    mobileMenu
+                        .querySelector("i")
+                        .className =
+                        "fa-solid fa-bars";
+
+                }
+
+            });
+
+        });
+
+
+    /* =========================================================
+       LINKS ACTIVOS
+    ========================================================= */
+
+    const sideLinks =
+        document.querySelectorAll(".side-link");
+
+
+    sideLinks.forEach(link => {
+
+        link.addEventListener("click", () => {
+
+            sideLinks.forEach(item => {
+
+                item.classList.remove("active");
+
+            });
+
+
+            link.classList.add("active");
+
+        });
+
+    });
+
+
+    /* =========================================================
+       TABS DE MÓDULOS
+    ========================================================= */
+
+    const moduleTabs =
+        document.querySelectorAll(".module-tab");
+
+    const moduleContents =
+        document.querySelectorAll(".module-content");
+
+
+    moduleTabs.forEach(tab => {
+
+        tab.addEventListener("click", () => {
+
+
+            moduleTabs.forEach(item => {
+
+                item.classList.remove("active");
+
+            });
+
+
+            moduleContents.forEach(content => {
+
+                content.classList.remove("active");
+
+            });
+
+
+            tab.classList.add("active");
+
+
+            const module =
+                tab.dataset.module;
+
+
+            document
+                .getElementById("module-" + module)
+                .classList.add("active");
+
+        });
+
+    });
+
+
+    /* =========================================================
+       ANIMACIONES AL HACER SCROLL
+    ========================================================= */
+
+    const revealElements =
+        document.querySelectorAll(".reveal");
+
+
+    const revealObserver =
+        new IntersectionObserver(
+
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting) {
+
+                        entry
+                            .target
+                            .classList
+                            .add("show");
+
+                        revealObserver
+                            .unobserve(entry.target);
+
+                    }
+
+                });
+
+            },
+
+            {
+                threshold: .12
+            }
+
+        );
+
+
+    revealElements.forEach(element => {
+
+        revealObserver.observe(element);
+
+    });
+
+
+    /* =========================================================
+       DETECTAR SECCIÓN ACTIVA
+    ========================================================= */
+
+    const sections =
+        document.querySelectorAll("section[id]");
+
+
+    const sectionObserver =
+        new IntersectionObserver(
+
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting) {
+
+                        const id =
+                            entry.target.id;
+
+
+                        sideLinks.forEach(link => {
+
+                            link.classList.remove(
+                                "active"
+                            );
+
+
+                            if(
+                                link.getAttribute("href")
+                                === "#" + id
+                            ) {
+
+                                link.classList.add(
+                                    "active"
+                                );
+
+                            }
+
+                        });
+
+                    }
+
+                });
+
+            },
+
+            {
+                threshold: .35
+            }
+
+        );
+
+
+    sections.forEach(section => {
+
+        sectionObserver.observe(section);
+
+    });
+
+
+    /* =========================================================
+       EFECTO SUTIL EN EL PANEL DE IA
+    ========================================================= */
+
+    const aiPanel =
+        document.querySelector(".ai-panel");
+
+
+    document.addEventListener(
+        "mousemove",
+        event => {
+
+            if(window.innerWidth < 900)
+                return;
+
+
+            const x =
+                (window.innerWidth / 2 -
+                event.clientX) / 250;
+
+
+            const y =
+                (window.innerHeight / 2 -
+                event.clientY) / 350;
+
+
+            aiPanel.style.transform =
+                `
+                translateY(${y}px)
+                rotateY(${x}deg)
+                `;
+
+        }
+    );
+
+
+    /* =========================================================
+       RESET DEL PANEL
+    ========================================================= */
+
+    document.addEventListener(
+        "mouseleave",
+        () => {
+
+            aiPanel.style.transform =
+                "translateY(0) rotateY(0deg)";
+
+        }
+    );
+
+
+    /* =========================================================
+       ANIMACIÓN DE ESTADÍSTICAS
+    ========================================================= */
+
+    const statNumbers =
+        document.querySelectorAll(
+            ".stat-block strong"
+        );
+
+
+    const statsObserver =
+        new IntersectionObserver(
+
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting) {
+
+                        entry
+                            .target
+                            .style.transform =
+                            "translateY(0)";
+
+                        entry
+                            .target
+                            .style.opacity =
+                            "1";
+
+                    }
+
+                });
+
+            },
+
+            {
+                threshold: .5
+            }
+
+        );
+
+
+    statNumbers.forEach(number => {
+
+        number.style.transform =
+            "translateY(5px)";
+
+        number.style.opacity =
+            ".5";
+
+        number.style.transition =
+            ".5s ease";
+
+        statsObserver.observe(number);
+
+    });
+
+
+    /* =========================================================
+       BOTONES DE QUIZ
+    ========================================================= */
+
+    const quizOptions =
+        document.querySelectorAll(
+            ".quiz-option"
+        );
+
+
+    quizOptions.forEach(option => {
+
+        option.addEventListener("click", () => {
+
+            quizOptions.forEach(item => {
+
+                item.style.borderColor = "";
+
+            });
+
+
+            option.style.borderColor =
+                "rgba(139,92,246,.45)";
+
+        });
+
+    });
+
+
+</script>
+
+
+</body>
+
+</html>

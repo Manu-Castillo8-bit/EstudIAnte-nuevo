@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:EstudIAnte"
+             x:Class="EstudIAnte.MainPage"
+             Title="EstudIAnte"
+             BackgroundColor="#0B1026">
+    <Grid ColumnDefinitions="200,*">
+        <!-- Barra lateral -->
+        <Grid Grid.Column="0" BackgroundColor="#0E1535" RowDefinitions="Auto,*,Auto" Padding="12">
+            <HorizontalStackLayout Grid.Row="0" Spacing="8" Margin="6,6,0,22">
+                <Label Text="🎓" FontSize="24" />
+                <Label FontSize="19" FontAttributes="Bold" TextColor="#E8ECFF" VerticalOptions="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Estud" />
+                            <Span Text="IA" TextColor="#22D3EE" />
+                            <Span Text="nte" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Grid.Row="1" Spacing="2">
+                <RadioButton x:Name="N1" GroupName="nav" IsChecked="True" Content="🏠  Inicio"
+                             TextColor="#E8ECFF" CheckedChanged="OnNavChanged" />
+                <RadioButton x:Name="N2" GroupName="nav" Content="💬  Chat Temático"
+                             TextColor="#E8ECFF" CheckedChanged="OnNavChanged" />
+                <RadioButton x:Name="N3" GroupName="nav" Content="📋  Cuestionarios"
+                             TextColor="#E8ECFF" CheckedChanged="OnNavChanged" />
+                <RadioButton GroupName="nav" Content="🔀  Diagramas" TextColor="#8B95C9" IsEnabled="False" />
+                <RadioButton x:Name="N4" GroupName="nav" Content="📁  Documentos"
+                             TextColor="#E8ECFF" CheckedChanged="OnNavChanged" />
+                <RadioButton GroupName="nav" Content="🗂  Mis Archivos" TextColor="#8B95C9" IsEnabled="False" />
+                <RadioButton GroupName="nav" Content="⚙  Configuración" TextColor="#8B95C9" IsEnabled="False" />
+            </VerticalStackLayout>
+
+            <Border Grid.Row="2" BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10" Padding="8" Margin="0,10,0,0">
+                <HorizontalStackLayout Spacing="8">
+                    <Border WidthRequest="32" HeightRequest="32" BackgroundColor="#22D3EE" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16">
+                        <Label Text="R" FontAttributes="Bold" TextColor="#0B1026"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                        <Label Text="René Orellana" FontSize="12" FontAttributes="Bold" TextColor="#E8ECFF" />
+                        <Label Text="Estudiante" FontSize="11" TextColor="#8B95C9" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- Contenido -->
+        <Grid Grid.Column="1">
+            <views:InicioView x:Name="VInicio" IsVisible="True" />
+            <views:ChatView x:Name="VChat" IsVisible="False" />
+            <views:CuestionarioView x:Name="VQuiz" IsVisible="False" />
+            <views:DocumentosView x:Name="VDocs" IsVisible="False" />
+        </Grid>
+    </Grid>
+</ContentPage>
