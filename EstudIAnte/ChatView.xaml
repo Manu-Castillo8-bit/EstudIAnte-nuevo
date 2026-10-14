@@ -2,22 +2,112 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EstudIAnte.ChatView">
-    <Grid RowDefinitions="Auto,*,Auto" Padding="24" RowSpacing="12">
-        <Label Grid.Row="0" Text="Chat Temático" FontSize="28" FontAttributes="Bold" TextColor="#E8ECFF" />
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="28,8,28,24" RowSpacing="16">
 
-        <Border Grid.Row="1" BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                StrokeShape="RoundRectangle 12" Padding="16">
-            <VerticalStackLayout Spacing="12">
-                <Label Text="🤖  ¡Hola! ¿Sobre qué tema quieres estudiar hoy?" TextColor="#E8ECFF" />
-                <Label Text="👤  Sobre la Revolución Industrial." TextColor="#22D3EE" HorizontalOptions="End" />
-                <Label Text="🤖  ¿Quieres un resumen, un cuestionario o un diagrama?" TextColor="#E8ECFF" />
+        <!-- Encabezado -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="16">
+            <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource BrandGradient}"
+                    StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label Text="Chat Temático" Style="{StaticResource PageTitle}" />
+                <Label Text="Selecciona un tema para iniciar una conversación" Style="{StaticResource Muted}" />
             </VerticalStackLayout>
+        </HorizontalStackLayout>
+
+        <!-- Temas -->
+        <HorizontalStackLayout Grid.Row="1" Spacing="10">
+            <Button Text="📐  Matemáticas" Style="{StaticResource ChipButton}" />
+            <Button Text="💻  Programación" Style="{StaticResource ChipButton}" />
+            <Button Text="🧪  Ciencias" Style="{StaticResource ChipButton}" />
+            <Button Text="🏛  Historia" Style="{StaticResource ChipButton}"
+                    Background="{StaticResource BrandGradient}" TextColor="{StaticResource OnCyan}"
+                    FontAttributes="Bold" BorderWidth="0" />
+            <Button Text="+" Style="{StaticResource ChipButton}" WidthRequest="44" Padding="0" />
+        </HorizontalStackLayout>
+
+        <!-- Conversación -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
+            <ScrollView>
+                <VerticalStackLayout Padding="22" Spacing="20">
+
+                    <!-- Bot -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border WidthRequest="42" HeightRequest="42" BackgroundColor="{StaticResource SurfaceAlt}"
+                                Stroke="{StaticResource Cyan}" StrokeThickness="1.5"
+                                StrokeShape="RoundRectangle 21" VerticalOptions="Start">
+                            <Label Text="🤖" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Border Grid.Column="1" HorizontalOptions="Start" MaximumWidthRequest="560"
+                                BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource Line}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 18,18,4,18" Padding="16,12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="¡Hola! ¿Sobre qué tema quieres estudiar hoy?" TextColor="{StaticResource TextMain}" />
+                                <Label Text="15:24" FontSize="10" TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <!-- Usuario -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Border HorizontalOptions="End" MaximumWidthRequest="560"
+                                Background="{StaticResource UserBubble}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18,18,18,4" Padding="16,12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Sobre la Revolución Industrial." TextColor="White" />
+                                <Label Text="15:24" FontSize="10" TextColor="#BFDBFE" HorizontalOptions="End" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" WidthRequest="42" HeightRequest="42"
+                                BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource Violet}"
+                                StrokeThickness="1.5" StrokeShape="RoundRectangle 21" VerticalOptions="Start">
+                            <Label Text="👤" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Bot -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border WidthRequest="42" HeightRequest="42" BackgroundColor="{StaticResource SurfaceAlt}"
+                                Stroke="{StaticResource Cyan}" StrokeThickness="1.5"
+                                StrokeShape="RoundRectangle 21" VerticalOptions="Start">
+                            <Label Text="🤖" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Border Grid.Column="1" HorizontalOptions="Start" MaximumWidthRequest="560"
+                                BackgroundColor="{StaticResource SurfaceAlt}" Stroke="{StaticResource Line}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 18,18,4,18" Padding="16,12">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="¡Excelente tema! La Revolución Industrial transformó la producción, el trabajo y la sociedad." TextColor="{StaticResource TextMain}" />
+                                <Border BackgroundColor="#2A1F6B" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12" Padding="14,10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="Inicio: 1760  →  Fin: 1840" FontSize="17" FontAttributes="Bold"
+                                               TextColor="White" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="Inglaterra" FontSize="12"
+                                               TextColor="#C4B5FD" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                                <Label Text="¿Quieres un resumen, un cuestionario o un diagrama?" TextColor="{StaticResource TextMain}" />
+                                <Label Text="15:25" FontSize="10" TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </ScrollView>
         </Border>
 
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <Entry Grid.Column="0" Placeholder="Escribe un mensaje..."
-                   BackgroundColor="#131B3F" TextColor="#E8ECFF" PlaceholderColor="#8B95C9" />
-            <Button Grid.Column="1" Text="Enviar" BackgroundColor="#22D3EE" TextColor="#0B1026" />
+        <!-- Entrada -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+            <Button Grid.Column="0" Text="📎" Style="{StaticResource GhostButton}"
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" />
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,0" HeightRequest="50"
+                    StrokeShape="RoundRectangle 25">
+                <Entry Placeholder="Escribe tu mensaje aquí..." BackgroundColor="Transparent"
+                       TextColor="{StaticResource TextMain}" PlaceholderColor="{StaticResource TextMuted}"
+                       VerticalOptions="Center" />
+            </Border>
+            <Button Grid.Column="2" Text="➤" Style="{StaticResource PrimaryButton}"
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" />
         </Grid>
     </Grid>
 </ContentView>

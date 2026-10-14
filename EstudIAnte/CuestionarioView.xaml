@@ -3,21 +3,94 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EstudIAnte.CuestionarioView">
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="14">
-            <Label Text="Cuestionarios" FontSize="28" FontAttributes="Bold" TextColor="#E8ECFF" />
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
 
-            <Border BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12" Padding="18">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="1. ¿En qué año inició la Revolución Industrial?"
-                           FontAttributes="Bold" TextColor="#E8ECFF" />
-                    <RadioButton Content="1760" GroupName="q1" TextColor="#E8ECFF" />
-                    <RadioButton Content="1492" GroupName="q1" TextColor="#E8ECFF" />
-                    <RadioButton Content="1900" GroupName="q1" TextColor="#E8ECFF" />
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#4C1D95"
+                        Stroke="{StaticResource Violet}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
+                    <Label Text="📋" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Cuestionario: Revolución Industrial" Style="{StaticResource PageTitle}" />
+                    <Label Text="Responde y evalúa tus conocimientos" Style="{StaticResource Muted}" />
                 </VerticalStackLayout>
-            </Border>
+                <Border Grid.Column="2" BackgroundColor="#0F3D33" Stroke="{StaticResource Emerald}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12,6" VerticalOptions="Center">
+                    <Label Text="Nivel: Medio" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource Emerald}" />
+                </Border>
+            </Grid>
 
-            <Button Text="Siguiente" BackgroundColor="#22D3EE" TextColor="#0B1026" HorizontalOptions="Start" />
+            <Grid ColumnDefinitions="*,280" ColumnSpacing="20">
+
+                <!-- Columna izquierda: pregunta -->
+                <VerticalStackLayout Grid.Column="0" Spacing="16">
+
+                    <Border Style="{StaticResource Card}" Padding="18,14">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="Pregunta 1 de 5" Style="{StaticResource Muted}" />
+                                <Label Grid.Column="1" Text="20%" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{StaticResource Cyan}" />
+                            </Grid>
+                            <ProgressBar Progress="0.2" ProgressColor="{StaticResource Cyan}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Padding="24">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="¿En qué año inició la Revolución Industrial?"
+                                   FontSize="21" FontAttributes="Bold" TextColor="{StaticResource TextMain}"
+                                   Margin="0,0,0,12" />
+                            <RadioButton Style="{StaticResource OptionRadio}" GroupName="q1" Value="A" Content="1760" />
+                            <RadioButton Style="{StaticResource OptionRadio}" GroupName="q1" Value="B" Content="1492" />
+                            <RadioButton Style="{StaticResource OptionRadio}" GroupName="q1" Value="C" Content="1900" />
+                            <RadioButton Style="{StaticResource OptionRadio}" GroupName="q1" Value="D" Content="1850" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Button Grid.Column="0" Text="←  Anterior" Style="{StaticResource GhostButton}" />
+                        <Button Grid.Column="2" Text="Siguiente  →" Style="{StaticResource PrimaryButton}" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Columna derecha: resumen -->
+                <VerticalStackLayout Grid.Column="1" Spacing="16">
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="Resumen" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="📊" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Preguntas" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="5" FontAttributes="Bold" TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="⏱" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Tiempo" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="10 min" FontAttributes="Bold" TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="🏆" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Puntaje" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="0 / 5" FontAttributes="Bold" TextColor="{StaticResource Pink}" VerticalOptions="Center" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border BackgroundColor="#2A2412" Stroke="{StaticResource Amber}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16" Padding="16">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="💡" FontSize="22" VerticalOptions="Start" />
+                            <VerticalStackLayout Spacing="2" MaximumWidthRequest="190">
+                                <Label Text="Tip" FontAttributes="Bold" TextColor="{StaticResource Amber}" />
+                                <Label Text="Recuerda que la primera Revolución Industrial comenzó en Inglaterra en el siglo XVIII."
+                                       FontSize="12" TextColor="#FDE68A" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
         </VerticalStackLayout>
     </ScrollView>
 </ContentView>

@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ========== COLORES ========== -->
+    <Color x:Key="Bg">#070B1F</Color>
+    <Color x:Key="Sidebar">#0A1030</Color>
+    <Color x:Key="Surface">#101840</Color>
+    <Color x:Key="SurfaceAlt">#161F4F</Color>
+    <Color x:Key="Line">#243066</Color>
+    <Color x:Key="Cyan">#22D3EE</Color>
+    <Color x:Key="Violet">#8B5CF6</Color>
+    <Color x:Key="Pink">#EC4899</Color>
+    <Color x:Key="Emerald">#10B981</Color>
+    <Color x:Key="Amber">#FBBF24</Color>
+    <Color x:Key="TextMain">#E8ECFF</Color>
+    <Color x:Key="TextMuted">#8B95C9</Color>
+    <Color x:Key="OnCyan">#06122B</Color>
+
+    <!-- ========== GRADIENTES ========== -->
+    <LinearGradientBrush x:Key="BrandGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#22D3EE" Offset="0" />
+        <GradientStop Color="#A855F7" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="LoginBg" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#070B1F" Offset="0" />
+        <GradientStop Color="#150E45" Offset="0.55" />
+        <GradientStop Color="#0A1B4D" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="HeroGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1E2A8A" Offset="0" />
+        <GradientStop Color="#5B21B6" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="UserBubble" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#2563EB" Offset="0" />
+        <GradientStop Color="#3B82F6" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="CardBlue" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0E3A6B" Offset="0" />
+        <GradientStop Color="#1D4ED8" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardViolet" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#3B1C8C" Offset="0" />
+        <GradientStop Color="#7C3AED" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardGreen" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#064E3B" Offset="0" />
+        <GradientStop Color="#0F9F7E" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardPink" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#7A1650" Offset="0" />
+        <GradientStop Color="#DB2777" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- ========== ESTILOS BASE ========== -->
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+        <Setter Property="Stroke" Value="{StaticResource Line}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <Style x:Key="PageTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextMain}" />
+    </Style>
+
+    <Style x:Key="Muted" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource BrandGradient}" />
+        <Setter Property="TextColor" Value="{StaticResource OnCyan}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceAlt}" />
+        <Setter Property="BorderColor" Value="{StaticResource Line}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="TextColor" Value="{StaticResource TextMain}" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="22,0" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+
+    <Style x:Key="ChipButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceAlt}" />
+        <Setter Property="BorderColor" Value="{StaticResource Line}" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="TextColor" Value="{StaticResource TextMain}" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="18,0" />
+        <Setter Property="HeightRequest" Value="40" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <!-- ========== ITEM DE NAVEGACIÓN (RadioButton) ========== -->
+    <Style x:Key="NavItem" TargetType="RadioButton">
+        <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+        <Setter Property="ControlTemplate">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border x:Name="Bd" Padding="14,12" Margin="0,2"
+                            BackgroundColor="Transparent" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroupList>
+                                <VisualStateGroup x:Name="CheckedStates">
+                                    <VisualState x:Name="Checked">
+                                        <VisualState.Setters>
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandGradient}" />
+                                            <Setter TargetName="Lbl" Property="Label.TextColor" Value="{StaticResource OnCyan}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unchecked">
+                                        <VisualState.Setters>
+                                            <Setter TargetName="Bd" Property="BackgroundColor" Value="Transparent" />
+                                            <Setter TargetName="Lbl" Property="Label.TextColor" Value="{StaticResource TextMain}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter TargetName="Bd" Property="Opacity" Value="0.4" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateGroupList>
+                        </VisualStateManager.VisualStateGroups>
+                        <Label x:Name="Lbl" Text="{TemplateBinding Content}" FontSize="14"
+                               FontAttributes="Bold" TextColor="{StaticResource TextMain}"
+                               VerticalOptions="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ========== OPCIÓN DE CUESTIONARIO (A, B, C, D) ========== -->
+    <Style x:Key="OptionRadio" TargetType="RadioButton">
+        <Setter Property="ControlTemplate">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border x:Name="Bd" Padding="16,12" Margin="0,5"
+                            BackgroundColor="{StaticResource SurfaceAlt}"
+                            Stroke="{StaticResource Line}" StrokeThickness="1.5"
+                            StrokeShape="RoundRectangle 14">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CheckedStates">
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter TargetName="Bd" Property="Stroke" Value="{StaticResource Cyan}" />
+                                        <Setter TargetName="Bd" Property="BackgroundColor" Value="#0F2E4D" />
+                                        <Setter TargetName="Badge" Property="BackgroundColor" Value="{StaticResource Cyan}" />
+                                        <Setter TargetName="Letter" Property="Label.TextColor" Value="{StaticResource OnCyan}" />
+                                        <Setter TargetName="Tick" Property="IsVisible" Value="True" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border x:Name="Badge" WidthRequest="34" HeightRequest="34"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 17"
+                                    BackgroundColor="#222D6E">
+                                <Label x:Name="Letter" Text="{TemplateBinding Value}" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMain}"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label Grid.Column="1" Text="{TemplateBinding Content}" FontSize="16"
+                                   TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                            <Label x:Name="Tick" Grid.Column="2" Text="✓" FontSize="20" FontAttributes="Bold"
+                                   TextColor="{StaticResource Cyan}" IsVisible="False" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

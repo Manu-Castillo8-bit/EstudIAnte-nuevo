@@ -3,29 +3,137 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EstudIAnte.LoginWindow"
              Title="Login"
-             BackgroundColor="#0B1026">
-    <Grid Padding="24">
-        <VerticalStackLayout x:Name="Root" Spacing="14" WidthRequest="340"
-                             HorizontalOptions="Center" VerticalOptions="Center">
-            <Label Text="🎓" FontSize="48" HorizontalOptions="Center" />
-            <Label FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#E8ECFF">
+             BackgroundColor="{StaticResource Bg}">
+    <Grid Background="{StaticResource LoginBg}" ColumnDefinitions="1.15*,*" Padding="40">
+
+        <!-- ========== PANEL DE MARCA ========== -->
+        <VerticalStackLayout Grid.Column="0" Spacing="26" VerticalOptions="Center"
+                             Margin="30,0,30,0">
+            <HorizontalStackLayout Spacing="14">
+                <Label Text="🎓" FontSize="52" VerticalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label FontSize="34" FontAttributes="Bold" TextColor="{StaticResource TextMain}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Estud" />
+                                <Span Text="IA" TextColor="{StaticResource Cyan}" />
+                                <Span Text="nte" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Label Text="Tu asistente educativo inteligente" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <Label FontSize="40" FontAttributes="Bold" TextColor="{StaticResource TextMain}" LineHeight="1.15">
                 <Label.FormattedText>
                     <FormattedString>
-                        <Span Text="Estud" />
-                        <Span Text="IA" TextColor="#22D3EE" />
-                        <Span Text="nte" />
+                        <Span Text="Aprende mejor," />
+                        <Span Text="&#10;con " />
+                        <Span Text="inteligencia" TextColor="{StaticResource Pink}" />
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
-            <Label Text="Inicia sesión para continuar" TextColor="#8B95C9" HorizontalOptions="Center" />
 
-            <Entry x:Name="Usuario" Placeholder="Usuario" BackgroundColor="#131B3F"
-                   TextColor="#E8ECFF" PlaceholderColor="#8B95C9" Margin="0,10,0,0" />
-            <Entry x:Name="Clave" Placeholder="Contraseña" IsPassword="True" BackgroundColor="#131B3F"
-                   TextColor="#E8ECFF" PlaceholderColor="#8B95C9" />
-
-            <Button Text="Iniciar sesión" BackgroundColor="#22D3EE" TextColor="#0B1026"
-                    Clicked="Login_Click" Margin="0,10,0,0" />
+            <VerticalStackLayout Spacing="14">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#3322D3EE" StrokeThickness="1"
+                            Stroke="{StaticResource Cyan}" StrokeShape="RoundRectangle 12">
+                        <Label Text="💬" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Tutorías personalizadas" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="Aprende a tu ritmo" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#338B5CF6" StrokeThickness="1"
+                            Stroke="{StaticResource Violet}" StrokeShape="RoundRectangle 12">
+                        <Label Text="📋" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Cuestionarios interactivos" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="Evalúa tus conocimientos" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#33EC4899" StrokeThickness="1"
+                            Stroke="{StaticResource Pink}" StrokeShape="RoundRectangle 12">
+                        <Label Text="🔀" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Diagramas y esquemas" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="Visualiza conceptos fácilmente" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#3310B981" StrokeThickness="1"
+                            Stroke="{StaticResource Emerald}" StrokeShape="RoundRectangle 12">
+                        <Label Text="📄" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Análisis de documentos" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="Obtén respuestas desde tus archivos" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
         </VerticalStackLayout>
+
+        <!-- ========== TARJETA DE LOGIN ========== -->
+        <Border Grid.Column="1" Style="{StaticResource Card}" BackgroundColor="#CC101840"
+                Padding="36" WidthRequest="420" MaximumWidthRequest="460"
+                StrokeShape="RoundRectangle 24"
+                HorizontalOptions="Center" VerticalOptions="Center">
+            <VerticalStackLayout x:Name="Root" Spacing="14">
+                <Label Text="Iniciar sesión" FontSize="30" FontAttributes="Bold"
+                       TextColor="{StaticResource Cyan}" HorizontalOptions="Center" />
+                <Label Text="Ingresa a tu cuenta para continuar" Style="{StaticResource Muted}"
+                       HorizontalOptions="Center" Margin="0,0,0,10" />
+
+                <Label Text="Usuario o correo" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                        StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="✉" FontSize="18" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        <Entry x:Name="Usuario" Grid.Column="1" Placeholder="ejemplo@correo.com"
+                               BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                               PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
+                <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                        StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <Label Text="🔒" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        <Entry x:Name="Clave" Grid.Column="1" Placeholder="Ingresa tu contraseña" IsPassword="True"
+                               BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                               PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        <Button Grid.Column="2" Text="👁" BackgroundColor="Transparent" Padding="0"
+                                WidthRequest="36" HeightRequest="36" Clicked="Ver_Click" />
+                    </Grid>
+                </Border>
+
+                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,6">
+                    <CheckBox x:Name="Recordar" Color="{StaticResource Cyan}" IsChecked="True" />
+                    <Label Grid.Column="1" Text="Recordar sesión" FontSize="13"
+                           TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                    <Label Grid.Column="2" Text="¿Olvidaste tu contraseña?" FontSize="12"
+                           TextColor="{StaticResource Cyan}" VerticalOptions="Center" />
+                </Grid>
+
+                <Button Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
+                        Clicked="Login_Click" HeightRequest="52" />
+
+                <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="¿No tienes una cuenta?  " TextColor="{StaticResource TextMuted}" />
+                            <Span Text="Regístrate aquí" TextColor="{StaticResource Cyan}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </VerticalStackLayout>
+        </Border>
     </Grid>
 </ContentPage>

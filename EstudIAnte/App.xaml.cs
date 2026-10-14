@@ -9,7 +9,12 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new LoginWindow());
+            return new Window(new IntroPage())
+            {
+                Title = "EstudIAnte",
+                Width = 1100,
+                Height = 680
+            };
         }
     }
 }

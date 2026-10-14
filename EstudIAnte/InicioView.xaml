@@ -3,24 +3,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EstudIAnte.InicioView">
     <ScrollView>
-        <VerticalStackLayout Padding="30" Spacing="16">
-            <Label Text="Inicio" FontSize="28" FontAttributes="Bold" TextColor="#E8ECFF" />
-            <Label Text="Bienvenido a EstudIAnte" FontSize="15" TextColor="#8B95C9" />
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="20">
 
-            <Border BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12" Padding="18">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="🎓  Tu asistente de estudio" FontSize="18" FontAttributes="Bold" TextColor="#E8ECFF" />
-                    <Label Text="Chatea con la IA, crea cuestionarios y organiza tus documentos en un solo lugar."
-                           TextColor="#8B95C9" />
-                </VerticalStackLayout>
+            <!-- Hero -->
+            <Border Background="{StaticResource HeroGradient}" StrokeThickness="0"
+                    StrokeShape="RoundRectangle 24" Padding="40,34">
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="12" VerticalOptions="Center">
+                        <Label Text="¡Hola, René!" FontSize="36" FontAttributes="Bold" TextColor="White" />
+                        <Label Text="Tu asistente educativo con IA está listo para ayudarte a aprender de forma más inteligente."
+                               FontSize="16" TextColor="#D6DBFF" MaximumWidthRequest="440" />
+                        <Button Text="Comenzar ahora   →" Style="{StaticResource PrimaryButton}"
+                                HorizontalOptions="Start" Margin="0,12,0,0" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="🤖" FontSize="120" VerticalOptions="Center" Margin="0,0,20,0" />
+                </Grid>
             </Border>
 
-            <Border BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12" Padding="18">
+            <!-- Accesos rápidos -->
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                <Border Grid.Column="0" Background="{StaticResource CardBlue}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                        <Label Text="💬" FontSize="38" HorizontalOptions="Center" />
+                        <Label Text="Chats Temáticos" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                        <Label Text="Explora por tema" FontSize="12" TextColor="#C7D2FE" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Background="{StaticResource CardViolet}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                        <Label Text="📋" FontSize="38" HorizontalOptions="Center" />
+                        <Label Text="Cuestionarios" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                        <Label Text="Evalúa tus conocimientos" FontSize="12" TextColor="#DDD6FE" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="2" Background="{StaticResource CardGreen}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                        <Label Text="🔀" FontSize="38" HorizontalOptions="Center" />
+                        <Label Text="Diagramas" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                        <Label Text="Visualiza conceptos" FontSize="12" TextColor="#A7F3D0" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="3" Background="{StaticResource CardPink}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                        <Label Text="📁" FontSize="38" HorizontalOptions="Center" />
+                        <Label Text="Documentos" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                        <Label Text="Analiza tus archivos" FontSize="12" TextColor="#FBCFE8" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Progreso -->
+            <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="📈  Progreso" FontSize="18" FontAttributes="Bold" TextColor="#E8ECFF" />
-                    <Label Text="Aún no tienes actividad registrada." TextColor="#8B95C9" />
+                    <Label Text="📈  Progreso" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                    <Label Text="Aún no tienes actividad registrada." Style="{StaticResource Muted}" FontSize="14" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

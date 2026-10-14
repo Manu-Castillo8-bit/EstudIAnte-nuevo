@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EstudIAnte.IntroPage"
+             BackgroundColor="#050608">
+
+    <Grid x:Name="Root">
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#050608" Offset="0.0"/>
+                <GradientStop Color="#2A3040" Offset="0.6"/>
+                <GradientStop Color="#8E93A3" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <!-- Resplandor de fondo -->
+        <Ellipse x:Name="Glow" WidthRequest="520" HeightRequest="520" Opacity="0"
+                 HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True">
+            <Ellipse.Fill>
+                <RadialGradientBrush Center="0.5,0.5" Radius="0.5">
+                    <GradientStop Color="#665070FF" Offset="0.0"/>
+                    <GradientStop Color="#269A46FF" Offset="0.5"/>
+                    <GradientStop Color="#00000000" Offset="1.0"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <!-- Escenario: las tarjetas se insertan por código; el logo queda encima -->
+        <Grid x:Name="Stage" HorizontalOptions="Center" VerticalOptions="Center">
+            <Image x:Name="Logo" Source="eduai_logo.png" WidthRequest="150" HeightRequest="150"
+                   HorizontalOptions="Center" VerticalOptions="Center" Opacity="0" Scale="0.2"/>
+        </Grid>
+
+        <!-- Texto -->
+        <VerticalStackLayout VerticalOptions="End" HorizontalOptions="Center" Margin="0,0,0,110" Spacing="6">
+            <Label x:Name="TitleLabel" Text="EduIA" FontSize="52" FontAttributes="Bold"
+                   CharacterSpacing="4" TextColor="#4F7BFF" HorizontalOptions="Center" Opacity="0"/>
+            <Label x:Name="SubLabel" Text="INNOVAMOS - AYUDAMOS" FontSize="13" CharacterSpacing="6"
+                   TextColor="#C9D0FF" HorizontalOptions="Center" Opacity="0"/>
+        </VerticalStackLayout>
+
+        <Button x:Name="EnterBtn" Text="Entrar a la plataforma" Clicked="OnEnterClicked"
+                VerticalOptions="End" HorizontalOptions="Center" Margin="0,0,0,40"
+                Padding="32,12" CornerRadius="28" FontAttributes="Bold"
+                BackgroundColor="#5B6BFF" TextColor="White" Opacity="0"/>
+
+        <Button x:Name="SkipBtn" Text="Saltar" Clicked="OnEnterClicked" FontSize="12"
+                VerticalOptions="Start" HorizontalOptions="End" Margin="0,40,16,0"
+                BackgroundColor="Transparent" TextColor="#CCFFFFFF"
+                BorderColor="#66FFFFFF" BorderWidth="1" CornerRadius="16" Padding="14,4"/>
+
+        <!-- Pantalla oscura de bienvenida (aparece al final, encima de todo) -->
+        <Grid x:Name="Welcome" Opacity="0" InputTransparent="True" BackgroundColor="#F2050608">
+            <Ellipse WidthRequest="620" HeightRequest="620" HorizontalOptions="Center"
+                     VerticalOptions="Center" InputTransparent="True">
+                <Ellipse.Fill>
+                    <RadialGradientBrush Center="0.5,0.5" Radius="0.5">
+                        <GradientStop Color="#4422D3EE" Offset="0.0"/>
+                        <GradientStop Color="#228B5CF6" Offset="0.5"/>
+                        <GradientStop Color="#00000000" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <VerticalStackLayout x:Name="WelcomeContent" Spacing="14" HorizontalOptions="Center"
+                                 VerticalOptions="Center" Opacity="0" Scale="0.9">
+                <Label Text="🎓" FontSize="84" HorizontalOptions="Center" />
+                <Label Text="Bienvenido a" FontSize="22" CharacterSpacing="4"
+                       TextColor="#C9D0FF" HorizontalOptions="Center" />
+                <Label FontSize="56" FontAttributes="Bold" HorizontalOptions="Center"
+                       TextColor="#E8ECFF">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Estud" />
+                            <Span Text="IA" TextColor="#22D3EE" />
+                            <Span Text="nte" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

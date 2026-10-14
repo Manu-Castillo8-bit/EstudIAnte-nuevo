@@ -3,32 +3,68 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EstudIAnte.DocumentosView">
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="14">
-            <Label Text="Documentos" FontSize="28" FontAttributes="Bold" TextColor="#E8ECFF" />
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="16">
 
-            <Border BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12" Padding="14">
-                <HorizontalStackLayout Spacing="12">
-                    <Label Text="📄" FontSize="24" VerticalOptions="Center" />
-                    <VerticalStackLayout>
-                        <Label Text="Resumen Revolución Industrial.pdf" TextColor="#E8ECFF" />
-                        <Label Text="120 KB" FontSize="11" TextColor="#8B95C9" />
-                    </VerticalStackLayout>
-                </HorizontalStackLayout>
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource CardPink}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                    <Label Text="📁" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Documentos" Style="{StaticResource PageTitle}" />
+                    <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="2" Text="＋  Subir documento" Style="{StaticResource PrimaryButton}" />
+            </Grid>
+
+            <!-- Zona de carga -->
+            <Border Stroke="{StaticResource Violet}" StrokeThickness="1.5" StrokeDashArray="5,4"
+                    BackgroundColor="#0D1236" StrokeShape="RoundRectangle 18" Padding="30">
+                <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                    <Label Text="☁" FontSize="40" HorizontalOptions="Center" TextColor="{StaticResource Cyan}" />
+                    <Label Text="Arrastra tus archivos aquí" FontSize="16" FontAttributes="Bold"
+                           TextColor="{StaticResource TextMain}" HorizontalOptions="Center" />
+                    <Label Text="PDF, DOCX, TXT · máx. 20 MB" Style="{StaticResource Muted}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="#131B3F" Stroke="#1E2A5A" StrokeThickness="1"
-                    StrokeShape="RoundRectangle 12" Padding="14">
-                <HorizontalStackLayout Spacing="12">
-                    <Label Text="📄" FontSize="24" VerticalOptions="Center" />
-                    <VerticalStackLayout>
-                        <Label Text="Apuntes de Historia.docx" TextColor="#E8ECFF" />
-                        <Label Text="85 KB" FontSize="11" TextColor="#8B95C9" />
+            <Label Text="Archivos recientes" FontSize="15" FontAttributes="Bold"
+                   TextColor="{StaticResource TextMain}" Margin="0,6,0,0" />
+
+            <!-- Archivo 1 -->
+            <Border Style="{StaticResource Card}" Padding="16">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <Border WidthRequest="48" HeightRequest="48" BackgroundColor="#3F1D2B"
+                            Stroke="#F43F5E" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                        <Label Text="PDF" FontSize="12" FontAttributes="Bold" TextColor="#FB7185"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                        <Label Text="Resumen Revolución Industrial.pdf" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="120 KB" FontSize="12" TextColor="{StaticResource TextMuted}" />
                     </VerticalStackLayout>
-                </HorizontalStackLayout>
+                    <Button Grid.Column="2" Text="Analizar con IA" Style="{StaticResource GhostButton}"
+                            HeightRequest="40" />
+                </Grid>
             </Border>
 
-            <Button Text="Subir documento" BackgroundColor="#22D3EE" TextColor="#0B1026" HorizontalOptions="Start" />
+            <!-- Archivo 2 -->
+            <Border Style="{StaticResource Card}" Padding="16">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <Border WidthRequest="48" HeightRequest="48" BackgroundColor="#14284F"
+                            Stroke="#3B82F6" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                        <Label Text="DOC" FontSize="12" FontAttributes="Bold" TextColor="#60A5FA"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                        <Label Text="Apuntes de Historia.docx" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label Text="85 KB" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="2" Text="Analizar con IA" Style="{StaticResource GhostButton}"
+                            HeightRequest="40" />
+                </Grid>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
 </ContentView>
