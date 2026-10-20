@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:EstudIAnte"
+             x:Class="EstudIAnte.MainPage"
+             Title="EstudIAnte"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Bg}">
+    <Grid ColumnDefinitions="220,*" Padding="0">
+
+        <!-- ========== BARRA LATERAL ========== -->
+        <Grid Grid.Column="0" BackgroundColor="{StaticResource Sidebar}"
+              RowDefinitions="Auto,*,Auto" Padding="14">
+            <HorizontalStackLayout Grid.Row="0" Spacing="10" Margin="8,8,0,26">
+                <Label Text="🎓" FontSize="28" VerticalOptions="Center" />
+                <Label FontSize="21" FontAttributes="Bold" TextColor="{StaticResource TextMain}" VerticalOptions="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Estud" />
+                            <Span Text="IA" TextColor="{StaticResource Cyan}" />
+                            <Span Text="nte" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </HorizontalStackLayout>
+
+            <VerticalStackLayout Grid.Row="1" Spacing="0">
+                <RadioButton x:Name="N1" Style="{StaticResource NavItem}" GroupName="nav" IsChecked="True"
+                             Content="🏠   Inicio" CheckedChanged="OnNavChanged" />
+                <RadioButton x:Name="N2" Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="💬   Chat Temático" CheckedChanged="OnNavChanged" />
+                <RadioButton x:Name="N3" Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="📋   Cuestionarios" CheckedChanged="OnNavChanged" />
+                <RadioButton Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="🔀   Diagramas" IsEnabled="False" />
+                <RadioButton x:Name="N4" Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="📁   Documentos" CheckedChanged="OnNavChanged" />
+                <RadioButton Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="🗂   Mis Archivos" IsEnabled="False" />
+                <RadioButton Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="⚙   Configuración" IsEnabled="False" />
+            </VerticalStackLayout>
+
+            <Border Grid.Row="2" Style="{StaticResource Card}" Padding="10" StrokeShape="RoundRectangle 14">
+                <HorizontalStackLayout Spacing="10">
+                    <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0"
+                            Background="{StaticResource BrandGradient}" StrokeShape="RoundRectangle 19">
+                        <Label x:Name="AvatarInicial" Text="?" FontAttributes="Bold" TextColor="{StaticResource OnCyan}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                        <Label x:Name="NombreUsuario" Text="Invitado" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <Label x:Name="RolUsuario" Text="Estudiante" FontSize="11" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- ========== CONTENIDO ========== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+
+            <!-- Barra superior: buscador + avatar -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16" Padding="28,22,28,14">
+                <Border Style="{StaticResource Card}" Padding="16,0" HeightRequest="46"
+                        StrokeShape="RoundRectangle 23" HorizontalOptions="Fill"
+                        MaximumWidthRequest="620">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="🔍" FontSize="15" VerticalOptions="Center" />
+                        <Entry Grid.Column="1" Placeholder="Buscar temas, documentos o preguntas..."
+                               BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                               PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1" WidthRequest="42" HeightRequest="42" StrokeThickness="2"
+                        Stroke="{StaticResource Violet}" StrokeShape="RoundRectangle 21"
+                        BackgroundColor="{StaticResource SurfaceAlt}">
+                    <Label x:Name="AvatarSuperior" Text="?" FontAttributes="Bold" TextColor="{StaticResource TextMain}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <views:InicioView x:Name="VInicio" IsVisible="True" />
+                <views:ChatView x:Name="VChat" IsVisible="False" />
+                <views:CuestionarioView x:Name="VQuiz" IsVisible="False" />
+                <views:DocumentosView x:Name="VDocs" IsVisible="False" />
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

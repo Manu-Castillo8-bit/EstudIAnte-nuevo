@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EstudIAnte.ChatView">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="28,8,28,24" RowSpacing="14">
+
+        <!-- Encabezado -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="14">
+            <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource BrandGradient}"
+                    StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                <Label Text="Chat Temático" Style="{StaticResource PageTitle}" />
+                <Label x:Name="Subtitulo" Text="Crea un tema para empezar una conversación"
+                       Style="{StaticResource Muted}" />
+            </VerticalStackLayout>
+            <Button x:Name="BtnNuevoTema" Grid.Column="2" Text="＋  Crear tema"
+                    Style="{StaticResource PrimaryButton}" Clicked="CrearTema_Click" VerticalOptions="Center" />
+            <Button x:Name="BtnEliminarTema" Grid.Column="3" Text="🗑  Eliminar tema"
+                    Style="{StaticResource GhostButton}" Clicked="EliminarTema_Click"
+                    IsVisible="False" VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Temas (chips dinámicos) -->
+        <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout x:Name="TemasPanel" Spacing="10">
+                <Label Text="Aún no tienes temas. Usa «Crear tema»."
+                       Style="{StaticResource Muted}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <!-- Conversación -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
+            <CollectionView x:Name="ListaMensajes">
+                <CollectionView.EmptyView>
+                    <Label Text="Escribe tu primer mensaje para conversar sobre el tema."
+                           Style="{StaticResource Muted}" Margin="22" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout HorizontalOptions="{Binding Alineacion}" Padding="22,8">
+                            <Border MaximumWidthRequest="560" BackgroundColor="{Binding ColorFondo}"
+                                    Stroke="{Binding ColorTexto}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 18" Padding="16,12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding Texto}" TextColor="{Binding ColorTextoTexto}" />
+                                    <Label Text="{Binding Hora}" FontSize="10" TextColor="{Binding ColorHora}"
+                                           HorizontalOptions="End" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Border>
+
+        <!-- Entrada -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+            <ActivityIndicator x:Name="SpinnerIA" Grid.Column="0" IsRunning="False" IsVisible="False"
+                               Color="{StaticResource Cyan}" WidthRequest="50" VerticalOptions="Center" />
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,0" HeightRequest="50"
+                    StrokeShape="RoundRectangle 25">
+                <Entry x:Name="MensajeEntry" Placeholder="Escribe tu mensaje aquí..." BackgroundColor="Transparent"
+                       TextColor="{StaticResource TextMain}" PlaceholderColor="{StaticResource TextMuted}"
+                       VerticalOptions="Center" Completed="Enviar_Click" />
+            </Border>
+            <Button x:Name="BtnEnviar" Grid.Column="2" Text="➤" Style="{StaticResource PrimaryButton}"
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" Clicked="Enviar_Click" />
+        </Grid>
+    </Grid>
+</ContentView>

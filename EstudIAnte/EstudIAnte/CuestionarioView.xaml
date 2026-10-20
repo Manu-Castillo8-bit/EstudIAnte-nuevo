@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EstudIAnte.CuestionarioView">
+    <ScrollView>
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
+
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#4C1D95"
+                        Stroke="{StaticResource Violet}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
+                    <Label Text="📋" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label x:Name="TituloQuiz" Text="Cuestionarios" Style="{StaticResource PageTitle}" />
+                    <Label Text="Genera y responde cuestionarios con IA" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <Border Grid.Column="2" BackgroundColor="#0F3D33" Stroke="{StaticResource Emerald}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12,6" VerticalOptions="Center">
+                    <Label x:Name="BadgeNivel" Text="Nivel: Medio" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource Emerald}" />
+                </Border>
+            </Grid>
+
+            <!-- Generador -->
+            <Border Style="{StaticResource Card}" Padding="20">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Crear un nuevo cuestionario" FontSize="17" FontAttributes="Bold"
+                           TextColor="{StaticResource TextMain}" />
+
+                    <Label Text="Fuente" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Button x:Name="BtnFuenteTema" Text="💬  Tema de conversación"
+                                Style="{StaticResource ChipButton}" Clicked="Fuente_Tema" />
+                        <Button x:Name="BtnFuenteDoc" Text="📄  Documento analizado"
+                                Style="{StaticResource ChipButton}" Clicked="Fuente_Doc" />
+                    </HorizontalStackLayout>
+
+                    <Label x:Name="LblFuenteSel" Text="Fuente: tema de conversación"
+                           Style="{StaticResource Muted}" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="48"
+                                StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                            <Picker x:Name="Selector" Title="Elige un tema o documento..."
+                                    TextColor="{StaticResource TextMain}"
+                                    TitleColor="{StaticResource TextMuted}" />
+                        </Border>
+                        <Button x:Name="BtnGenerar" Grid.Column="1" Text="✨  Generar con IA"
+                                Style="{StaticResource PrimaryButton}" Clicked="Generar_Click" />
+                    </Grid>
+
+                    <ActivityIndicator x:Name="SpinnerGen" IsRunning="False" IsVisible="False"
+                                       Color="{StaticResource Cyan}" HorizontalOptions="Start" />
+                    <Label x:Name="LblEstadoGen" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*,280" ColumnSpacing="20">
+
+                <!-- Columna izquierda: pregunta -->
+                <VerticalStackLayout Grid.Column="0" Spacing="16">
+
+                    <Border Style="{StaticResource Card}" Padding="18,14">
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label x:Name="ProgresoTexto" Text="Elige o genera un cuestionario" Style="{StaticResource Muted}" />
+                                <Label x:Name="ProgresoPct" Grid.Column="1" Text="0%" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{StaticResource Cyan}" />
+                            </Grid>
+                            <ProgressBar x:Name="BarraProgreso" Progress="0" ProgressColor="{StaticResource Cyan}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource Card}" Padding="24">
+                        <VerticalStackLayout Spacing="6">
+                            <Label x:Name="PreguntaTexto" Text="Aún no hay un cuestionario activo. Genera uno arriba."
+                                   FontSize="21" FontAttributes="Bold" TextColor="{StaticResource TextMain}"
+                                   Margin="0,0,0,12" />
+                            <VerticalStackLayout x:Name="OpcionesPanel" Spacing="6" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Button x:Name="BtnAnterior" Grid.Column="0" Text="←  Anterior"
+                                Style="{StaticResource GhostButton}" Clicked="Anterior_Click" />
+                        <Button x:Name="BtnSiguiente" Grid.Column="2" Text="Siguiente  →"
+                                Style="{StaticResource PrimaryButton}" Clicked="Siguiente_Click" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Columna derecha: resumen -->
+                <VerticalStackLayout Grid.Column="1" Spacing="16">
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="Resumen" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="📊" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Preguntas" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label x:Name="ResumenPreguntas" Grid.Column="2" Text="0" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="⏱" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Tiempo" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label x:Name="ResumenTiempo" Grid.Column="2" Text="0 min" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="🏆" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="Puntaje" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label x:Name="ResumenPuntaje" Grid.Column="2" Text="0 / 0" FontAttributes="Bold"
+                                       TextColor="{StaticResource Pink}" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="🤖" FontSize="22" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="IA" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                                <Label x:Name="ResumenIA" Grid.Column="2" Text="—" FontSize="12" FontAttributes="Bold"
+                                       TextColor="{StaticResource Cyan}" VerticalOptions="Center" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border BackgroundColor="#2A2412" Stroke="{StaticResource Amber}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16" Padding="16">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="💡" FontSize="22" VerticalOptions="Start" />
+                            <VerticalStackLayout Spacing="2" MaximumWidthRequest="190">
+                                <Label Text="Tip" FontAttributes="Bold" TextColor="{StaticResource Amber}" />
+                                <Label x:Name="TipTexto" Text="Genera cuestionarios desde tus temas de chat o documentos analizados."
+                                       FontSize="12" TextColor="#FDE68A" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>
