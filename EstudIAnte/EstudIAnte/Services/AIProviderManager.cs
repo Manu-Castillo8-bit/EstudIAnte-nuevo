@@ -21,12 +21,16 @@ public static class AIProviderManager
     {
         var lista = new List<IAIProvider>();
 
-        // Gemini con las claves que tengas configuradas.
+        // 1) Servicio de IA incluido en la app (vía Supabase). Funciona en cualquier
+        //    clon sin pegar ninguna clave, porque la clave vive en el servidor.
+        lista.Add(new SupabaseGeminiProvider());
+
+        // 2) Respaldo opcional: si el usuario tiene su propia clave de Gemini
+        //    (archivo api-key-gemini.txt o variable ESTUDIANTE_GEMINI_KEY), se usa
+        //    además como alternativa por si el servicio principal está saturado.
         if (ApiKeys.GeminiConfigured)
         {
             lista.Add(new GeminiProvider(ApiKeys.GeminiKey, "gemini-3.8-flash"));
-            // Ejemplo de segunda clave de respaldo (descomenta y pega otra clave):
-            // lista.Add(new GeminiProvider("TU-OTRA-KEY", "gemini-3.8-flash"));
         }
 
         return lista;

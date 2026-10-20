@@ -364,3 +364,7 @@ FodyWeavers.xsd
 # Clave de IA local (no subir)
 api-key-gemini.txt
 **/api-key-gemini.txt
+
+# Supabase CLI (estado local, contiene refs/credenciales)
+supabase/.temp/
+supabase/.branches/
