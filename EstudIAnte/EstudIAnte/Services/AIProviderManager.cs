@@ -24,7 +24,7 @@ public static class AIProviderManager
         // Gemini con las claves que tengas configuradas.
         if (ApiKeys.GeminiConfigured)
         {
-            lista.Add(new GeminiProvider(ApiKeys.Gemini, "gemini-3.8-flash"));
+            lista.Add(new GeminiProvider(ApiKeys.GeminiKey, "gemini-3.8-flash"));
             // Ejemplo de segunda clave de respaldo (descomenta y pega otra clave):
             // lista.Add(new GeminiProvider("TU-OTRA-KEY", "gemini-3.8-flash"));
         }

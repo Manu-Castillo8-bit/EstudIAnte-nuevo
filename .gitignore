@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Clave de IA local (no subir)
+api-key-gemini.txt
+**/api-key-gemini.txt
