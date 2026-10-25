@@ -86,6 +86,19 @@ create table if not exists preguntas (
     fuente             text not null default ''
 );
 
+-- ---------- DIAGRAMAS ----------
+create table if not exists diagramas (
+    id           text primary key,
+    documento_id text references documentos (id) on delete set null,
+    usuario_id   text not null references usuarios (id) on delete cascade,
+    titulo       text not null,
+    codigo       text not null,         -- codigo Mermaid del diagrama
+    tipo         text not null default 'flujo'
+                 check (tipo in ('flujo', 'mapa')),
+    fuente       text not null default '',   -- "Documento: X" o "Tema: Y"
+    creado_en    timestamptz not null default now()
+);
+
 -- ---------- RESULTADOS DE CUESTIONARIOS ----------
 create table if not exists resultados (
     id              text primary key,
@@ -104,6 +117,7 @@ create index if not exists idx_chats_usuario       on chats (usuario_id);
 create index if not exists idx_mensajes_chat       on mensajes (chat_id);
 create index if not exists idx_cuestionarios_user  on cuestionarios (usuario_id);
 create index if not exists idx_preguntas_cuestion  on preguntas (cuestionario_id);
+create index if not exists idx_diagramas_usuario   on diagramas (usuario_id);
 create index if not exists idx_resultados_usuario  on resultados (usuario_id);
 
 -- ============================================================

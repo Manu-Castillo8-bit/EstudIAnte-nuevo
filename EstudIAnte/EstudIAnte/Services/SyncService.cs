@@ -25,6 +25,7 @@ public static class SyncService
             await PullTable<Mensaje>(client, conn);
             await PullTable<Cuestionario>(client, conn);
             await PullTable<Pregunta>(client, conn);
+            await PullTable<Diagrama>(client, conn);
             await PullTable<Resultado>(client, conn);
 
             return true;

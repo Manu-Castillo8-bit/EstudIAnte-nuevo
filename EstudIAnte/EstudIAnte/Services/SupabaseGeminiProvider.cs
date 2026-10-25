@@ -5,20 +5,27 @@ using System.Text.Json.Nodes;
 namespace EstudIAnte.Services;
 
 /// <summary>
-/// Proveedor de IA que llama a la Edge Function "gemini" de Supabase.
+/// Proveedores de IA vía la Edge Function "gemini" de Supabase.
 ///
 /// ¿Por qué? Para que la IA funcione en cualquier clon sin pegar una clave:
-/// la API key de Gemini vive como SECRETO en el servidor de Supabase, y la app
-/// solo usa la AnonKey pública del proyecto (que no es secreta y GitHub no bloquea).
+/// las API keys de Gemini y Groq viven como SECRETOS en el servidor de Supabase,
+/// y la app solo usa la AnonKey pública del proyecto (que no es secreta).
 ///
-/// Si el servidor no está disponible, el gestor pasa al siguiente proveedor
-/// (por ejemplo, un GeminiProvider con clave local como respaldo).
+/// La app decide qué IA usar en cada petición. Si el servidor reporta que esa
+/// IA está saturada (respuesta con "saturada": true), el gestor
+/// <see cref="AIProviderManager"/> pregunta al usuario si quiere cambiar a la
+/// siguiente IA. El servidor nunca cambia de proveedor por su cuenta.
 /// </summary>
-public class SupabaseGeminiProvider : IAIProvider
+public abstract class SupabaseIAProvider : IAIProvider
 {
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(90) };
 
-    public string Nombre => "EstudIAnte IA (Supabase)";
+    /// <summary>Proveedor que esta instancia pide al servidor: "gemini" o "groq".</summary>
+    readonly string _proveedor;
+
+    protected SupabaseIAProvider(string proveedor) => _proveedor = proveedor;
+
+    public string Nombre => _proveedor == "groq" ? "Groq (IA alternativa, servidor)" : "Google Gemini (servidor)";
 
     public bool Configurado => SupabaseConfig.IsConfigured;
 
@@ -28,7 +35,7 @@ public class SupabaseGeminiProvider : IAIProvider
 
         using var peticion = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            Content = JsonContent.Create(new { prompt })
+            Content = JsonContent.Create(new { prompt, proveedor = _proveedor })
         };
         peticion.Headers.Add("apikey", SupabaseConfig.AnonKey);
         peticion.Headers.Add("Authorization", $"Bearer {SupabaseConfig.AnonKey}");
@@ -44,48 +51,61 @@ public class SupabaseGeminiProvider : IAIProvider
         }
 
         var json = await respuesta.Content.ReadAsStringAsync(ct);
+        var (error, saturada) = LeerError(json);
 
         if (!respuesta.IsSuccessStatusCode)
         {
-            var cuota = respuesta.StatusCode == HttpStatusCode.TooManyRequests
+            var cuota = saturada
+                        || respuesta.StatusCode == HttpStatusCode.TooManyRequests
                         || respuesta.StatusCode == HttpStatusCode.Forbidden
                         || json.Contains("quota", StringComparison.OrdinalIgnoreCase)
                         || json.Contains("RESOURCE_EXHAUSTED", StringComparison.OrdinalIgnoreCase);
-            throw new IAException($"El servicio de IA respondió {(int)respuesta.StatusCode}. {Recortar(json)}", cuota);
+
+            throw new IAException(
+                error ?? $"El servicio de IA respondió {(int)respuesta.StatusCode}. {Recortar(json)}",
+                cuota);
         }
 
-        var texto = ExtraerTexto(json);
+        var texto = LeerTexto(json);
         if (string.IsNullOrWhiteSpace(texto))
             throw new IAException("El servicio de IA devolvió una respuesta vacía.");
 
         return texto;
     }
 
-    static string ExtraerTexto(string json)
+    static string? LeerTexto(string json)
+    {
+        try
+        {
+            return JsonNode.Parse(json)?["texto"]?.GetValue<string>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Extrae {error, saturada} del cuerpo de la respuesta del servidor.</summary>
+    static (string? Error, bool Saturada) LeerError(string json)
     {
         try
         {
             var nodo = JsonNode.Parse(json);
-            var texto = nodo?["texto"]?.GetValue<string>();
-            if (!string.IsNullOrEmpty(texto))
-                return texto;
-
             var error = nodo?["error"]?.GetValue<string>();
-            if (!string.IsNullOrEmpty(error))
-                throw new IAException(error);
-
-            return string.Empty;
-        }
-        catch (IAException)
-        {
-            throw;
+            var saturada = nodo?["saturada"]?.GetValue<bool>() ?? false;
+            return (string.IsNullOrEmpty(error) ? null : error, saturada);
         }
         catch
         {
-            return string.Empty;
+            return (null, false);
         }
     }
 
-    static string Recortar(string texto) =>
-        texto.Length <= 200 ? texto : texto[..200];
+    static string Recortar(string texto) => texto.Length <= 200 ? texto : texto[..200];
+}
+
+/// <summary>Google Gemini vía Supabase: la primera opción, siempre se intenta primero.</summary>
+public class SupabaseGeminiProvider : SupabaseIAProvider
+{
+    public SupabaseGeminiProvider() : base("gemini") { }
 }

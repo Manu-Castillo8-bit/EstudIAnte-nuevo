@@ -36,6 +36,11 @@
                 </VerticalStackLayout>
             </Border>
 
+            <SearchBar x:Name="Buscador" Placeholder="🔍   Buscar por nombre o contenido..."
+                       BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                       PlaceholderColor="{StaticResource TextMuted}" Margin="0,4,0,0"
+                       TextChanged="Buscador_TextChanged" />
+
             <Label Text="Archivos recientes" FontSize="15" FontAttributes="Bold"
                    TextColor="{StaticResource TextMain}" Margin="0,6,0,0" />
 
@@ -75,6 +80,10 @@
                                             CommandParameter="{Binding Id}" />
                                     <Button Text="Crear cuestionario" Style="{StaticResource GhostButton}"
                                             HeightRequest="38" Clicked="CrearCuestionario_Click"
+                                            IsVisible="{Binding Listo}"
+                                            CommandParameter="{Binding Id}" />
+                                    <Button Text="🔀  Generar diagrama" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="CrearDiagrama_Click"
                                             IsVisible="{Binding Listo}"
                                             CommandParameter="{Binding Id}" />
                                     <Button Text="🗑  Eliminar" Style="{StaticResource GhostButton}"

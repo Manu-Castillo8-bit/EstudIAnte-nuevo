@@ -80,6 +80,9 @@
 	  <MauiXaml Update="CuestionarioView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="DiagramasView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="DocumentosView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

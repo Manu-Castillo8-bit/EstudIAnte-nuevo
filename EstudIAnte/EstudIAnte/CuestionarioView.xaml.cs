@@ -17,6 +17,7 @@ public partial class CuestionarioView : ContentView
     public CuestionarioView()
     {
         InitializeComponent();
+        SelectorCantidad.SelectedIndex = 0;
         Loaded += (_, _) => _ = InicializarAsync();
     }
 
@@ -127,6 +128,12 @@ public partial class CuestionarioView : ContentView
         }
 
         var (id, nombre) = _opciones[Selector.SelectedIndex];
+
+        // Cantidad de preguntas elegida por el usuario (5/10/15/20).
+        var cantidad = 5;
+        if (SelectorCantidad.SelectedItem is string texto && int.TryParse(texto, out var elegida))
+            cantidad = elegida;
+
         var conn = await LocalDatabase.GetAsync();
 
         string material;
@@ -164,7 +171,7 @@ public partial class CuestionarioView : ContentView
 
         try
         {
-            var (quiz, ia) = await QuizGenerator.GenerarAsync(usuario.Id, nombre, fuenteTexto, material, documentoId, 5);
+            var (quiz, ia) = await QuizGenerator.GenerarAsync(usuario.Id, nombre, fuenteTexto, material, documentoId, cantidad);
             _cuestionario = quiz;
             ResumenIA.Text = ia;
             LblEstadoGen.Text = $"Cuestionario generado con {ia}.";

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EstudIAnte.DiagramasView">
+    <ScrollView x:Name="Scroll">
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
+
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#134E4A"
+                        Stroke="{StaticResource Emerald}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
+                    <Label Text="🔀" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Diagramas" Style="{StaticResource PageTitle}" />
+                    <Label Text="Convierte tu material en diagramas visuales con IA" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <Border Grid.Column="2" BackgroundColor="#0F3D33" Stroke="{StaticResource Emerald}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12,6" VerticalOptions="Center">
+                    <Label Text="Mermaid" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource Emerald}" />
+                </Border>
+            </Grid>
+
+            <!-- Generador -->
+            <Border Style="{StaticResource Card}" Padding="20">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Crear un nuevo diagrama" FontSize="17" FontAttributes="Bold"
+                           TextColor="{StaticResource TextMain}" />
+
+                    <Label Text="Tipo de diagrama" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Button x:Name="BtnTipoFlujo" Text="🔀  Diagrama de flujo"
+                                Style="{StaticResource ChipButton}" Clicked="Tipo_Flujo" />
+                        <Button x:Name="BtnTipoMapa" Text="🧠  Mapa mental"
+                                Style="{StaticResource ChipButton}" Clicked="Tipo_Mapa" />
+                    </HorizontalStackLayout>
+
+                    <Label x:Name="LblTipoSel" Text="Tipo: diagrama de flujo"
+                           Style="{StaticResource Muted}" />
+
+                    <Label Text="Fuente (documento analizado o tema de chat)" FontSize="12"
+                           TextColor="{StaticResource TextMuted}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="48"
+                                StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                            <Picker x:Name="Selector" Title="Elige un documento o tema..."
+                                    TextColor="{StaticResource TextMain}"
+                                    TitleColor="{StaticResource TextMuted}" />
+                        </Border>
+                        <Button x:Name="BtnGenerar" Grid.Column="1" Text="✨  Generar con IA"
+                                Style="{StaticResource PrimaryButton}" Clicked="Generar_Click" />
+                    </Grid>
+
+                    <ActivityIndicator x:Name="SpinnerGen" IsRunning="False" IsVisible="False"
+                                       Color="{StaticResource Cyan}" HorizontalOptions="Start" />
+                    <Label x:Name="LblEstadoGen" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Visor del diagrama -->
+            <Border x:Name="PanelVisor" Style="{StaticResource Card}" Padding="14" IsVisible="False">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <Label x:Name="TituloVisor" Text="Diagrama" FontAttributes="Bold" FontSize="16"
+                               TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                        <Button x:Name="BtnCopiar" Grid.Column="1" Text="📋  Copiar código"
+                                Style="{StaticResource GhostButton}" HeightRequest="38"
+                                Clicked="Copiar_Click" />
+                        <Button x:Name="BtnVerCodigo" Grid.Column="2" Text="📜  Ver código"
+                                Style="{StaticResource GhostButton}" HeightRequest="38"
+                                Clicked="VerCodigo_Click" />
+                    </Grid>
+
+                    <WebView x:Name="Visor" HeightRequest="520" BackgroundColor="#070B21" />
+
+                    <Editor x:Name="EditorCodigo" IsVisible="False" IsReadOnly="True"
+                            HeightRequest="220" BackgroundColor="#0B1233"
+                            TextColor="{StaticResource Cyan}" FontFamily="Consolas" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Historial -->
+            <Label Text="Diagramas guardados" FontSize="15" FontAttributes="Bold"
+                   TextColor="{StaticResource TextMain}" Margin="0,6,0,0" />
+            <CollectionView x:Name="ListaDiagramas">
+                <CollectionView.EmptyView>
+                    <Label Text="Todavía no tienes diagramas guardados. Genera uno arriba." Style="{StaticResource Muted}" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                <Border WidthRequest="48" HeightRequest="48" BackgroundColor="#134E4A"
+                                        Stroke="{StaticResource Emerald}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                                    <Label Text="{Binding Icono}" FontSize="20"
+                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                    <Label Text="{Binding Titulo}" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextMain}" />
+                                    <Label FontSize="12" TextColor="{StaticResource TextMuted}">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="{Binding TipoEtiqueta}" />
+                                                <Span Text="  ·  " />
+                                                <Span Text="{Binding Fuente}" />
+                                                <Span Text="  ·  " />
+                                                <Span Text="{Binding FechaTexto}" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <HorizontalStackLayout Grid.Column="2" Spacing="6" VerticalOptions="Center">
+                                    <Button Text="Ver" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="VerDiagrama_Click"
+                                            CommandParameter="{Binding Id}" />
+                                    <Button Text="🗑" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" TextColor="{StaticResource Pink}"
+                                            Clicked="EliminarDiagrama_Click" CommandParameter="{Binding Id}" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

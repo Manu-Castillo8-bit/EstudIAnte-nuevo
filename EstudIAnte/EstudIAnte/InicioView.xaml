@@ -27,6 +27,9 @@
                 <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
                         Background="{StaticResource CardBlue}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="Card_Chat" />
+                    </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="6" VerticalOptions="Center">
                         <Label Text="💬" FontSize="38" HorizontalOptions="Center" />
                         <Label Text="Chats Temáticos" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
@@ -36,6 +39,9 @@
                 <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
                         Background="{StaticResource CardViolet}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="Card_Quiz" />
+                    </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="6" VerticalOptions="Center">
                         <Label Text="📋" FontSize="38" HorizontalOptions="Center" />
                         <Label Text="Cuestionarios" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
@@ -45,6 +51,9 @@
                 <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
                         Background="{StaticResource CardGreen}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="Card_Diagramas" />
+                    </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="6" VerticalOptions="Center">
                         <Label Text="🔀" FontSize="38" HorizontalOptions="Center" />
                         <Label Text="Diagramas" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
@@ -54,6 +63,9 @@
                 <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
                         Background="{StaticResource CardPink}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="Card_Documentos" />
+                    </Border.GestureRecognizers>
                     <VerticalStackLayout Spacing="6" VerticalOptions="Center">
                         <Label Text="📁" FontSize="38" HorizontalOptions="Center" />
                         <Label Text="Documentos" FontSize="17" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />

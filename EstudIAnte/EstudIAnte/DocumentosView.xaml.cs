@@ -21,13 +21,34 @@ public partial class DocumentosView : ContentView
             return;
 
         var conn = await LocalDatabase.GetAsync();
-        var docs = await conn.Table<Documento>()
+        _docs = await conn.Table<Documento>()
             .Where(d => d.UsuarioId == usuario.Id)
             .OrderByDescending(d => d.CreadoEn)
             .ToListAsync();
 
-        ListaDocumentos.ItemsSource = docs.Select(d => new DocumentoItem(d)).ToList();
+        AplicarFiltro();
     }
+
+    List<Documento> _docs = new();
+
+    void AplicarFiltro()
+    {
+        var texto = Buscador.Text?.Trim();
+        var resultados = string.IsNullOrWhiteSpace(texto)
+            ? _docs
+            : _docs.Where(d =>
+                d.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                d.Resumen.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                d.Texto.Contains(texto, StringComparison.OrdinalIgnoreCase));
+
+        // Lista ordenada por fecha (más reciente primero) y ya filtrada.
+        ListaDocumentos.ItemsSource = resultados.Select(d => new DocumentoItem(d)).ToList();
+    }
+
+    void Buscador_TextChanged(object? sender, TextChangedEventArgs e) => AplicarFiltro();
+
+    /// <summary>Recarga los documentos (la llama MainPage al volver a la sección).</summary>
+    public async Task RefrescarAsync() => await CargarDocumentosAsync();
 
     async void Subir_Click(object? sender, EventArgs e) => await SubirAsync();
 
@@ -206,10 +227,15 @@ public partial class DocumentosView : ContentView
         if (!confirmar)
             return;
 
+        // El usuario elige cuántas preguntas quiere.
+        var eleccion = await page.DisplayActionSheetAsync("¿Cuántas preguntas?", "Cancelar", null, "5", "10", "15", "20");
+        if (eleccion is null || eleccion == "Cancelar" || !int.TryParse(eleccion, out var cantidad))
+            return;
+
         try
         {
             var (quiz, ia) = await QuizGenerator.GenerarAsync(
-                usuario.Id, doc.Nombre, $"Documento: {doc.Nombre}", doc.Texto, doc.Id);
+                usuario.Id, doc.Nombre, $"Documento: {doc.Nombre}", doc.Texto, doc.Id, cantidad);
 
             await page.DisplayAlertAsync("Cuestionario listo",
                 $"Se creó «{quiz.Titulo}» con {quiz.TotalPreguntas} preguntas usando {ia}.\n\nVe a la sección Cuestionarios para responderlo.", "OK");
@@ -218,6 +244,16 @@ public partial class DocumentosView : ContentView
         {
             await page.DisplayAlertAsync("No se pudo crear", ex.Message, "OK");
         }
+    }
+
+    async void CrearDiagrama_Click(object? sender, EventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string id)
+            return;
+
+        // Navega a la sección Diagramas con este documento ya seleccionado.
+        if (MainPage.Actual is not null)
+            await MainPage.Actual.IrADiagramasAsync(id);
     }
 
     async void Eliminar_Click(object? sender, EventArgs e)

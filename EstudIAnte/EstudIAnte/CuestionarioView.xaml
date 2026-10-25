@@ -50,6 +50,26 @@
                                 Style="{StaticResource PrimaryButton}" Clicked="Generar_Click" />
                     </Grid>
 
+                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="10">
+                        <Label Text="Cantidad de preguntas:" FontSize="13" VerticalOptions="Center"
+                               TextColor="{StaticResource TextMuted}" />
+                        <Border Grid.Column="1" Style="{StaticResource Card}" Padding="12,4"
+                                StrokeShape="RoundRectangle 10" BackgroundColor="#0B1233">
+                            <Picker x:Name="SelectorCantidad" HeightRequest="36" WidthRequest="90"
+                                    TextColor="{StaticResource TextMain}"
+                                    TitleColor="{StaticResource TextMuted}">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>5</x:String>
+                                        <x:String>10</x:String>
+                                        <x:String>15</x:String>
+                                        <x:String>20</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </Border>
+                    </Grid>
+
                     <ActivityIndicator x:Name="SpinnerGen" IsRunning="False" IsVisible="False"
                                        Color="{StaticResource Cyan}" HorizontalOptions="Start" />
                     <Label x:Name="LblEstadoGen" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />

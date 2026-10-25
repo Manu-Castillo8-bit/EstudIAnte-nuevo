@@ -31,8 +31,8 @@
                              Content="💬   Chat Temático" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N3" Style="{StaticResource NavItem}" GroupName="nav"
                              Content="📋   Cuestionarios" CheckedChanged="OnNavChanged" />
-                <RadioButton Style="{StaticResource NavItem}" GroupName="nav"
-                             Content="🔀   Diagramas" IsEnabled="False" />
+                <RadioButton x:Name="N5" Style="{StaticResource NavItem}" GroupName="nav"
+                             Content="🔀   Diagramas" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N4" Style="{StaticResource NavItem}" GroupName="nav"
                              Content="📁   Documentos" CheckedChanged="OnNavChanged" />
                 <RadioButton Style="{StaticResource NavItem}" GroupName="nav"
@@ -83,6 +83,7 @@
                 <views:InicioView x:Name="VInicio" IsVisible="True" />
                 <views:ChatView x:Name="VChat" IsVisible="False" />
                 <views:CuestionarioView x:Name="VQuiz" IsVisible="False" />
+                <views:DiagramasView x:Name="VDiag" IsVisible="False" />
                 <views:DocumentosView x:Name="VDocs" IsVisible="False" />
             </Grid>
         </Grid>
