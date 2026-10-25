@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.IntroPage"
              BackgroundColor="#050608">
 
@@ -39,12 +40,12 @@
                    TextColor="#C9D0FF" HorizontalOptions="Center" Opacity="0"/>
         </VerticalStackLayout>
 
-        <Button x:Name="EnterBtn" Text="Entrar a la plataforma" Clicked="OnEnterClicked"
+        <controls:PulsarButton x:Name="EnterBtn" Text="Entrar a la plataforma" Clicked="OnEnterClicked"
                 VerticalOptions="End" HorizontalOptions="Center" Margin="0,0,0,40"
                 Padding="32,12" CornerRadius="28" FontAttributes="Bold"
                 BackgroundColor="#5B6BFF" TextColor="White" Opacity="0"/>
 
-        <Button x:Name="SkipBtn" Text="Saltar" Clicked="OnEnterClicked" FontSize="12"
+        <controls:PulsarButton x:Name="SkipBtn" Text="Saltar" Clicked="OnEnterClicked" FontSize="12"
                 VerticalOptions="Start" HorizontalOptions="End" Margin="0,40,16,0"
                 BackgroundColor="Transparent" TextColor="#CCFFFFFF"
                 BorderColor="#66FFFFFF" BorderWidth="1" CornerRadius="16" Padding="14,4"/>

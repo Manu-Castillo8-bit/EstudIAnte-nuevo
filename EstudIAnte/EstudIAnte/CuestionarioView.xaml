@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.CuestionarioView">
     <ScrollView>
         <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
@@ -30,9 +31,9 @@
 
                     <Label Text="Fuente" FontSize="12" TextColor="{StaticResource TextMuted}" />
                     <HorizontalStackLayout Spacing="10">
-                        <Button x:Name="BtnFuenteTema" Text="💬  Tema de conversación"
+                        <controls:PulsarButton x:Name="BtnFuenteTema" Text="💬  Tema de conversón"
                                 Style="{StaticResource ChipButton}" Clicked="Fuente_Tema" />
-                        <Button x:Name="BtnFuenteDoc" Text="📄  Documento analizado"
+                        <controls:PulsarButton x:Name="BtnFuenteDoc" Text="📄  Documento analizado"
                                 Style="{StaticResource ChipButton}" Clicked="Fuente_Doc" />
                     </HorizontalStackLayout>
 
@@ -46,7 +47,7 @@
                                     TextColor="{StaticResource TextMain}"
                                     TitleColor="{StaticResource TextMuted}" />
                         </Border>
-                        <Button x:Name="BtnGenerar" Grid.Column="1" Text="✨  Generar con IA"
+                        <controls:PulsarButton x:Name="BtnGenerar" Grid.Column="1" Text="✨  Generar con IA"
                                 Style="{StaticResource PrimaryButton}" Clicked="Generar_Click" />
                     </Grid>
 
@@ -102,9 +103,9 @@
                     </Border>
 
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Button x:Name="BtnAnterior" Grid.Column="0" Text="←  Anterior"
+                        <controls:PulsarButton x:Name="BtnAnterior" Grid.Column="0" Text="←  Anterior"
                                 Style="{StaticResource GhostButton}" Clicked="Anterior_Click" />
-                        <Button x:Name="BtnSiguiente" Grid.Column="2" Text="Siguiente  →"
+                        <controls:PulsarButton x:Name="BtnSiguiente" Grid.Column="2" Text="Siguiente  →"
                                 Style="{StaticResource PrimaryButton}" Clicked="Siguiente_Click" />
                     </Grid>
                 </VerticalStackLayout>
@@ -127,13 +128,13 @@
                                        TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
                             </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                <Label Text="🏆" FontSize="22" VerticalOptions="Center" />
+                                <Label Text="⏱" FontSize="22" VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="Puntaje" Style="{StaticResource Muted}" VerticalOptions="Center" />
                                 <Label x:Name="ResumenPuntaje" Grid.Column="2" Text="0 / 0" FontAttributes="Bold"
                                        TextColor="{StaticResource Pink}" VerticalOptions="Center" />
                             </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                <Label Text="🤖" FontSize="22" VerticalOptions="Center" />
+                                <Label Text="🏆" FontSize="22" VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="IA" Style="{StaticResource Muted}" VerticalOptions="Center" />
                                 <Label x:Name="ResumenIA" Grid.Column="2" Text="—" FontSize="12" FontAttributes="Bold"
                                        TextColor="{StaticResource Cyan}" VerticalOptions="Center" />

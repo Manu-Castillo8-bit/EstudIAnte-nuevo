@@ -21,7 +21,7 @@ A partir del contenido de tus archivos, la aplicación actúa como un **tutor in
 La app no llama a ninguna API directamente: usa una **Edge Function de Supabase** que mantiene las claves como secretos en el servidor, así la IA funciona en cualquier clon del repo sin configurar nada.
 
 **Cadena de IAs y comportamiento ante saturación** (siempre se intenta primero Gemini):
-1. **Google Gemini** (servidor) → 2. **Groq / GPT-OSS** (servidor) → 3. **Gemini local** (solo si pegas tu propia clave en `api-key-gemini.txt` o la variable `ESTUDIANTE_GEMINI_KEY`).
+1. **Google Gemini** (servidor) → 2. **Groq / GPT-OSS** (servidor) → 3. **OpenRouter, modelos gratuitos** (servidor) → 4. **Gemini local** (solo si pegas tu propia clave en `api-key-gemini.txt` o la variable `ESTUDIANTE_GEMINI_KEY`).
 
 Si una IA está **saturada** (cuota agotada), la app muestra un **popup**: *"¿Quieres cambiar a Groq?"* — el usuario decide si cambia a la siguiente IA (y así sucesivamente) o prefiere esperar. El servidor nunca cambia de proveedor por su cuenta: la app le pide un proveedor concreto en cada petición.
 

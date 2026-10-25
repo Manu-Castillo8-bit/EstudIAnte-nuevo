@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.LoginWindow"
              Title="Login"
              BackgroundColor="{StaticResource Bg}">
@@ -39,7 +40,7 @@
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                     <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#3322D3EE" StrokeThickness="1"
                             Stroke="{StaticResource Cyan}" StrokeShape="RoundRectangle 12">
-                        <Label Text="💬" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Label Text="🎓" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                         <Label Text="Tutorías personalizadas" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
@@ -69,7 +70,7 @@
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                     <Border WidthRequest="46" HeightRequest="46" BackgroundColor="#3310B981" StrokeThickness="1"
                             Stroke="{StaticResource Emerald}" StrokeShape="RoundRectangle 12">
-                        <Label Text="📄" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Label Text="📁" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                         <Label Text="Análisis de documentos" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
@@ -109,7 +110,7 @@
                         <Entry x:Name="Clave" Grid.Column="1" Placeholder="Ingresa tu contraseña" IsPassword="True"
                                BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
                                PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
-                        <Button Grid.Column="2" Text="👁" BackgroundColor="Transparent" Padding="0"
+                        <controls:PulsarButton Grid.Column="2" Text="👁" BackgroundColor="Transparent" Padding="0"
                                 WidthRequest="36" HeightRequest="36" Clicked="Ver_Click" />
                     </Grid>
                 </Border>
@@ -122,7 +123,7 @@
                            TextColor="{StaticResource Cyan}" VerticalOptions="Center" />
                 </Grid>
 
-                <Button Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
+                <controls:PulsarButton Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
                         Clicked="Login_Click" HeightRequest="52" />
 
                 <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">

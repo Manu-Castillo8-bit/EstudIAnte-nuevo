@@ -5,6 +5,23 @@ namespace EstudIAnte;
 
 public partial class DiagramasView : ContentView
 {
+    /// <summary>Tipos de diagrama disponibles (id = valor guardado en la base).</summary>
+    record TipoDiagrama(string Id, string Etiqueta, string Descripcion);
+
+    static readonly TipoDiagrama[] Tipos =
+    {
+        new("flujo",       "🔀  Diagrama de flujo",     "Organiza pasos, procesos y decisiones"),
+        new("mapa",        "🧠  Mapa mental",           "Ramifica conceptos desde una idea central"),
+        new("comparativo", "⚖️  Cuadro comparativo",    "Compara elementos en columnas"),
+        new("timeline",    "📅  Línea de tiempo",       "Ordena eventos por fecha o etapa"),
+        new("secuencia",   "🔁  Diagrama de secuencia", "Muestra interacciones paso a paso"),
+        new("clases",      "🏛  Diagrama de clases",    "Estructura de conceptos y atributos"),
+        new("er",          "🗄  Entidad-Relación",      "Modelo de datos y sus relaciones"),
+        new("organigrama", "🏢  Organigrama",           "Jerarquías y niveles"),
+        new("gantt",       "📆  Cronograma (Gantt)",    "Tareas y duraciones en el tiempo"),
+        new("pastel",      "🍰  Gráfica de pastel",     "Proporciones y porcentajes"),
+    };
+
     string _tipo = "flujo";
     readonly List<(string Id, string Nombre, bool EsDocumento)> _opciones = new();
     Diagrama? _actual;
@@ -13,21 +30,22 @@ public partial class DiagramasView : ContentView
     public DiagramasView()
     {
         InitializeComponent();
+        foreach (var t in Tipos)
+            SelectorTipo.Items.Add(t.Etiqueta);
+        SelectorTipo.SelectedIndex = 0;
         Loaded += (_, _) => _ = CargarHistorialAsync();
     }
 
     // ---------------- TIPO ----------------
 
-    void Tipo_Flujo(object? sender, EventArgs e)
+    void Tipo_SelectedIndexChanged(object? sender, EventArgs e)
     {
-        _tipo = "flujo";
-        LblTipoSel.Text = "Tipo: diagrama de flujo";
-    }
+        if (SelectorTipo.SelectedIndex < 0 || SelectorTipo.SelectedIndex >= Tipos.Length)
+            return;
 
-    void Tipo_Mapa(object? sender, EventArgs e)
-    {
-        _tipo = "mapa";
-        LblTipoSel.Text = "Tipo: mapa mental";
+        var tipo = Tipos[SelectorTipo.SelectedIndex];
+        _tipo = tipo.Id;
+        LblTipoSel.Text = tipo.Descripcion;
     }
 
     // ---------------- FUENTES ----------------
@@ -144,7 +162,7 @@ public partial class DiagramasView : ContentView
         }
 
         _generando = true;
-        BtnGenerar.IsEnabled = false;
+        BtnGenerar.IsBusy = true;
         SpinnerGen.IsRunning = SpinnerGen.IsVisible = true;
         LblEstadoGen.Text = "Generando diagrama con IA, espera un momento...";
 
@@ -166,7 +184,7 @@ public partial class DiagramasView : ContentView
         finally
         {
             _generando = false;
-            BtnGenerar.IsEnabled = true;
+            BtnGenerar.IsBusy = false;
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
         }
     }
@@ -199,7 +217,7 @@ public partial class DiagramasView : ContentView
         TituloVisor.Text = diagrama.Titulo;
         EditorCodigo.Text = diagrama.Codigo;
         PanelVisor.IsVisible = true;
-        Visor.Source = new HtmlWebViewSource { Html = HtmlDiagrama(diagrama.Codigo) };
+        Visor.Source = new HtmlWebViewSource { Html = HtmlDiagrama(diagrama.Codigo, diagrama.Tipo) };
     }
 
     const string PlantillaHtml = """
@@ -212,6 +230,10 @@ public partial class DiagramasView : ContentView
           body { background:#070B21; margin:0; padding:14px; font-family:'Segoe UI',sans-serif; }
           #cont { display:flex; justify-content:center; overflow:auto; }
           #cont svg { max-width:100%; height:auto; }
+          #cont table { border-collapse:collapse; color:#E8ECFF; font-size:14px; }
+          #cont th, #cont td { border:1px solid #243066; padding:10px 14px; text-align:left; }
+          #cont th { background:#152253; color:#22D3EE; font-weight:bold; }
+          #cont tr:nth-child(even) td { background:#0D1436; }
           #err { display:none; color:#FCA5A5; background:#3F1D2B; border:1px solid #FB7185;
                  border-radius:10px; padding:12px; font-family:Consolas,monospace;
                  white-space:pre-wrap; font-size:12px; }
@@ -228,16 +250,22 @@ public partial class DiagramasView : ContentView
           }
           async function renderizar(datos){
             try{
+              if (datos.tipo === 'comparativo') {
+                document.getElementById('cont').innerHTML = datos.codigo;
+                return;
+              }
               var r = await mermaid.render('grafo' + Date.now(), datos.codigo);
               document.getElementById('cont').innerHTML = r.svg;
             }catch(e){
-              mostrarError('El diagrama no se pudo dibujar.\n\nCódigo Mermaid generado:\n\n' + datos.codigo);
+              mostrarError('El diagrama no se pudo dibujar.\n\nCódigo generado:\n\n' + datos.codigo);
             }
           }
-          if (typeof mermaid === 'undefined') {
+          if (typeof mermaid === 'undefined' && __TIPO__ !== 'tabla') {
             mostrarError('No se pudo cargar el motor de diagramas (revisa tu conexión a internet).');
           } else {
-            mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose' });
+            if (typeof mermaid !== 'undefined') {
+              mermaid.initialize({ startOnLoad:false, theme:'dark', securityLevel:'loose' });
+            }
             try { renderizar(__CODIGO__); }
             catch(e){ mostrarError('Error al iniciar el diagrama: ' + e); }
           }
@@ -246,8 +274,14 @@ public partial class DiagramasView : ContentView
         </html>
         """;
 
-    static string HtmlDiagrama(string codigo) =>
-        PlantillaHtml.Replace("__CODIGO__", DiagramaGenerator.AJson(codigo).Replace("</", "<\\/"));
+    static string HtmlDiagrama(string codigo, string tipo)
+    {
+        var json = DiagramaGenerator.AJson(codigo, tipo).Replace("</", "<\\/");
+        var esTabla = tipo == "comparativo" || tipo == "tabla";
+        return PlantillaHtml
+            .Replace("__CODIGO__", json)
+            .Replace("__TIPO__", esTabla ? "'tabla'" : "'mermaid'");
+    }
 
     async void Copiar_Click(object? sender, EventArgs e)
     {
@@ -359,7 +393,19 @@ public class DiagramaItem
         Titulo = d.Titulo;
         Fuente = d.Fuente;
         FechaTexto = FormatearFecha(d.CreadoEn);
-        Icono = d.Tipo == "mapa" ? "🧠" : "🔀";
+        Icono = d.Tipo switch
+        {
+            "mapa" => "🧠",
+            "comparativo" => "⚖️",
+            "timeline" => "📅",
+            "secuencia" => "🔁",
+            "clases" => "🏛",
+            "er" => "🗄",
+            "organigrama" => "🏢",
+            "gantt" => "📆",
+            "pastel" => "🍰",
+            _ => "🔀"
+        };
     }
 
     static string FormatearFecha(string creadoEn)

@@ -87,6 +87,10 @@ create table if not exists preguntas (
 );
 
 -- ---------- DIAGRAMAS ----------
+-- Nota para bases ya creadas con la versión anterior (solo flujo/mapa):
+--   alter table diagramas drop constraint if exists diagramas_tipo_check;
+--   alter table diagramas add constraint diagramas_tipo_check
+--     check (tipo in ('flujo','mapa','comparativo','timeline','secuencia','clases','er','organigrama','gantt','pastel'));
 create table if not exists diagramas (
     id           text primary key,
     documento_id text references documentos (id) on delete set null,
@@ -94,7 +98,8 @@ create table if not exists diagramas (
     titulo       text not null,
     codigo       text not null,         -- codigo Mermaid del diagrama
     tipo         text not null default 'flujo'
-                 check (tipo in ('flujo', 'mapa')),
+                 check (tipo in ('flujo', 'mapa', 'comparativo', 'timeline', 'secuencia',
+                                 'clases', 'er', 'organigrama', 'gantt', 'pastel')),
     fuente       text not null default '',   -- "Documento: X" o "Tema: Y"
     creado_en    timestamptz not null default now()
 );

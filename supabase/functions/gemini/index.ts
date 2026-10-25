@@ -10,10 +10,12 @@
 // proveedor por su cuenta.
 //
 // Secretos (Supabase Dashboard -> Edge Functions -> Secrets):
-//   GEMINI_API_KEY   = clave de https://aistudio.google.com/app/apikey
-//   GEMINI_MODEL     = (opcional) por defecto "gemini-3.8-flash"
-//   GROQ_API_KEY     = clave gratuita de https://console.groq.com/keys (alternativa)
-//   GROQ_MODEL       = (opcional) por defecto "openai/gpt-oss-120b"
+//   GEMINI_API_KEY     = clave de https://aistudio.google.com/app/apikey
+//   GEMINI_MODEL       = (opcional) por defecto "gemini-3.8-flash"
+//   GROQ_API_KEY       = clave gratuita de https://console.groq.com/keys (alternativa 1)
+//   GROQ_MODEL         = (opcional) por defecto "openai/gpt-oss-120b"
+//   OPENROUTER_API_KEY = clave de https://openrouter.ai/keys (alternativa 2, modelos gratuitos)
+//   OPENROUTER_MODEL   = (opcional) por defecto "meta-llama/llama-3.3-70b-instruct:free"
 //
 // Despliegue: supabase functions deploy gemini
 
@@ -28,6 +30,8 @@ const CORS = {
 
 const MODELO_GEMINI = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 const MODELO_GROQ = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+const MODELO_OPENROUTER =
+  Deno.env.get("OPENROUTER_MODEL") ?? "meta-llama/llama-3.3-70b-instruct:free";
 
 const REINTENTOS = 3;
 
@@ -50,16 +54,26 @@ serve(async (req) => {
       return json({ error: "Falta el campo 'prompt'." }, 400);
     }
 
-    const elegido = proveedor === "groq" ? "groq" : "gemini";
+    const elegido = proveedor === "groq"
+      ? "groq"
+      : proveedor === "openrouter"
+        ? "openrouter"
+        : "gemini";
 
     try {
       const texto = elegido === "groq"
         ? await llamarGroq(prompt)
-        : await llamarGemini(prompt);
+        : elegido === "openrouter"
+          ? await llamarOpenRouter(prompt)
+          : await llamarGemini(prompt);
 
       return json({
         texto,
-        modelo: elegido === "groq" ? MODELO_GROQ : MODELO_GEMINI,
+        modelo: elegido === "groq"
+          ? MODELO_GROQ
+          : elegido === "openrouter"
+            ? MODELO_OPENROUTER
+            : MODELO_GEMINI,
         proveedor: elegido,
       });
     } catch (e) {
@@ -137,9 +151,45 @@ async function llamarGroq(prompt: string): Promise<string> {
     throw new IAError("El servidor no tiene configurada GROQ_API_KEY.", false);
   }
 
-  const url = "https://api.groq.com/openai/v1/chat/completions";
+  return await llamarOpenAICompatible(
+    "https://api.groq.com/openai/v1/chat/completions",
+    apiKey,
+    MODELO_GROQ,
+    prompt,
+    {},
+  );
+}
+
+// ---------------- OpenRouter (API compatible con OpenAI) ----------------
+
+async function llamarOpenRouter(prompt: string): Promise<string> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) {
+    throw new IAError("El servidor no tiene configurada OPENROUTER_API_KEY.", false);
+  }
+
+  return await llamarOpenAICompatible(
+    "https://openrouter.ai/api/v1/chat/completions",
+    apiKey,
+    MODELO_OPENROUTER,
+    prompt,
+    {
+      "HTTP-Referer": "https://estudiante.app",
+      "X-Title": "EstudIAnte",
+    },
+  );
+}
+
+/// Llamada genérica a una API compatible con OpenAI (Groq, OpenRouter, etc.).
+async function llamarOpenAICompatible(
+  url: string,
+  apiKey: string,
+  modelo: string,
+  prompt: string,
+  cabecerasExtra: Record<string, string>,
+): Promise<string> {
   const cuerpo = {
-    model: MODELO_GROQ,
+    model: modelo,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.7,
   };
@@ -153,6 +203,7 @@ async function llamarGroq(prompt: string): Promise<string> {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
+        ...cabecerasExtra,
       },
       body: JSON.stringify(cuerpo),
     });

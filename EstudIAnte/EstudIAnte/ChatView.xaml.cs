@@ -1,3 +1,4 @@
+using EstudIAnte.Controls;
 using EstudIAnte.Models;
 using EstudIAnte.Services;
 
@@ -40,11 +41,12 @@ public partial class ChatView : ContentView
 
         foreach (var tema in temas)
         {
-            var boton = new Button
+            var boton = new PulsarButton
             {
                 Text = tema.Nombre,
                 Style = ChipStyle(),
-                CommandParameter = tema
+                CommandParameter = tema,
+                Margin = new Thickness(0, 0, 10, 8)
             };
 
             if (_temaActual is not null && _temaActual.Id == tema.Id)
@@ -73,8 +75,15 @@ public partial class ChatView : ContentView
 
     async void TemaChip_Click(object? sender, EventArgs e)
     {
-        if ((sender as Button)?.CommandParameter is Tema tema)
-            await SeleccionarTemaAsync(tema);
+        try
+        {
+            if ((sender as PulsarButton)?.CommandParameter is Tema tema)
+                await SeleccionarTemaAsync(tema);
+        }
+        catch (Exception ex)
+        {
+            await MostrarAsync("Error", "No se pudo abrir el tema: " + ex.Message);
+        }
     }
 
     async Task SeleccionarTemaAsync(Tema tema)
@@ -109,7 +118,13 @@ public partial class ChatView : ContentView
         TemasPanel.Clear();
         foreach (var tema in temas)
         {
-            var boton = new Button { Text = tema.Nombre, Style = ChipStyle(), CommandParameter = tema };
+            var boton = new PulsarButton
+            {
+                Text = tema.Nombre,
+                Style = ChipStyle(),
+                CommandParameter = tema,
+                Margin = new Thickness(0, 0, 10, 8)
+            };
             if (tema.Id == activo.Id)
             {
                 boton.Background = Gradient();
@@ -139,6 +154,10 @@ public partial class ChatView : ContentView
             return;
 
         var tema = await TemasService.CrearAsync(usuario.Id, nombre.Trim());
+
+        // Marca el tema como actual ANTES de refrescar, para que el flujo de
+        // refresco no elija el primero y el nuevo tema quede abierto al instante.
+        _temaActual = tema;
         await RefrescarTemasAsync();
         await SeleccionarTemaAsync(tema);
     }
@@ -193,7 +212,7 @@ public partial class ChatView : ContentView
 
         // Respuesta de la IA
         _ocupado = true;
-        BtnEnviar.IsEnabled = false;
+        BtnEnviar.IsBusy = true;
         SpinnerIA.IsRunning = SpinnerIA.IsVisible = true;
 
         try
@@ -221,7 +240,7 @@ public partial class ChatView : ContentView
         finally
         {
             _ocupado = false;
-            BtnEnviar.IsEnabled = true;
+            BtnEnviar.IsBusy = false;
             SpinnerIA.IsRunning = SpinnerIA.IsVisible = false;
             await CargarMensajesAsync();
         }

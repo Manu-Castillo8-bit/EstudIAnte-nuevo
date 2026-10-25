@@ -25,7 +25,12 @@ public abstract class SupabaseIAProvider : IAIProvider
 
     protected SupabaseIAProvider(string proveedor) => _proveedor = proveedor;
 
-    public string Nombre => _proveedor == "groq" ? "Groq (IA alternativa, servidor)" : "Google Gemini (servidor)";
+    public string Nombre => _proveedor switch
+    {
+        "groq" => "Groq (IA alternativa, servidor)",
+        "openrouter" => "OpenRouter (IA alternativa 2, servidor)",
+        _ => "Google Gemini (servidor)"
+    };
 
     public bool Configurado => SupabaseConfig.IsConfigured;
 

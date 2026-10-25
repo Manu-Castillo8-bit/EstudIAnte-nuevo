@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.DocumentosView">
     <ScrollView>
         <VerticalStackLayout Padding="28,8,28,28" Spacing="16">
@@ -9,13 +10,13 @@
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
                 <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource CardPink}"
                         StrokeThickness="0" StrokeShape="RoundRectangle 16">
-                    <Label Text="📁" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                <Label Text="📁" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                     <Label Text="Documentos" Style="{StaticResource PageTitle}" />
                     <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
                 </VerticalStackLayout>
-                <Button x:Name="BtnSubir" Grid.Column="2" Text="＋  Subir documento"
+                <controls:PulsarButton x:Name="BtnSubir" Grid.Column="2" Text="＋  Subir documento"
                         Style="{StaticResource PrimaryButton}" Clicked="Subir_Click" />
             </Grid>
 
@@ -51,45 +52,49 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                                <Border WidthRequest="48" HeightRequest="48" BackgroundColor="{Binding ColorFondo}"
-                                        Stroke="{Binding ColorTexto}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
-                                    <Label Text="{Binding TipoEtiqueta}" FontSize="12" FontAttributes="Bold"
-                                           TextColor="{Binding ColorTexto}"
-                                           HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Border>
-                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                                    <Label Text="{Binding Nombre}" FontAttributes="Bold"
-                                           TextColor="{StaticResource TextMain}" />
-                                    <Label FontSize="12" TextColor="{StaticResource TextMuted}">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span Text="{Binding TamanoTexto}" />
-                                                <Span Text="  ·  " />
-                                                <Span Text="{Binding Estado}" />
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
-                                    <Label Text="{Binding Resumen}" FontSize="12" TextColor="{StaticResource Cyan}"
-                                           IsVisible="{Binding TieneResumen}" MaximumWidthRequest="520" />
-                                </VerticalStackLayout>
-                                <VerticalStackLayout Grid.Column="2" Spacing="6">
-                                    <Button Text="{Binding TextoBotonAnalizar}" Style="{StaticResource GhostButton}"
-                                            HeightRequest="40" Clicked="Analizar_Click"
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                    <Border WidthRequest="48" HeightRequest="48" BackgroundColor="{Binding ColorFondo}"
+                                            Stroke="{Binding ColorTexto}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                                        <Label Text="{Binding TipoEtiqueta}" FontSize="12" FontAttributes="Bold"
+                                               TextColor="{Binding ColorTexto}"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding Nombre}" FontAttributes="Bold"
+                                               TextColor="{StaticResource TextMain}" />
+                                        <Label FontSize="12" TextColor="{StaticResource TextMuted}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding TamanoTexto}" />
+                                                    <Span Text="  ·  " />
+                                                    <Span Text="{Binding Estado}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Text="{Binding Resumen}" FontSize="12" TextColor="{StaticResource Cyan}"
+                                               IsVisible="{Binding TieneResumen}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <!-- Botones: se acomodan en una o varias líneas según el ancho -->
+                                <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End"
+                                            AlignItems="Center" AlignContent="Start">
+                                    <controls:PulsarButton Text="{Binding TextoBotonAnalizar}" Style="{StaticResource GhostButton}"
+                                            HeightRequest="40" Clicked="Analizar_Click" Margin="0,0,8,4"
                                             IsEnabled="{Binding PuedeAnalizar}"
                                             CommandParameter="{Binding Id}" />
-                                    <Button Text="Crear cuestionario" Style="{StaticResource GhostButton}"
-                                            HeightRequest="38" Clicked="CrearCuestionario_Click"
+                                    <controls:PulsarButton Text="Crear cuestionario" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="CrearCuestionario_Click" Margin="0,0,8,4"
                                             IsVisible="{Binding Listo}"
                                             CommandParameter="{Binding Id}" />
-                                    <Button Text="🔀  Generar diagrama" Style="{StaticResource GhostButton}"
-                                            HeightRequest="38" Clicked="CrearDiagrama_Click"
+                                    <controls:PulsarButton Text="🔀  Generar diagrama" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="CrearDiagrama_Click" Margin="0,0,8,4"
                                             IsVisible="{Binding Listo}"
                                             CommandParameter="{Binding Id}" />
-                                    <Button Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
-                                            HeightRequest="38" TextColor="{StaticResource Pink}"
+                                    <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
                                             Clicked="Eliminar_Click" CommandParameter="{Binding Id}" />
-                                </VerticalStackLayout>
+                                </FlexLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>

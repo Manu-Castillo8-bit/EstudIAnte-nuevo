@@ -91,7 +91,7 @@ public partial class DocumentosView : ContentView
             return;
 
         _trabajando = true;
-        BtnSubir.IsEnabled = false;
+        BtnSubir.IsBusy = true;
         Spinner.IsRunning = Spinner.IsVisible = true;
         IconoNube.IsVisible = false;
 
@@ -166,7 +166,7 @@ public partial class DocumentosView : ContentView
         finally
         {
             _trabajando = false;
-            BtnSubir.IsEnabled = true;
+            BtnSubir.IsBusy = false;
             Spinner.IsRunning = Spinner.IsVisible = false;
             IconoNube.IsVisible = true;
         }

@@ -1,5 +1,6 @@
 using EstudIAnte.Models;
 using EstudIAnte.Services;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace EstudIAnte;
 
@@ -11,6 +12,7 @@ public partial class CuestionarioView : ContentView
     Cuestionario? _cuestionario;
     List<Pregunta> _preguntas = new();
     readonly Dictionary<int, string> _respuestas = new();
+    readonly HashSet<int> _reveladas = new();
     int _indice;
     bool _generando;
 
@@ -165,7 +167,7 @@ public partial class CuestionarioView : ContentView
         }
 
         _generando = true;
-        BtnGenerar.IsEnabled = false;
+        BtnGenerar.IsBusy = true;
         SpinnerGen.IsRunning = SpinnerGen.IsVisible = true;
         LblEstadoGen.Text = "Generando con IA, espera un momento...";
 
@@ -185,7 +187,7 @@ public partial class CuestionarioView : ContentView
         finally
         {
             _generando = false;
-            BtnGenerar.IsEnabled = true;
+            BtnGenerar.IsBusy = false;
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
         }
     }
@@ -224,6 +226,7 @@ public partial class CuestionarioView : ContentView
             .ToListAsync();
 
         _respuestas.Clear();
+        _reveladas.Clear();
         _indice = 0;
 
         ResumenPreguntas.Text = _preguntas.Count.ToString();
@@ -263,28 +266,138 @@ public partial class CuestionarioView : ContentView
             ("A", p.OpcionA), ("B", p.OpcionB), ("C", p.OpcionC), ("D", p.OpcionD)
         };
 
-        var estilo = Application.Current?.Resources.TryGetValue("OptionRadio", out var s) == true ? s as Style : null;
+        var revelada = _reveladas.Contains(_indice);
 
         foreach (var (valor, texto) in opciones)
         {
-            var radio = new RadioButton
-            {
-                GroupName = "preguntaActual",
-                Value = valor,
-                Content = texto,
-                Style = estilo,
-                IsChecked = _respuestas.TryGetValue(_indice, out var r) && r == valor
-            };
-            radio.CheckedChanged += (_, ev) =>
-            {
-                if (ev.Value)
-                    _respuestas[_indice] = valor;
-            };
-            OpcionesPanel.Add(radio);
+            var fila = CrearFilaOpcion(valor, texto, p.RespuestaCorrecta, revelada,
+                _respuestas.TryGetValue(_indice, out var elegida) && elegida == valor);
+
+            var tap = new TapGestureRecognizer { CommandParameter = valor };
+            tap.Tapped += (_, _) => SeleccionarOpcion(valor);
+            fila.GestureRecognizers.Add(tap);
+
+            OpcionesPanel.Add(fila);
         }
 
         BtnAnterior.IsEnabled = _indice > 0;
         BtnSiguiente.Text = _indice == total - 1 ? "Finalizar  ✓" : "Siguiente  →";
+    }
+
+    /// <summary>
+    /// Al tocar una opción se revela la respuesta: la correcta se pinta en verde
+    /// y la elegida incorrecta en rojo. La pregunta queda bloqueada al revelarse.
+    /// </summary>
+    void SeleccionarOpcion(string valor)
+    {
+        if (_reveladas.Contains(_indice))
+            return; // Ya se respondió esta pregunta.
+
+        _respuestas[_indice] = valor;
+        _reveladas.Add(_indice);
+        MostrarPregunta();
+    }
+
+    /// <summary>
+    /// Crea la fila visual de una opción (A, B, C o D). Cuando la pregunta ya
+    /// fue respondida: la opción correcta se muestra en verde, la incorrecta
+    /// elegida en rojo y las demás se atenúan.
+    /// </summary>
+    static Border CrearFilaOpcion(string valor, string texto, string correcta, bool revelada, bool elegida)
+    {
+        var esCorrecta = valor == correcta;
+
+        // Estados visuales según el resultado.
+        var fondo = Color.FromArgb("#161F4F");
+        var borde = Color.FromArgb("#243066");
+        var fondoBadge = Color.FromArgb("#222D6E");
+        var colorLetra = Color.FromArgb("#E8ECFF");
+        string icono = "";
+        var colorIcono = Colors.Transparent;
+
+        if (revelada && esCorrecta)
+        {
+            fondo = Color.FromArgb("#0F3D2E");
+            borde = Color.FromArgb("#10B981");
+            fondoBadge = Color.FromArgb("#10B981");
+            colorLetra = Color.FromArgb("#052E1F");
+            icono = "✓";
+            colorIcono = Color.FromArgb("#10B981");
+        }
+        else if (revelada && elegida && !esCorrecta)
+        {
+            fondo = Color.FromArgb("#3F1D2B");
+            borde = Color.FromArgb("#EC4899");
+            fondoBadge = Color.FromArgb("#EC4899");
+            colorLetra = Colors.White;
+            icono = "✗";
+            colorIcono = Color.FromArgb("#EC4899");
+        }
+
+        var badge = new Border
+        {
+            WidthRequest = 34,
+            HeightRequest = 34,
+            StrokeThickness = 0,
+            StrokeShape = new RoundRectangle { CornerRadius = 17 },
+            BackgroundColor = fondoBadge,
+            VerticalOptions = LayoutOptions.Center,
+            Content = new Label
+            {
+                Text = valor,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = colorLetra,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            }
+        };
+
+        var fila = new Border
+        {
+            Padding = new Thickness(16, 12),
+            Margin = new Thickness(0, 5),
+            BackgroundColor = fondo,
+            Stroke = borde,
+            StrokeThickness = 1.5,
+            StrokeShape = new RoundRectangle { CornerRadius = 14 }
+        };
+
+        if (revelada && !esCorrecta && !elegida)
+            fila.Opacity = 0.55;
+
+        var grid = new Grid
+        {
+            ColumnSpacing = 14,
+            ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto),
+            }
+        };
+        grid.Add(badge);
+        grid.Add(new Label
+        {
+            Text = texto,
+            FontSize = 16,
+            TextColor = Color.FromArgb("#E8ECFF"),
+            VerticalOptions = LayoutOptions.Center
+        }, 1);
+
+        if (icono.Length > 0)
+        {
+            grid.Add(new Label
+            {
+                Text = icono,
+                FontSize = 20,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = colorIcono,
+                VerticalOptions = LayoutOptions.Center
+            }, 2);
+        }
+
+        fila.Content = grid;
+        return fila;
     }
 
     void Anterior_Click(object? sender, EventArgs e)

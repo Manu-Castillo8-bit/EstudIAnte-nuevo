@@ -4,7 +4,8 @@ namespace EstudIAnte.Services;
 /// Administra las IAs disponibles en orden de prioridad:
 ///   1. Google Gemini (vía Supabase)
 ///   2. Groq / GPT-OSS (vía Supabase)
-///   3. Gemini local con clave propia (opcional, solo si hay api-key-gemini.txt)
+///   3. OpenRouter, modelos gratuitos (vía Supabase)
+///   4. Gemini local con clave propia (opcional, solo si hay api-key-gemini.txt)
 ///
 /// ---- COMPORTAMIENTO ANTE SATURACIÓN ----
 /// Cuando una IA está saturada (cuota agotada) se muestra un aviso al usuario:
@@ -34,7 +35,10 @@ public static class AIProviderManager
             new SupabaseGeminiProvider(),
 
             // 2) Groq vía Supabase: alternativa gratuita para cuando Gemini esté saturada.
-            new SupabaseGroqProvider()
+            new SupabaseGroqProvider(),
+
+            // 3) OpenRouter vía Supabase: segunda alternativa (modelos gratuitos).
+            new SupabaseOpenRouterProvider()
         };
 
         // 3) Respaldo opcional: Gemini con clave propia (api-key-gemini.txt o
