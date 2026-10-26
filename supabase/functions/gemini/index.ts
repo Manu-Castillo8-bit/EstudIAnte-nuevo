@@ -15,7 +15,7 @@
 //   GROQ_API_KEY       = clave gratuita de https://console.groq.com/keys (alternativa 1)
 //   GROQ_MODEL         = (opcional) por defecto "openai/gpt-oss-120b"
 //   OPENROUTER_API_KEY = clave de https://openrouter.ai/keys (alternativa 2, modelos gratuitos)
-//   OPENROUTER_MODEL   = (opcional) por defecto "meta-llama/llama-3.3-70b-instruct:free"
+//   OPENROUTER_MODEL   = (opcional) por defecto "nvidia/nemotron-3.5-lightning:free"
 //
 // Despliegue: supabase functions deploy gemini
 
@@ -31,9 +31,13 @@ const CORS = {
 const MODELO_GEMINI = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 const MODELO_GROQ = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
 const MODELO_OPENROUTER =
-  Deno.env.get("OPENROUTER_MODEL") ?? "meta-llama/llama-3.3-70b-instruct:free";
+  Deno.env.get("OPENROUTER_MODEL") ?? "nvidia/nemotron-3.5-lightning:free";
 
 const REINTENTOS = 3;
+
+/// Límite de tiempo por cada intento de llamada a una IA (evita workers colgados
+/// por "WORKER_RESOURCE_LIMIT" cuando un proveedor tarda demasiado en responder).
+const TIEMPO_POR_INTENTO_MS = 30000;
 
 class IAError extends Error {
   saturada: boolean;
@@ -106,11 +110,21 @@ async function llamarGemini(prompt: string): Promise<string> {
   let detalle = "";
 
   for (let intento = 1; intento <= REINTENTOS; intento++) {
-    respuesta = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(cuerpo),
-    });
+    try {
+      respuesta = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cuerpo),
+        signal: AbortSignal.timeout(TIEMPO_POR_INTENTO_MS),
+      });
+    } catch {
+      // Timeout o error de red: se trata como saturación para que la app
+      // ofrezca al usuario cambiar de IA.
+      detalle = "timeout esperando respuesta";
+      if (intento === REINTENTOS) break;
+      await new Promise((r) => setTimeout(r, intento * 1000));
+      continue;
+    }
 
     if (respuesta.ok) break;
 
@@ -128,7 +142,7 @@ async function llamarGemini(prompt: string): Promise<string> {
   if (!respuesta || !respuesta.ok) {
     const estado = respuesta?.status ?? 0;
     const saturada = estado === 429 || estado === 500 || estado === 503 ||
-      estado === 529 || /quota|RESOURCE_EXHAUSTED/i.test(detalle);
+      estado === 529 || /quota|RESOURCE_EXHAUSTED|timeout/i.test(detalle);
     throw new IAError(
       `respondió ${estado || "sin respuesta"}. ${detalle.slice(0, 200)}`,
       saturada,
@@ -198,15 +212,25 @@ async function llamarOpenAICompatible(
   let detalle = "";
 
   for (let intento = 1; intento <= REINTENTOS; intento++) {
-    respuesta = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        ...cabecerasExtra,
-      },
-      body: JSON.stringify(cuerpo),
-    });
+    try {
+      respuesta = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          ...cabecerasExtra,
+        },
+        body: JSON.stringify(cuerpo),
+        signal: AbortSignal.timeout(TIEMPO_POR_INTENTO_MS),
+      });
+    } catch {
+      // Timeout o error de red: se trata como saturación para que la app
+      // ofrezca al usuario cambiar de IA.
+      detalle = "timeout esperando respuesta";
+      if (intento === REINTENTOS) break;
+      await new Promise((r) => setTimeout(r, intento * 1000));
+      continue;
+    }
 
     if (respuesta.ok) break;
 
@@ -222,7 +246,7 @@ async function llamarOpenAICompatible(
   if (!respuesta || !respuesta.ok) {
     const estado = respuesta?.status ?? 0;
     const saturada = (estado >= 500 && estado < 600) ||
-      /rate.?limit|quota|429/i.test(detalle) || estado === 429;
+      /rate.?limit|quota|429|timeout/i.test(detalle) || estado === 429;
     throw new IAError(
       `respondió ${estado || "sin respuesta"}. ${detalle.slice(0, 200)}`,
       saturada,
