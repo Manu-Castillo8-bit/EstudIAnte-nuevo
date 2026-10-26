@@ -28,10 +28,12 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MODELO_GEMINI = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
-const MODELO_GROQ = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+// .trim() en todos los valores leídos del entorno: si alguien copia un secreto
+// con espacios extra por accidente, el espacio no rompe el ID del modelo.
+const MODELO_GEMINI = (Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash").trim();
+const MODELO_GROQ = (Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b").trim();
 const MODELO_OPENROUTER =
-  Deno.env.get("OPENROUTER_MODEL") ?? "nvidia/nemotron-3.5-lightning:free";
+  (Deno.env.get("OPENROUTER_MODEL") ?? "nvidia/nemotron-3.5-lightning:free").trim();
 
 const REINTENTOS = 3;
 
