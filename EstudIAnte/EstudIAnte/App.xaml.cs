@@ -12,7 +12,8 @@ namespace EstudIAnte
         protected override Window CreateWindow(IActivationState? activationState)
         {
             // Si hay sesión guardada ("Recordar sesión"), entra directo y sincroniza en segundo plano.
-            var usuario = AuthService.RestaurarSesionAsync().GetAwaiter().GetResult();
+            // Nota: Task.Run evita el interbloqueo de restaurar el contexto de la UI al usar .GetResult().
+            var usuario = Task.Run(async () => await AuthService.RestaurarSesionAsync()).GetAwaiter().GetResult();
             if (usuario is not null)
             {
                 _ = Task.Run(async () =>
