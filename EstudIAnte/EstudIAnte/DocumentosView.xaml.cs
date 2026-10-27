@@ -436,6 +436,11 @@ public partial class DocumentosView : ContentView
         if (_trabajando)
             return;
 
+        await EliminarDocumentoAsync(id);
+    }
+
+    async Task EliminarDocumentoAsync(string id)
+    {
         var conn = await LocalDatabase.GetAsync();
         var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
         if (doc is null)

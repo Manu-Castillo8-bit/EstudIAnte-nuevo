@@ -39,8 +39,27 @@ public static class DocumentoHtmlService
           pre { background:#10173D; border:1px solid #2A3A6A; border-radius:12px;
                 padding:16px; white-space:pre-wrap; word-wrap:break-word; font-size:13px;
                 color:#94E7C9; }
-          .deco { color:#64748B; font-size:12px; margin-top:30px; border-top:1px solid #2A3A6A; padding-top:10px; }
+          .deco { color:#64748B; font-size:12px; margin-top:30px; border-top:1px solid #2A3A6A; padding-top:10px; text-align:center; }
           b, strong { color:#FFFFFF; }
+
+          /* ===== Páginas: cada bloque se ve como una hoja con su salto ===== */
+          .pagina { background:#FFFFFF; color:#1E293B; border-radius:14px;
+                    max-width:940px; margin:20px auto; padding:34px 40px 44px;
+                    box-shadow:0 10px 30px rgba(0,0,0,.45); position:relative;
+                    min-height:340px; }
+          .pagina h1, .pagina h2, .pagina h3, .pagina h4 { color:#0369A1; }
+          .pagina p, .pagina li, .pagina b, .pagina strong,
+          .pagina td, .pagina th, .pagina span { color:#1E293B; }
+          .pagina th { background:#F1F5F9; color:#0C4A6E; border-color:#CBD5E1; }
+          .pagina td { border-color:#CBD5E1; }
+          .pagina tr:nth-child(even) td { background:#F8FAFC; }
+          .pagina pre { background:#F1F5F9; border-color:#CBD5E1; color:#0F172A; }
+          .pagina img { border-color:#E2E8F0; background:transparent; margin:10px 0; }
+          .num-pagina { text-align:right; font-size:12px; color:#94A3B8;
+                        border-top:1px dashed #CBD5E1; padding-top:6px; margin-top:26px; }
+          .salto { color:#475569; text-align:center; font-size:12px; margin:10px auto;
+                   letter-spacing:2px; }
+          @media (max-width:680px) { .pagina { padding:20px 16px 34px; margin:12px 6px; } }
         </style>
         """;
 
@@ -70,8 +89,15 @@ public static class DocumentoHtmlService
             if (string.IsNullOrWhiteSpace(cuerpo))
                 return string.Empty;
 
+            var paginado = doc.Tipo switch
+            {
+                // PDF y PPTX ya se envuelven por página/diapositiva en su generador.
+                "pdf" or "pptx" => cuerpo,
+                _ => EnvolverPaginas(cuerpo),
+            };
+
             return "<!DOCTYPE html><html><head><meta charset='utf-8'>" + Estilo +
-                   "</head><body>" + cuerpo +
+                   "</head><body>" + paginado +
                    $"<p class='deco'>📄 {Escapar(doc.Nombre)} · visualizado con EstudIAnte</p>" +
                    "</body></html>";
         }
@@ -79,6 +105,56 @@ public static class DocumentoHtmlService
         {
             return string.Empty;
         }
+    }
+
+    // ---------------- PAGINACIÓN ----------------
+
+    /// <summary>
+    /// Divide el cuerpo en "hojas" (páginas) cortando el HTML solo en
+    /// fronteras de bloques (&lt;/p&gt;, &lt;/li&gt;, &lt;/table&gt;, &lt;/hN&gt;),
+    /// para que cada página se vea como una hoja con su número y el salto
+    /// entre páginas sea claramente visible.
+    /// </summary>
+    static string EnvolverPaginas(string cuerpo)
+    {
+        const int MAX_POR_PAGINA = 3400;
+        var paginas = new List<string>();
+        var posicion = 0;
+
+        while (posicion < cuerpo.Length)
+        {
+            var fin = Math.Min(posicion + MAX_POR_PAGINA, cuerpo.Length);
+            if (fin < cuerpo.Length)
+            {
+                // Busca el corte más adelante del límite en la frontera de un bloque.
+                var corte = -1;
+                foreach (var marca in new[] { "</p>", "</li>", "</h1>", "</h2>", "</h3>", "</h4>", "</table>" })
+                {
+                    var desde = cuerpo.LastIndexOf(marca, fin, StringComparison.Ordinal);
+                    if (desde >= posicion && desde + marca.Length > corte)
+                        corte = desde + marca.Length;
+                }
+                if (corte > posicion)
+                    fin = corte;
+            }
+
+            var contenido = cuerpo[posicion..fin].Trim();
+            if (contenido.Length > 0)
+                paginas.Add(contenido);
+            posicion = fin;
+        }
+
+        if (paginas.Count == 0)
+            return cuerpo;
+
+        var sb = new StringBuilder();
+        for (var i = 0; i < paginas.Count; i++)
+        {
+            if (i > 0)
+                sb.Append("<div class='salto'>──────── SALTO DE PÁGINA ────────</div>");
+            sb.Append($"<div class='pagina'>{paginas[i]}<div class='num-pagina'>Página {i + 1} de {paginas.Count}</div></div>");
+        }
+        return sb.ToString();
     }
 
     // ---------------- DOCX ----------------
@@ -317,7 +393,7 @@ public static class DocumentoHtmlService
         for (var i = 0; i < entradas.Count; i++)
         {
             var titulo = i < nombresHojas.Count ? nombresHojas[i] : $"Hoja {i + 1}";
-            sb.Append($"<h2 class='sheet-title'>{Escapar(titulo)}</h2><table>");
+            sb.Append($"<div class='pagina'><h2 style='color:#0369A1'>{Escapar(titulo)}</h2><table>");
 
             using var s = entradas[i].Open();
             var hoja = XDocument.Load(s);
@@ -353,7 +429,7 @@ public static class DocumentoHtmlService
 
             if (filas.Count > 1)
                 sb.Append("</tbody>");
-            sb.Append("</table>");
+            sb.Append($"</table><div class='num-pagina'>Hoja {i + 1} de {entradas.Count}</div></div>");
         }
         return sb.ToString();
     }
@@ -383,7 +459,7 @@ public static class DocumentoHtmlService
             var rels = $"ppt/slides/_rels/{Path.GetFileName(entry.FullName)}.rels";
             var imagenes = CargarImagenes(zip, rels, "ppt/");
 
-            sb.Append($"<h2 class='sheet-title'>Diapositiva {numero}</h2>");
+            sb.Append($"<div class='pagina'><h2 style='color:#0369A1'>Diapositiva {numero}</h2>");
 
             // Texto: párrafos de cada caja de texto
             foreach (var parrafo in doc.Descendants(A + "p"))
@@ -400,12 +476,13 @@ public static class DocumentoHtmlService
                 if (rel is not null && imagenes.TryGetValue(rel, out var uri))
                     sb.Append($"<img src='{uri}' />");
             }
+
+            sb.Append($"<div class='num-pagina'>Diapositiva {numero}</div></div>");
         }
         return sb.ToString();
     }
 
     // ---------------- PDF ----------------
-
     /// <summary>
     /// Los PDFs se renderizan CON pdf.js (dibuja cada página en un canvas):
     /// mantiene imágenes, diseño y paginación. Chrome/WebView2 bloquea el
@@ -433,18 +510,25 @@ public static class DocumentoHtmlService
           try {{
             pdfjsLib.GlobalWorkerOptions.workerSrc =
               'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            const ANCHO_MAX = Math.min(window.innerWidth - 60, 900);
+            const CONT = document.getElementById('contenedor');
             pdfjsLib.getDocument({{ data: b64aBytes(B64) }}).promise.then(function (pdf) {{
               let cadena = Promise.resolve();
               for (let n = 1; n <= pdf.numPages; n++) {{
                 cadena = cadena.then(function () {{
                   return pdf.getPage(n).then(function (pagina) {{
-                    const escala = ANCHO_MAX / pagina.getViewport({{scale: 1}}).width;
+                    const escala = Math.min(window.innerWidth - 80, 900) / pagina.getViewport({{scale: 1}}).width;
                     const visor = pagina.getViewport({{ scale: escala }});
+                    // Cada página se ve como una hoja blanca separada (salto visible).
+                    const hoja = document.createElement('div');
+                    hoja.className = 'pagina';
                     const lienzo = document.createElement('canvas');
                     lienzo.width = visor.width; lienzo.height = visor.height;
-                    lienzo.style.margin = '14px auto'; lienzo.style.maxWidth = '100%';
-                    document.getElementById('contenedor').appendChild(lienzo);
+                    lienzo.style.maxWidth = '100%';
+                    const pie = document.createElement('div');
+                    pie.className = 'num-pagina';
+                    pie.textContent = 'Página ' + n + ' de ' + pdf.numPages;
+                    hoja.appendChild(lienzo); hoja.appendChild(pie);
+                    CONT.appendChild(hoja);
                     return pagina.render({{ canvasContext: lienzo.getContext('2d'), viewport: visor }}).promise;
                   }});
                 }});
