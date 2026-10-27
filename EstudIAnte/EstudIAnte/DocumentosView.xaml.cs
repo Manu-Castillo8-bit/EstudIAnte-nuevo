@@ -332,7 +332,24 @@ public partial class DocumentosView : ContentView
                     var html = DocumentoHtmlService.GenerarHtml(doc, bytes);
                     if (!string.IsNullOrWhiteSpace(html))
                     {
-                        VisorWeb.Source = new HtmlWebViewSource { Html = html };
+                        // WebView2 (NavigateToString) solo acepta ~2 MB; para HTML
+                        // grandes se escribe en un archivo temporal y se navega por URL.
+                        if (html.Length > 1_500_000)
+                        {
+                            var carpeta = Path.Combine(FileSystem.CacheDirectory, "visores");
+                            Directory.CreateDirectory(carpeta);
+                            var ruta = Path.Combine(carpeta, $"{Guid.NewGuid()}.html");
+                            await File.WriteAllTextAsync(ruta, html);
+                            VisorWeb.Source = new UrlWebViewSource
+                            {
+                                Url = "file:///" + ruta.Replace('\\', '/').TrimStart('/'),
+                            };
+                        }
+                        else
+                        {
+                            VisorWeb.Source = new HtmlWebViewSource { Html = html };
+                        }
+
                         VisorWeb.IsVisible = true;
                         VisorTextoScroll.IsVisible = false;
                         mostradoFiel = true;
