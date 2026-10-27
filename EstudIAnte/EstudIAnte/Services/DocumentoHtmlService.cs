@@ -23,8 +23,9 @@ public static class DocumentoHtmlService
 
     static readonly string Estilo = """
         <style>
+          * { box-sizing:border-box; }
           body { background:#0B1030; color:#E2E8F0; font-family:'Segoe UI',sans-serif;
-                 margin:0; padding:26px 30px; line-height:1.55; }
+                 margin:0; padding:12px; line-height:1.55; }
           h1,h2,h3,h4 { color:#22D3EE; margin:18px 0 8px; font-weight:700; }
           h2.sheet-title { color:#F472B6; border-bottom:2px solid #2A3A6A; padding-bottom:6px; }
           p { margin:8px 0; }
@@ -43,9 +44,10 @@ public static class DocumentoHtmlService
           b, strong { color:#FFFFFF; }
 
           /* ===== Páginas: cada bloque se ve como una hoja con su salto ===== */
-          .pagina { background:#FFFFFF; color:#1E293B; border-radius:14px;
-                    max-width:940px; margin:20px auto; padding:34px 40px 44px;
-                    box-shadow:0 10px 30px rgba(0,0,0,.45); position:relative;
+          .pagina { background:#FFFFFF; color:#1E293B; border:1px solid #CBD5E1;
+                    border-radius:4px; width:calc(100% - 24px); max-width:900px;
+                    margin:24px auto; padding:34px 40px 44px;
+                    box-shadow:0 12px 30px rgba(0,0,0,.5); position:relative;
                     min-height:340px; }
           .pagina h1, .pagina h2, .pagina h3, .pagina h4 { color:#0369A1; }
           .pagina p, .pagina li, .pagina b, .pagina strong,
@@ -57,9 +59,13 @@ public static class DocumentoHtmlService
           .pagina img { border-color:#E2E8F0; background:transparent; margin:10px 0; }
           .num-pagina { text-align:right; font-size:12px; color:#94A3B8;
                         border-top:1px dashed #CBD5E1; padding-top:6px; margin-top:26px; }
-          .salto { color:#475569; text-align:center; font-size:12px; margin:10px auto;
-                   letter-spacing:2px; }
-          @media (max-width:680px) { .pagina { padding:20px 16px 34px; margin:12px 6px; } }
+          .pagina canvas { display:block; max-width:100%; height:auto; margin:0 auto; }
+          .salto { color:#A5B4FC; text-align:center; font-size:12px; margin:0 auto;
+                   padding:4px 8px; letter-spacing:2px; }
+          @media (max-width:680px) {
+            body { padding:6px; }
+            .pagina { width:100%; padding:20px 16px 34px; margin:12px auto; }
+          }
         </style>
         """;
 
@@ -96,7 +102,8 @@ public static class DocumentoHtmlService
                 _ => EnvolverPaginas(cuerpo),
             };
 
-            return "<!DOCTYPE html><html><head><meta charset='utf-8'>" + Estilo +
+            return "<!DOCTYPE html><html><head><meta charset='utf-8'>" +
+                   "<meta name='viewport' content='width=device-width, initial-scale=1'>" + Estilo +
                    "</head><body>" + paginado +
                    $"<p class='deco'>📄 {Escapar(doc.Nombre)} · visualizado con EstudIAnte</p>" +
                    "</body></html>";
@@ -516,14 +523,15 @@ public static class DocumentoHtmlService
               for (let n = 1; n <= pdf.numPages; n++) {{
                 cadena = cadena.then(function () {{
                   return pdf.getPage(n).then(function (pagina) {{
-                    const escala = Math.min(window.innerWidth - 80, 900) / pagina.getViewport({{scale: 1}}).width;
+                    const anchoDisponible = Math.max(1, Math.min(CONT.clientWidth - 64, 900));
+                    const escala = anchoDisponible / pagina.getViewport({{scale: 1}}).width;
                     const visor = pagina.getViewport({{ scale: escala }});
                     // Cada página se ve como una hoja blanca separada (salto visible).
                     const hoja = document.createElement('div');
                     hoja.className = 'pagina';
                     const lienzo = document.createElement('canvas');
                     lienzo.width = visor.width; lienzo.height = visor.height;
-                    lienzo.style.maxWidth = '100%';
+                    lienzo.style.width = '100%';
                     const pie = document.createElement('div');
                     pie.className = 'num-pagina';
                     pie.textContent = 'Página ' + n + ' de ' + pdf.numPages;

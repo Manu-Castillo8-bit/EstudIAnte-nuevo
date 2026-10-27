@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.ChatView">
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="28,8,28,24" RowSpacing="14">
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Padding="{OnIdiom Phone='14,8,14,18', Tablet='20,8,20,20', Default='28,8,28,24'}"
+          RowSpacing="14">
 
         <!-- Encabezado -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="14">

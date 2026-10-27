@@ -4,7 +4,7 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.DiagramasView">
     <ScrollView x:Name="Scroll">
-        <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
+        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="18">
 
             <!-- Encabezado -->
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
@@ -31,7 +31,8 @@
 
                     <Label Text="Tipo de diagrama" FontSize="12" TextColor="{StaticResource TextMuted}" />
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                        <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="48" WidthRequest="290"
+                        <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="48"
+                                WidthRequest="{OnIdiom Phone=240, Default=290}"
                                 StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
                             <Picker x:Name="SelectorTipo" Title="Elige el tipo de diagrama..."
                                     TextColor="{StaticResource TextMain}"

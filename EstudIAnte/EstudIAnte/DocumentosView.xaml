@@ -18,7 +18,8 @@
                     <Label Text="Documentos" Style="{StaticResource PageTitle}" />
                     <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
                 </VerticalStackLayout>
-                <controls:PulsarButton x:Name="BtnSubir" Grid.Column="2" Text="＋ Subir documento"
+                <controls:PulsarButton x:Name="BtnSubir" Grid.Column="2"
+                        Text="{OnIdiom Phone='＋ Subir', Default='＋ Subir documento'}"
                         Style="{StaticResource PrimaryButton}" Clicked="Subir_Click" />
             </Grid>
 
@@ -54,12 +55,12 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="Detalle_Click"
-                                                      CommandParameter="{Binding Id}" NumberOfTapsRequired="1" />
-                            </Border.GestureRecognizers>
                             <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="Detalle_Click"
+                                                              CommandParameter="{Binding Id}" />
+                                    </Grid.GestureRecognizers>
                                     <Border WidthRequest="48" HeightRequest="48" BackgroundColor="{Binding ColorFondo}"
                                             Stroke="{Binding ColorTexto}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
                                         <Label Text="{Binding TipoEtiqueta}" FontSize="12" FontAttributes="Bold"
@@ -95,7 +96,7 @@
                                             CommandParameter="{Binding Id}" />
                                     <controls:PulsarButton Text="Crear cuestionario" Style="{StaticResource GhostButton}"
                                             HeightRequest="38" Clicked="CrearCuestionario_Click" Margin="0,0,8,4"
-                                            IsVisible="{Binding Listo}"
+                                            IsVisible="{Binding PuedeCrearCuestionario}"
                                             CommandParameter="{Binding Id}" />
                                     <controls:PulsarButton Text="🔀  Generar diagrama" Style="{StaticResource GhostButton}"
                                             HeightRequest="38" Clicked="CrearDiagrama_Click" Margin="0,0,8,4"
@@ -117,15 +118,15 @@
         <Border x:Name="PanelDetalle" IsVisible="False" BackgroundColor="#0D1236"
                 Stroke="{StaticResource Line}" StrokeThickness="1"
                 HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <ScrollView Padding="{OnIdiom Phone=16,14,16,14, Default=28,22,28,22}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="14"
+            <ScrollView Padding="{OnIdiom Phone='16,14,16,14', Tablet='22,18,22,18', Default='28,22,28,22'}">
+                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="14"
                       MaximumWidthRequest="900" HorizontalOptions="FillAndExpand">
                     <!-- fila 0: encabezado con icono y cerrar -->
                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
                         <Border x:Name="DetalleIconoBorder" WidthRequest="56" HeightRequest="56"
                                 StrokeThickness="0" StrokeShape="RoundRectangle 16">
                             <Label x:Name="DetalleIcono" Text="DOC" FontSize="13" FontAttributes="Bold"
-                                   TextColor="{Binding ColorTexto}" TextTransform="Uppercase"
+                                   TextColor="{StaticResource TextMain}" TextTransform="Uppercase"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
@@ -152,7 +153,7 @@
                     </VerticalStackLayout>
 
                     <!-- fila 3: vista previa embutida -->
-                    <Grid Grid.Row="3" MinimumHeightRequest="0">
+                    <Grid Grid.Row="3" MinimumHeightRequest="120">
                         <WebView x:Name="DetalleWeb" IsVisible="False" />
                         <ScrollView x:Name="DetalleTextoScroll" IsVisible="False">
                             <Label x:Name="DetalleTexto" Text="" TextColor="{StaticResource TextMain}"
@@ -160,8 +161,8 @@
                         </ScrollView>
                     </Grid>
 
-                    <!-- fila 5: acciones -->
-                    <FlexLayout Grid.Row="5" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                    <!-- acciones -->
+                    <FlexLayout Grid.Row="4" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
                         <controls:PulsarButton Text="👁 Ver contenido" Style="{StaticResource PrimaryButton}"
                                 HeightRequest="44" Clicked="DetalleVer_Click" Margin="0,0,10,6" />
                         <controls:PulsarButton x:Name="BtnDetalleAnalizar" Text="✨ Analizar con IA"
@@ -184,7 +185,8 @@
         <!-- ===== VISOR DE CONTENIDO (overlay) ===== -->
         <Border x:Name="PanelVisor" IsVisible="False" BackgroundColor="{StaticResource Bg}"
                 HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12" Padding="{OnIdiom Phone=12,12,12,12, Default=24,18,24,18}">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12"
+                  Padding="{OnIdiom Phone='12,12,12,12', Tablet='20,16,20,16', Default='24,18,24,18'}">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
                     <VerticalStackLayout Spacing="2">
                         <Label x:Name="TituloVisor" Text="Documento" FontSize="{OnIdiom Phone=15, Default=18}" FontAttributes="Bold"
@@ -195,19 +197,19 @@
                             Style="{StaticResource GhostButton}" Clicked="CerrarVisor_Click" />
                 </Grid>
 
-                <Grid Grid.Row="2">
+                <Grid Grid.Row="1">
                     <WebView x:Name="VisorWeb" IsVisible="False" />
                     <ScrollView x:Name="VisorTextoScroll">
                         <Label x:Name="TextoVisor" Text="" TextColor="{StaticResource TextMain}" LineBreakMode="WordWrap" />
                     </ScrollView>
                 </Grid>
 
-                <FlexLayout Grid.Row="3" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
-                    <controls:PulsarButton x:Name="BtnVisorResumen" Text="📝 Resumen con IA"
+                <FlexLayout Grid.Row="2" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                    <controls:PulsarButton x:Name="BtnVisorAnalizar" Text="✨ Analizar con IA"
                             Style="{StaticResource PrimaryButton}" Clicked="VisorResumen_Click" Margin="0,0,8,6" />
-                    <controls:PulsarButton Text="📋 Cuestionario" Style="{StaticResource GhostButton}"
+                    <controls:PulsarButton Text="📋 Hacer cuestionario" Style="{StaticResource GhostButton}"
                             Clicked="VisorCuestionario_Click" Margin="0,0,8,6" />
-                    <controls:PulsarButton Text="🔀 Diagrama" Style="{StaticResource GhostButton}"
+                    <controls:PulsarButton Text="🔀 Generar diagrama" Style="{StaticResource GhostButton}"
                             Clicked="VisorDiagrama_Click" Margin="0,0,8,6" />
                 </FlexLayout>
             </Grid>

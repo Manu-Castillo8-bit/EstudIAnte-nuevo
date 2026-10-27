@@ -7,6 +7,7 @@ public partial class DocumentosView : ContentView
 {
     const long MaxBytes = 20 * 1024 * 1024;
     bool _trabajando;
+    string? _detalleId;
 
     public DocumentosView()
     {
@@ -49,6 +50,73 @@ public partial class DocumentosView : ContentView
 
     /// <summary>Recarga los documentos (la llama MainPage al volver a la sección).</summary>
     public async Task RefrescarAsync() => await CargarDocumentosAsync();
+
+    async void Detalle_Click(object? sender, TappedEventArgs e)
+    {
+        var id = (sender as TapGestureRecognizer)?.CommandParameter as string;
+        if (id is null)
+            return;
+
+        var conn = await LocalDatabase.GetAsync();
+        var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
+        if (doc is null)
+            return;
+
+        var item = new DocumentoItem(doc);
+        _detalleId = id;
+        DetalleIcono.Text = item.TipoEtiqueta;
+        DetalleIcono.TextColor = item.ColorTexto;
+        DetalleIconoBorder.BackgroundColor = item.ColorFondo;
+        DetalleNombre.Text = doc.Nombre;
+        DetalleMeta.Text = $"{item.TipoEtiqueta} · {item.TamanoTexto}";
+        DetalleEstado.Text = item.Estado;
+        DetalleResumen.Text = string.IsNullOrWhiteSpace(doc.Resumen)
+            ? "Aún no hay un resumen. Analiza el documento para generarlo."
+            : doc.Resumen;
+        DetalleTexto.Text = doc.Texto;
+        DetalleTextoScroll.IsVisible = !string.IsNullOrWhiteSpace(doc.Texto);
+        DetalleWeb.IsVisible = false;
+        BtnDetalleAnalizar.Text = item.TextoBotonAnalizar;
+        BtnDetalleAnalizar.IsEnabled = item.PuedeAnalizar;
+        BtnDetalleCuestionario.IsEnabled = !string.IsNullOrWhiteSpace(doc.Texto);
+        BtnDetalleDiagrama.IsEnabled = !string.IsNullOrWhiteSpace(doc.Texto);
+        PanelDetalle.IsVisible = true;
+    }
+
+    void CerrarDetalle_Click(object? sender, EventArgs e)
+    {
+        PanelDetalle.IsVisible = false;
+        _detalleId = null;
+    }
+
+    async void DetalleVer_Click(object? sender, EventArgs e)
+    {
+        var id = _detalleId;
+        if (id is null)
+            return;
+
+        PanelDetalle.IsVisible = false;
+        await AbrirVisorAsync(id);
+    }
+
+    async void DetalleAnalizar_Click(object? sender, EventArgs e) =>
+        await AnalizarConTamanoAsync(_detalleId);
+
+    async void DetalleCuestionario_Click(object? sender, EventArgs e) =>
+        await CrearCuestionarioAsync(_detalleId);
+
+    async void DetalleDiagrama_Click(object? sender, EventArgs e) =>
+        await CrearDiagramaDesdeAsync(_detalleId);
+
+    async void DetalleEliminar_Click(object? sender, EventArgs e)
+    {
+        var id = _detalleId;
+        if (id is null)
+            return;
+
+        if (await EliminarDocumentoAsync(id))
+            CerrarDetalle_Click(sender, e);
+    }
 
     async void Subir_Click(object? sender, EventArgs e) => await SubirAsync();
 
@@ -215,6 +283,7 @@ public partial class DocumentosView : ContentView
         {
             var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(doc, claveTamano);
             await CargarDocumentosAsync();
+            ActualizarDetalle();
             await MostrarAsync("Análisis completo", $"Resumen ({claveTamano}) generado con {ia}:\n\n{resumen}");
         }
         catch (Exception ex)
@@ -222,8 +291,27 @@ public partial class DocumentosView : ContentView
             doc.Estado = "error";
             await conn.UpdateAsync(doc);
             await CargarDocumentosAsync();
+            ActualizarDetalle();
             await MostrarAsync("No se pudo analizar", ex.Message);
         }
+    }
+
+    void ActualizarDetalle()
+    {
+        if (_detalleId is null)
+            return;
+
+        var doc = _docs.FirstOrDefault(d => d.Id == _detalleId);
+        if (doc is null)
+            return;
+
+        var item = new DocumentoItem(doc);
+        DetalleEstado.Text = item.Estado;
+        DetalleResumen.Text = string.IsNullOrWhiteSpace(doc.Resumen)
+            ? "Aún no hay un resumen. Analiza el documento para generarlo."
+            : doc.Resumen;
+        BtnDetalleAnalizar.Text = item.TextoBotonAnalizar;
+        BtnDetalleAnalizar.IsEnabled = item.PuedeAnalizar;
     }
 
     async void CrearCuestionario_Click(object? sender, EventArgs e) =>
@@ -439,21 +527,21 @@ public partial class DocumentosView : ContentView
         await EliminarDocumentoAsync(id);
     }
 
-    async Task EliminarDocumentoAsync(string id)
+    async Task<bool> EliminarDocumentoAsync(string id)
     {
         var conn = await LocalDatabase.GetAsync();
         var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
         if (doc is null)
-            return;
+            return false;
 
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page is null)
-            return;
+            return false;
 
         var confirmar = await page.DisplayAlertAsync("Eliminar documento",
             $"¿Borrar «{doc.Nombre}»? Esta acción no se puede deshacer.", "Sí", "No");
         if (!confirmar)
-            return;
+            return false;
 
         _trabajando = true;
         try
@@ -482,10 +570,12 @@ public partial class DocumentosView : ContentView
             }
 
             await CargarDocumentosAsync();
+            return true;
         }
         catch (Exception ex)
         {
             await MostrarAsync("Error", "No se pudo eliminar el documento: " + ex.Message);
+            return false;
         }
         finally
         {
@@ -511,6 +601,7 @@ public class DocumentoItem
     public bool TieneResumen { get; set; }
     public bool Listo { get; set; }
     public bool PuedeAnalizar { get; set; }
+    public bool PuedeCrearCuestionario { get; set; }
     public bool PuedeVer { get; set; }
     public string TextoBotonAnalizar { get; set; } = "Analizar con IA";
     public Color ColorTexto { get; set; } = Colors.White;
@@ -544,6 +635,7 @@ public class DocumentoItem
 
         Resumen = d.Resumen;
         TieneResumen = !string.IsNullOrWhiteSpace(d.Resumen);
+        PuedeCrearCuestionario = !string.IsNullOrWhiteSpace(d.Texto);
         // El botón "Ver contenido" aparece si hay texto extraído O si el tipo
         // se puede renderizar fielmente (los Word/PowerPoint de solo imágenes
         // tienen Texto vacío pero el visor los muestra igual con imágenes).

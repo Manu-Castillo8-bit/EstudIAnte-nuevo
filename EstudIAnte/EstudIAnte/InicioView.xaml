@@ -4,14 +4,14 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.InicioView">
     <ScrollView>
-        <VerticalStackLayout Padding="28,8,28,28" Spacing="20">
+        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="20">
 
             <!-- Hero -->
             <Border Background="{StaticResource HeroGradient}" StrokeThickness="0"
-                    StrokeShape="RoundRectangle 24" Padding="40,34">
+                    StrokeShape="RoundRectangle 24" Padding="{OnIdiom Phone='22,24', Tablet='30,28', Default='40,34'}">
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="12" VerticalOptions="Center">
-                        <Label x:Name="SaludoNombre" Text="¡Hola!" FontSize="36" FontAttributes="Bold" TextColor="White" />
+                        <Label x:Name="SaludoNombre" Text="¡Hola!" FontSize="{OnIdiom Phone=28, Default=36}" FontAttributes="Bold" TextColor="White" />
                         <Label Text="Tu asistente educativo con IA está listo para ayudarte a aprender de forma más inteligente."
                                FontSize="16" TextColor="#D6DBFF" MaximumWidthRequest="440" />
                         <controls:PulsarButton Text="Comenzar ahora   →" Style="{StaticResource PrimaryButton}"

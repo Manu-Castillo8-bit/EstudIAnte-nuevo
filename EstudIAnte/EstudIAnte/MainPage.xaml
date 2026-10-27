@@ -6,12 +6,12 @@
              Title="EstudIAnte"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Bg}">
-    <Grid ColumnDefinitions="220,*" Padding="0">
+    <Grid x:Name="MainLayout" ColumnDefinitions="220,*" Padding="0">
 
         <!-- ========== BARRA LATERAL ========== -->
-        <Grid Grid.Column="0" BackgroundColor="{StaticResource Sidebar}"
+        <Grid x:Name="NavigationPanel" Grid.Column="0" BackgroundColor="{StaticResource Sidebar}"
               RowDefinitions="Auto,*,Auto" Padding="14">
-            <HorizontalStackLayout Grid.Row="0" Spacing="10" Margin="8,8,0,26">
+            <HorizontalStackLayout x:Name="BrandHeader" Grid.Row="0" Spacing="10" Margin="8,8,0,26">
                 <Label Text="🎓" FontSize="28" VerticalOptions="Center" />
                 <Label FontSize="21" FontAttributes="Bold" TextColor="{StaticResource TextMain}" VerticalOptions="Center">
                     <Label.FormattedText>
@@ -24,7 +24,9 @@
                 </Label>
             </HorizontalStackLayout>
 
-            <VerticalStackLayout Grid.Row="1" Spacing="0">
+            <ScrollView x:Name="NavigationScroll" Grid.Row="1" Orientation="Vertical"
+                        HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never">
+                <FlexLayout x:Name="NavItems" Direction="Column" Wrap="NoWrap">
                 <RadioButton x:Name="N1" Style="{StaticResource NavItem}" GroupName="nav" IsChecked="True"
                              Content="🏠   Inicio" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N2" Style="{StaticResource NavItem}" GroupName="nav"
@@ -41,9 +43,10 @@
                              Content="🛡   Panel Admin" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N7" Style="{StaticResource NavItem}" GroupName="nav"
                              Content="⚙   Configuración" CheckedChanged="OnNavChanged" />
-            </VerticalStackLayout>
+                </FlexLayout>
+            </ScrollView>
 
-            <Border Grid.Row="2" Style="{StaticResource Card}" Padding="10" StrokeShape="RoundRectangle 14">
+            <Border x:Name="UserCard" Grid.Row="2" Style="{StaticResource Card}" Padding="10" StrokeShape="RoundRectangle 14">
                 <HorizontalStackLayout Spacing="10">
                     <Border WidthRequest="38" HeightRequest="38" StrokeThickness="0"
                             Background="{StaticResource BrandGradient}" StrokeShape="RoundRectangle 19">
@@ -59,10 +62,10 @@
         </Grid>
 
         <!-- ========== CONTENIDO ========== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+        <Grid x:Name="ContentPanel" Grid.Column="1" RowDefinitions="Auto,*">
 
             <!-- Barra superior: buscador + avatar -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16" Padding="28,22,28,14">
+            <Grid x:Name="TopBar" Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16" Padding="28,22,28,14">
                 <Border Style="{StaticResource Card}" Padding="16,0" HeightRequest="46"
                         StrokeShape="RoundRectangle 23" HorizontalOptions="Fill"
                         MaximumWidthRequest="620">

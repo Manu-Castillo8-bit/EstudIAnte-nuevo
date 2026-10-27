@@ -1,4 +1,5 @@
 ﻿using EstudIAnte.Services;
+using Microsoft.Maui.Layouts;
 
 namespace EstudIAnte
 {
@@ -8,6 +9,76 @@ namespace EstudIAnte
         {
             InitializeComponent();
             ActualizarUsuario();
+        }
+
+        bool _compactLayout;
+
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            if (width <= 0 || _compactLayout == (width < 900))
+                return;
+
+            _compactLayout = width < 900;
+            MainLayout.ColumnDefinitions.Clear();
+            MainLayout.RowDefinitions.Clear();
+
+            if (_compactLayout)
+            {
+                MainLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                MainLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                MainLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+
+                NavigationPanel.Padding = new Thickness(6, 4);
+                NavigationPanel.HeightRequest = 60;
+                NavigationPanel.RowDefinitions.Clear();
+                NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                BrandHeader.IsVisible = false;
+                UserCard.IsVisible = false;
+                Grid.SetRow(NavigationScroll, 0);
+                Grid.SetRow(NavigationPanel, 0);
+                Grid.SetColumn(NavigationPanel, 0);
+                Grid.SetRow(ContentPanel, 1);
+                Grid.SetColumn(ContentPanel, 0);
+
+                NavItems.Direction = FlexDirection.Row;
+                NavigationScroll.Orientation = ScrollOrientation.Horizontal;
+                TopBar.Padding = new Thickness(12, 10, 12, 8);
+                TopBar.ColumnSpacing = 8;
+            }
+            else
+            {
+                MainLayout.ColumnDefinitions.Add(new ColumnDefinition(220));
+                MainLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                MainLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+
+                NavigationPanel.Padding = new Thickness(14);
+                NavigationPanel.HeightRequest = -1;
+                NavigationPanel.RowDefinitions.Clear();
+                NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+                NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                BrandHeader.IsVisible = true;
+                UserCard.IsVisible = true;
+                Grid.SetRow(BrandHeader, 0);
+                Grid.SetRow(NavigationScroll, 1);
+                Grid.SetRow(UserCard, 2);
+                Grid.SetRow(NavigationPanel, 0);
+                Grid.SetColumn(NavigationPanel, 0);
+                Grid.SetRow(ContentPanel, 0);
+                Grid.SetColumn(ContentPanel, 1);
+
+                NavItems.Direction = FlexDirection.Column;
+                NavigationScroll.Orientation = ScrollOrientation.Vertical;
+                TopBar.Padding = new Thickness(28, 22, 28, 14);
+                TopBar.ColumnSpacing = 16;
+            }
+
+            foreach (var item in new[] { N1, N2, N3, N4, N5, N6, N7, N8 })
+            {
+                item.WidthRequest = _compactLayout ? 150 : -1;
+                item.HeightRequest = _compactLayout ? 48 : -1;
+            }
         }
 
         void ActualizarUsuario()

@@ -4,7 +4,7 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.CuestionarioView">
     <ScrollView>
-        <VerticalStackLayout Padding="28,8,28,28" Spacing="18">
+        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="18">
 
             <!-- Encabezado -->
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
