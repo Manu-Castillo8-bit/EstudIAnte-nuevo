@@ -242,6 +242,25 @@ public static class AdminService
         catch { /* la tumba se aplica al sincronizar */ }
     }
 
+    /// <summary>Elimina un chat junto con todos sus mensajes.</summary>
+    public static async Task EliminarChatAsync(Chat c)
+    {
+        await SyncService.MarcarBorradoAsync("chats", c.Id);
+
+        var conn = await LocalDatabase.GetAsync();
+        var antiguos = await conn.Table<Mensaje>().Where(m => m.ChatId == c.Id).ToListAsync();
+        foreach (var m in antiguos)
+            await SyncService.MarcarBorradoAsync("mensajes", m.Id);
+        await conn.DeleteAsync(c);
+        await conn.Table<Mensaje>().Where(m => m.ChatId == c.Id).DeleteAsync();
+
+        var client = await SupabaseService.GetClientAsync();
+        if (client is null) return;
+
+        try { await client.From<Chat>().Where(x => x.Id == c.Id).Delete(); }
+        catch { /* la tumba se aplica al sincronizar */ }
+    }
+
     // ---------------- VALIDACIÓN ----------------
 
     static (bool, string) ValidarAsync(string usuario, string clave, string? email)

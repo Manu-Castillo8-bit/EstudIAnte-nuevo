@@ -93,6 +93,73 @@ public partial class AdminView : ContentView
         PanelDetalleUsuario.IsVisible = false;
     }
 
+    /// <summary>Borra cualquier fila de las listas de detalle según su tipo ("Clave").</summary>
+    async void EliminarDetalle_Click(object? sender, EventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not ItemDetalle item)
+            return;
+        var page = Pagina();
+        if (page is null)
+            return;
+
+        var confirmar = await page.DisplayAlertAsync("Eliminar",
+            $"¿Borrar «{item.Titulo}»? Esta acción no se puede deshacer.", "Sí", "No");
+        if (!confirmar)
+            return;
+
+        _trabajando = true;
+        try
+        {
+            switch (item.Clave)
+            {
+                case "doc":
+                    var docs = await AdminService.ListarDocumentosAsync();
+                    var doc = docs.FirstOrDefault(d => d.Id == item.Id);
+                    if (doc is not null)
+                        await AdminService.EliminarDocumentoAsync(doc);
+                    break;
+
+                case "chat":
+                    var chats = await AdminService.ListarChatsAsync();
+                    var chat = chats.FirstOrDefault(c => c.Id == item.Id);
+                    if (chat is not null)
+                        await AdminService.EliminarChatAsync(chat);
+                    break;
+
+                case "quiz":
+                    var quizzes = await AdminService.ListarCuestionariosAsync();
+                    var quiz = quizzes.FirstOrDefault(c => c.Id == item.Id);
+                    if (quiz is not null)
+                        await AdminService.EliminarCuestionarioAsync(quiz);
+                    break;
+
+                case "diag":
+                    var diagramas = await AdminService.ListarDiagramasAsync();
+                    var diag = diagramas.FirstOrDefault(d => d.Id == item.Id);
+                    if (diag is not null)
+                        await AdminService.EliminarDiagramaAsync(diag);
+                    break;
+
+                case "res":
+                    var resultados = await AdminService.ListarResultadosAsync();
+                    var res = resultados.FirstOrDefault(r => r.Id == item.Id);
+                    if (res is not null)
+                        await AdminService.EliminarResultadoAsync(res);
+                    break;
+            }
+
+            // recarga el detalle conservando al mismo usuario
+            var (usuarios, _) = await AdminService.ListarUsuariosAsync();
+            var u = usuarios.FirstOrDefault(x => x.Id == BtnDetClave.CommandParameter as string);
+            if (u is not null)
+                await CargarContenidoUsuarioAsync(u);
+        }
+        finally
+        {
+            _trabajando = false;
+        }
+    }
+
     async Task AbrirDetalleUsuarioAsync(string? id)
     {
         if (id is null || Pagina() is null)
