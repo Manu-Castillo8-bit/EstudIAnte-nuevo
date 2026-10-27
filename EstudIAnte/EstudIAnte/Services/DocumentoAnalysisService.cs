@@ -12,7 +12,8 @@ public static class DocumentoAnalysisService
     /// Marca el documento como analizado. Devuelve la IA usada.
     /// Lanza excepción con mensaje claro si no hay IA configurada o el archivo no tiene texto.
     /// </summary>
-    public static async Task<(string Resumen, string IA)> AnalizarAsync(Documento doc, string tamano = "Medio")
+    public static async Task<(string Resumen, string IA)> AnalizarAsync(
+        Documento doc, string tamano = "Medio", CancellationToken ct = default)
     {
         var texto = doc.Texto;
 
@@ -31,7 +32,8 @@ public static class DocumentoAnalysisService
             $"Eres un tutor educativo. {instruccion} " +
             "el siguiente material de estudio:\n\n" + Recortar(texto, 6000 * (tamano == "Corto" ? 3 : 6));
 
-        var (resumen, proveedor) = await AIProviderManager.GenerarAsync(prompt);
+        var (resumen, proveedor) = await AIProviderManager.GenerarAsync(prompt, ct);
+        ct.ThrowIfCancellationRequested();
 
         doc.Resumen = resumen.Trim();
         doc.Estado = "listo";

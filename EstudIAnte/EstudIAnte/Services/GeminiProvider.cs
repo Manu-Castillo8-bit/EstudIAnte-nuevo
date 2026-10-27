@@ -28,9 +28,17 @@ public class GeminiProvider : IAIProvider
 
     public bool Configurado => !string.IsNullOrWhiteSpace(ApiKey) && !ApiKey.StartsWith("PEGA-AQUI");
 
-    public async Task<string> GenerarAsync(string prompt, CancellationToken ct = default)
+    public async Task<string> GenerarAsync(
+        string prompt, CancellationToken ct = default, bool buscarEnWeb = false)
     {
-        var cuerpo = new
+        object cuerpo = buscarEnWeb ? new
+        {
+            contents = new[]
+            {
+                new { parts = new[] { new { text = prompt } } }
+            },
+            tools = new[] { new { google_search = new { } } }
+        } : new
         {
             contents = new[]
             {
@@ -71,7 +79,7 @@ public class GeminiProvider : IAIProvider
             throw new IAException("Gemini no respondió tras varios intentos. " + PrimerasLineas(detalle), true);
 
         var json = await respuesta.Content.ReadAsStringAsync(ct);
-        var texto = ExtraerTexto(json);
+        var texto = ExtraerTexto(json, buscarEnWeb);
 
         if (string.IsNullOrWhiteSpace(texto))
             throw new IAException("Gemini devolvió una respuesta vacía.");
@@ -79,7 +87,7 @@ public class GeminiProvider : IAIProvider
         return texto;
     }
 
-    static string ExtraerTexto(string json)
+    static string ExtraerTexto(string json, bool incluirFuentes)
     {
         try
         {
@@ -95,6 +103,19 @@ public class GeminiProvider : IAIProvider
                 if (!string.IsNullOrEmpty(t))
                     sb.Append(t);
             }
+            if (incluirFuentes)
+            {
+                var chunks = nodo?["candidates"]?[0]?["groundingMetadata"]?["groundingChunks"]?.AsArray();
+                var fuentes = chunks?
+                    .Select(c => c?["web"])
+                    .Where(web => web?["uri"] is not null)
+                    .Select(web => $"- {web?["title"]?.GetValue<string>() ?? "Fuente"}: {web?["uri"]?.GetValue<string>()}")
+                    .Distinct()
+                    .ToList();
+                if (fuentes is { Count: > 0 })
+                    sb.Append("\n\nFuentes consultadas:\n").AppendJoin('\n', fuentes);
+            }
+
             return sb.ToString();
         }
         catch

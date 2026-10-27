@@ -19,7 +19,15 @@ public partial class LoginWindow : ContentPage
 
         var compact = width < 820;
         if (_compactLayout == compact)
+        {
+            if (compact)
+            {
+                LoginCard.MaximumHeightRequest = Math.Max(0, height - 16);
+                LoginScroll.HeightRequest = Math.Max(0, height - 56);
+                LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
+            }
             return;
+        }
 
         _compactLayout = compact;
         LoginLayout.ColumnDefinitions.Clear();
@@ -29,11 +37,15 @@ public partial class LoginWindow : ContentPage
         {
             LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
             LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-            LoginLayout.Padding = new Thickness(12);
+            LoginLayout.Padding = new Thickness(12, 8);
             BrandPanel.IsVisible = false;
             LoginCard.WidthRequest = -1;
+            LoginCard.MaximumHeightRequest = Math.Max(0, height - 16);
             LoginCard.Padding = new Thickness(20);
             LoginCard.HorizontalOptions = LayoutOptions.Fill;
+            LoginCard.VerticalOptions = LayoutOptions.Center;
+            LoginScroll.HeightRequest = Math.Max(0, height - 56);
+            LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
             Grid.SetColumn(LoginCard, 0);
             Grid.SetRow(LoginCard, 0);
         }
@@ -45,12 +57,22 @@ public partial class LoginWindow : ContentPage
             LoginLayout.Padding = new Thickness(40);
             BrandPanel.IsVisible = true;
             LoginCard.WidthRequest = 420;
+            LoginCard.MaximumHeightRequest = -1;
             LoginCard.Padding = new Thickness(36);
             LoginCard.HorizontalOptions = LayoutOptions.Center;
+            LoginCard.VerticalOptions = LayoutOptions.Center;
+            LoginScroll.HeightRequest = -1;
+            LoginContentGrid.HeightRequest = -1;
             Grid.SetColumn(BrandPanel, 0);
             Grid.SetColumn(LoginCard, 1);
             Grid.SetRow(BrandPanel, 0);
             Grid.SetRow(LoginCard, 0);
+        }
+
+        if (compact)
+        {
+            LoginScroll.HeightRequest = Math.Max(0, height - 56);
+            LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
         }
     }
 
@@ -77,8 +99,8 @@ public partial class LoginWindow : ContentPage
             return;
         }
 
-        var boton = sender as Button;
-        if (boton is not null) boton.IsEnabled = false;
+        LoginSpinner.IsVisible = LoginSpinner.IsRunning = true;
+        BtnLogin.IsBusy = true;
 
         try
         {
@@ -111,7 +133,8 @@ public partial class LoginWindow : ContentPage
         }
         finally
         {
-            if (boton is not null) boton.IsEnabled = true;
+            BtnLogin.IsBusy = false;
+            LoginSpinner.IsRunning = LoginSpinner.IsVisible = false;
         }
     }
 
@@ -163,8 +186,8 @@ public partial class LoginWindow : ContentPage
             return;
         }
 
-        var boton = sender as Button;
-        if (boton is not null) boton.IsEnabled = false;
+        RegisterSpinner.IsVisible = RegisterSpinner.IsRunning = true;
+        BtnRegistrar.IsBusy = true;
 
         try
         {
@@ -187,7 +210,8 @@ public partial class LoginWindow : ContentPage
         }
         finally
         {
-            if (boton is not null) boton.IsEnabled = true;
+            BtnRegistrar.IsBusy = false;
+            RegisterSpinner.IsRunning = RegisterSpinner.IsVisible = false;
         }
     }
 

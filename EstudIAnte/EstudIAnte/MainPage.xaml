@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:EstudIAnte"
+             xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.MainPage"
              Title="EstudIAnte"
              Shell.NavBarIsVisible="False"
@@ -65,8 +66,11 @@
         <Grid x:Name="ContentPanel" Grid.Column="1" RowDefinitions="Auto,*">
 
             <!-- Barra superior: buscador + avatar -->
-            <Grid x:Name="TopBar" Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16" Padding="28,22,28,14">
-                <Border Style="{StaticResource Card}" Padding="16,0" HeightRequest="46"
+            <Grid x:Name="TopBar" Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="28,22,28,14">
+                <controls:PulsarButton x:Name="BtnMenu" Text="☰" FontSize="21"
+                        Style="{StaticResource GhostButton}" WidthRequest="44" HeightRequest="44"
+                        IsVisible="False" Clicked="Menu_Tapped" />
+                <Border Grid.Column="1" Style="{StaticResource Card}" Padding="16,0" HeightRequest="46"
                         StrokeShape="RoundRectangle 23" HorizontalOptions="Fill"
                         MaximumWidthRequest="620">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
@@ -77,7 +81,7 @@
                                TextChanged="BuscadorGlobal_TextChanged" />
                     </Grid>
                 </Border>
-                <Border Grid.Column="1" WidthRequest="42" HeightRequest="42" StrokeThickness="2"
+                <Border Grid.Column="2" WidthRequest="42" HeightRequest="42" StrokeThickness="2"
                         Stroke="{StaticResource Violet}" StrokeShape="RoundRectangle 21"
                         BackgroundColor="{StaticResource SurfaceAlt}">
                     <Border.GestureRecognizers>
@@ -99,5 +103,11 @@
                 <views:AdminView x:Name="VAdmin" IsVisible="False" />
             </Grid>
         </Grid>
+        <BoxView x:Name="MenuBackdrop" Grid.ColumnSpan="2" Grid.RowSpan="2"
+                 IsVisible="False" BackgroundColor="#99040A20" ZIndex="1">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="MenuBackdrop_Tapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
     </Grid>
 </ContentPage>

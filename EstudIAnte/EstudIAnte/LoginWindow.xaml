@@ -6,10 +6,10 @@
              Title="Login"
              BackgroundColor="{StaticResource Bg}">
     <Grid x:Name="LoginLayout" Background="{StaticResource LoginBg}"
-          ColumnDefinitions="1.15*,*" Padding="40">
+          ColumnDefinitions="1.15*,*" RowDefinitions="*,Auto,*" Padding="40">
 
         <!-- ========== PANEL DE MARCA ========== -->
-        <VerticalStackLayout x:Name="BrandPanel" Grid.Column="0" Spacing="26" VerticalOptions="Center"
+        <VerticalStackLayout x:Name="BrandPanel" Grid.Column="0" Grid.Row="1" Spacing="26" VerticalOptions="Center"
                              Margin="30,0,30,0">
             <HorizontalStackLayout Spacing="14">
                 <Label Text="🎓" FontSize="52" VerticalOptions="Center" />
@@ -82,12 +82,13 @@
         </VerticalStackLayout>
 
         <!-- ========== TARJETA DE LOGIN ========== -->
-        <Border x:Name="LoginCard" Grid.Column="1" Style="{StaticResource Card}" BackgroundColor="#CC101840"
+        <Border x:Name="LoginCard" Grid.Column="1" Grid.Row="1" Style="{StaticResource Card}" BackgroundColor="#CC101840"
                 Padding="36" WidthRequest="420" MaximumWidthRequest="460"
                 StrokeShape="RoundRectangle 24"
                 HorizontalOptions="Center" VerticalOptions="Center">
-            <ScrollView>
-            <VerticalStackLayout x:Name="Root" Spacing="14">
+            <ScrollView x:Name="LoginScroll">
+            <Grid x:Name="LoginContentGrid" RowDefinitions="*,Auto,*">
+            <VerticalStackLayout x:Name="Root" Grid.Row="1" Spacing="14">
                 <!-- ========== PANEL DE LOGIN ========== -->
                 <VerticalStackLayout x:Name="PanelLogin" Spacing="14">
                     <Label Text="Iniciar sesión" FontSize="30" FontAttributes="Bold"
@@ -131,8 +132,13 @@
                         </Label>
                     </Grid>
 
-                    <controls:PulsarButton Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
-                            Clicked="Login_Click" HeightRequest="52" />
+                    <Grid>
+                        <controls:PulsarButton x:Name="BtnLogin" Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
+                                Clicked="Login_Click" HeightRequest="52" TextoCarga="" />
+                        <ActivityIndicator x:Name="LoginSpinner" IsRunning="False" IsVisible="False"
+                                InputTransparent="True" Color="{StaticResource OnCyan}"
+                                HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Grid>
 
                     <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
                         <Label.FormattedText>
@@ -199,8 +205,13 @@
                         </Grid>
                     </Border>
 
-                    <controls:PulsarButton Text="✚   Crear cuenta" Style="{StaticResource PrimaryButton}"
-                            Clicked="Registrar_Click" HeightRequest="52" Margin="0,10,0,0" />
+                    <Grid Margin="0,10,0,0">
+                        <controls:PulsarButton x:Name="BtnRegistrar" Text="✚   Crear cuenta" Style="{StaticResource PrimaryButton}"
+                                Clicked="Registrar_Click" HeightRequest="52" TextoCarga="" />
+                        <ActivityIndicator x:Name="RegisterSpinner" IsRunning="False" IsVisible="False"
+                                InputTransparent="True" Color="{StaticResource OnCyan}"
+                                HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Grid>
 
                     <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
                         <Label.FormattedText>
@@ -220,6 +231,7 @@
                        FontSize="12" HorizontalOptions="Center" HorizontalTextAlignment="Center"
                        TextColor="{StaticResource TextMuted}" Margin="0,10,0,0" />
             </VerticalStackLayout>
+            </Grid>
             </ScrollView>
         </Border>
     </Grid>

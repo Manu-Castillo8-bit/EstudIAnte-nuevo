@@ -45,7 +45,8 @@ public static class DiagramaGenerator
         string fuente,
         string material,
         string? documentoId = null,
-        string tipo = "flujo")
+        string tipo = "flujo",
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(material))
             throw new IAException("No hay material para generar el diagrama.");
@@ -54,7 +55,8 @@ public static class DiagramaGenerator
             tipo = "flujo";
 
         var prompt = ConstruirPrompt(titulo, material, tipo);
-        var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(prompt);
+        var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(prompt, ct);
+        ct.ThrowIfCancellationRequested();
 
         var codigo = tipo == "comparativo"
             ? ExtraerTabla(respuesta)

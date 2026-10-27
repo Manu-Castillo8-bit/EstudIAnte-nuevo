@@ -18,5 +18,5 @@ public interface IAIProvider
     bool Configurado { get; }
 
     /// <summary>Envía un prompt y devuelve el texto de respuesta.</summary>
-    Task<string> GenerarAsync(string prompt, CancellationToken ct = default);
+    Task<string> GenerarAsync(string prompt, CancellationToken ct = default, bool buscarEnWeb = false);
 }

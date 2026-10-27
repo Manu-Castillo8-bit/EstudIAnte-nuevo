@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.ChatView">
-    <Grid x:Name="ChatLayout" RowDefinitions="Auto,Auto,*,Auto"
+    <Grid x:Name="ChatLayout" RowDefinitions="Auto,Auto,*,Auto,Auto"
           Padding="{OnIdiom Phone='14,8,14,18', Tablet='20,8,20,20', Default='28,8,28,24'}"
           RowSpacing="14">
 
@@ -52,6 +52,10 @@
                                     StrokeShape="RoundRectangle 18" Padding="16,12">
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="{Binding Texto}" TextColor="{Binding ColorTextoTexto}" />
+                                    <controls:PulsarButton Text="📋 Copiar" Style="{StaticResource GhostButton}"
+                                            HeightRequest="34" Padding="8,2" FontSize="12"
+                                            HorizontalOptions="Start" IsVisible="{Binding EsIA}"
+                                            CommandParameter="{Binding Texto}" Clicked="CopiarMensaje_Click" />
                                     <Label Text="{Binding Hora}" FontSize="10" TextColor="{Binding ColorHora}"
                                            HorizontalOptions="End" />
                                 </VerticalStackLayout>
@@ -62,8 +66,19 @@
             </CollectionView>
         </Border>
 
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                <CheckBox x:Name="BuscarActualizado" Color="{StaticResource Cyan}" />
+                <Label Text="Buscar información actualizada (web)" FontSize="12"
+                       TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+            <controls:PulsarButton x:Name="BtnEditarPregunta" Grid.Column="1"
+                    Text="✎ Editar" Style="{StaticResource GhostButton}" HeightRequest="38"
+                    IsVisible="False" Clicked="EditarPregunta_Click" />
+        </Grid>
+
         <!-- Entrada -->
-        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+        <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
             <ActivityIndicator x:Name="SpinnerIA" Grid.Column="0" IsRunning="False" IsVisible="False"
                                Color="{StaticResource Cyan}" WidthRequest="24" HeightRequest="24"
                                HorizontalOptions="CenterAndExpand" VerticalOptions="Center" />
@@ -75,6 +90,8 @@
             </Border>
             <controls:PulsarButton x:Name="BtnEnviar" Grid.Column="2" Text="➤" Style="{StaticResource PrimaryButton}"
                     WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" Clicked="Enviar_Click" />
+            <controls:PulsarButton x:Name="BtnCancelar" Grid.Column="3" Text="✕" Style="{StaticResource GhostButton}"
+                    WidthRequest="42" HeightRequest="42" IsVisible="False" Clicked="Cancelar_Click" />
         </Grid>
     </Grid>
 </ContentView>

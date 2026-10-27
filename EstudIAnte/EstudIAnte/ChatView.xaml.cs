@@ -10,6 +10,9 @@ public partial class ChatView : ContentView
     Chat? _chatActual;
     bool _ocupado;
     bool? _compactLayout;
+    CancellationTokenSource? _envioCts;
+    Task? _operacionActual;
+    string? _ultimoMensajeUsuarioId;
 
     public ChatView()
     {
@@ -215,7 +218,16 @@ public partial class ChatView : ContentView
         if (_ocupado)
             return;
 
-        var texto = MensajeEntry.Text?.Trim();
+        _operacionActual = EnviarMensajeAsync(null, null);
+        await _operacionActual;
+    }
+
+    async Task EnviarMensajeAsync(string? editarId, string? textoEditado)
+    {
+        if (_ocupado)
+            return;
+
+        var texto = (textoEditado ?? MensajeEntry.Text)?.Trim();
         if (string.IsNullOrEmpty(texto))
             return;
 
@@ -232,20 +244,64 @@ public partial class ChatView : ContentView
             return;
         }
 
-        await GuardarMensajeAsync(new Mensaje { ChatId = _chatActual.Id, Rol = "user", Contenido = texto });
+        if (editarId is null)
+        {
+            var mensajeUsuario = new Mensaje { ChatId = _chatActual.Id, Rol = "user", Contenido = texto };
+            await GuardarMensajeAsync(mensajeUsuario);
+            _ultimoMensajeUsuarioId = mensajeUsuario.Id;
+        }
+        else
+        {
+            var conn = await LocalDatabase.GetAsync();
+            var mensajeUsuario = await conn.Table<Mensaje>().Where(m => m.Id == editarId).FirstOrDefaultAsync();
+            if (mensajeUsuario is null)
+                return;
+
+            var respuestasAnteriores = await conn.Table<Mensaje>()
+                .Where(m => m.ChatId == mensajeUsuario.ChatId && m.Rol == "assistant")
+                .ToListAsync();
+            respuestasAnteriores = respuestasAnteriores
+                .Where(m => string.CompareOrdinal(m.CreadoEn, mensajeUsuario.CreadoEn) > 0)
+                .ToList();
+            foreach (var respuestaAnterior in respuestasAnteriores)
+                await conn.DeleteAsync(respuestaAnterior);
+
+            mensajeUsuario.Contenido = texto;
+            mensajeUsuario.CreadoEn = DateTime.UtcNow.ToString("o");
+            await conn.UpdateAsync(mensajeUsuario);
+            var client = await SupabaseService.GetClientAsync();
+            if (client is not null)
+            {
+                try
+                {
+                    foreach (var respuestaAnterior in respuestasAnteriores)
+                        await client.From<Mensaje>().Where(m => m.Id == respuestaAnterior.Id).Delete();
+                    await client.From<Mensaje>().Update(mensajeUsuario);
+                }
+                catch { /* se sincroniza después */ }
+            }
+            _ultimoMensajeUsuarioId = mensajeUsuario.Id;
+        }
+
         MensajeEntry.Text = string.Empty;
         await CargarMensajesAsync();
 
         // Respuesta de la IA
         _ocupado = true;
         BtnEnviar.IsBusy = true;
+        BtnCancelar.IsVisible = true;
+        BtnEditarPregunta.IsVisible = true;
         SpinnerIA.IsRunning = SpinnerIA.IsVisible = true;
+        _envioCts = new CancellationTokenSource();
 
         try
         {
             var historial = await ObtenerHistorialAsync();
-            var prompt = ConstruirPromptChat(_temaActual.Nombre, historial);
-            var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(prompt);
+            var buscarWeb = BuscarActualizado.IsChecked;
+            var prompt = ConstruirPromptChat(_temaActual.Nombre, historial, buscarWeb);
+            var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(
+                prompt, _envioCts.Token, buscarWeb);
+            _envioCts.Token.ThrowIfCancellationRequested();
 
             await GuardarMensajeAsync(new Mensaje
             {
@@ -253,6 +309,10 @@ public partial class ChatView : ContentView
                 Rol = "assistant",
                 Contenido = $"{respuesta}\n\n— {proveedor}"
             });
+        }
+        catch (OperationCanceledException) when (_envioCts?.IsCancellationRequested == true)
+        {
+            Subtitulo.Text = "Solicitud cancelada. Puedes editar la pregunta o enviarla de nuevo.";
         }
         catch (Exception ex)
         {
@@ -267,9 +327,51 @@ public partial class ChatView : ContentView
         {
             _ocupado = false;
             BtnEnviar.IsBusy = false;
+            BtnCancelar.IsVisible = false;
+            BtnEditarPregunta.IsVisible = _ultimoMensajeUsuarioId is not null;
             SpinnerIA.IsRunning = SpinnerIA.IsVisible = false;
+            _envioCts?.Dispose();
+            _envioCts = null;
             await CargarMensajesAsync();
         }
+    }
+
+    void Cancelar_Click(object? sender, EventArgs e) => _envioCts?.Cancel();
+
+    async void EditarPregunta_Click(object? sender, EventArgs e)
+    {
+        if (_ultimoMensajeUsuarioId is null || _chatActual is null)
+            return;
+
+        var conn = await LocalDatabase.GetAsync();
+        var mensaje = await conn.Table<Mensaje>()
+            .Where(m => m.Id == _ultimoMensajeUsuarioId).FirstOrDefaultAsync();
+        if (mensaje is null)
+            return;
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is null)
+            return;
+
+        var texto = await page.DisplayPromptAsync(
+            "Editar pregunta", "Modifica tu mensaje y se volverá a generar la respuesta.",
+            "Actualizar", "Cancelar", initialValue: mensaje.Contenido);
+        if (string.IsNullOrWhiteSpace(texto) || texto.Trim() == mensaje.Contenido)
+            return;
+
+        _envioCts?.Cancel();
+        if (_operacionActual is not null)
+            await _operacionActual;
+
+        BuscarActualizado.IsChecked = false;
+        _operacionActual = EnviarMensajeAsync(mensaje.Id, texto);
+        await _operacionActual;
+    }
+
+    async void CopiarMensaje_Click(object? sender, EventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is string texto)
+            await Clipboard.Default.SetTextAsync(texto);
     }
 
     async Task GuardarMensajeAsync(Mensaje mensaje)
@@ -294,11 +396,16 @@ public partial class ChatView : ContentView
             .ToListAsync();
     }
 
-    static string ConstruirPromptChat(string tema, List<Mensaje> historial)
+    static string ConstruirPromptChat(string tema, List<Mensaje> historial, bool buscarWeb)
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Eres un tutor educativo amable y claro. Estás ayudando a un estudiante con el tema: \"{tema}\".");
         sb.AppendLine("Responde en español, de forma concisa y didáctica.");
+        if (buscarWeb)
+        {
+            sb.AppendLine($"La fecha actual es {DateTime.Today:yyyy-MM-dd}. Prioriza información reciente, distingue hechos actuales de conocimiento general e incluye fuentes consultadas si la herramienta de búsqueda las proporciona.");
+            sb.AppendLine("Si la búsqueda web no está disponible, aclara que no puedes verificar la vigencia en vez de presentar datos inciertos como actuales.");
+        }
         sb.AppendLine();
         sb.AppendLine("Conversación hasta ahora:");
 
@@ -325,6 +432,9 @@ public partial class ChatView : ContentView
             .ToListAsync();
 
         ListaMensajes.ItemsSource = mensajes.Select(m => new MensajeItem(m)).ToList();
+        var ultimoUsuario = mensajes.LastOrDefault(m => m.Rol == "user");
+        _ultimoMensajeUsuarioId = ultimoUsuario?.Id;
+        BtnEditarPregunta.IsVisible = !_ocupado && ultimoUsuario is not null;
 
         // Mantiene la conversación anclada al último mensaje.
         await Task.Delay(80); // deja que la lista termine de maquetar
@@ -362,6 +472,7 @@ public class MensajeItem
     public Color ColorTexto { get; set; } = Colors.White;
     public Color ColorTextoTexto { get; set; } = Colors.White;
     public Color ColorHora { get; set; } = Colors.Gray;
+    public bool EsIA { get; set; }
 
     public MensajeItem() { }
 
@@ -380,6 +491,7 @@ public class MensajeItem
         }
         else
         {
+            EsIA = true;
             Alineacion = LayoutOptions.Start;
             ColorFondo = Color.FromArgb("#0F1733");
             ColorTexto = Color.FromArgb("#2A3A6A");

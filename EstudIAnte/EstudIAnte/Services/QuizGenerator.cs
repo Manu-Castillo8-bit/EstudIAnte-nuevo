@@ -20,14 +20,16 @@ public static class QuizGenerator
         string fuente,
         string material,
         string? documentoId = null,
-        int numeroPreguntas = 5)
+        int numeroPreguntas = 5,
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(material))
             throw new IAException("No hay material para generar el cuestionario.");
 
         var prompt = ConstruirPrompt(titulo, material, numeroPreguntas);
 
-        var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(prompt);
+        var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(prompt, ct);
+        ct.ThrowIfCancellationRequested();
         var preguntas = Parsear(respuesta, numeroPreguntas);
 
         if (preguntas.Count == 0)

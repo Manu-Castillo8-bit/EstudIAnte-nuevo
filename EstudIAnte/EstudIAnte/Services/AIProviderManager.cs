@@ -58,7 +58,8 @@ public static class AIProviderManager
     /// al usuario si desea cambiar a la siguiente. Devuelve también el nombre de la
     /// IA usada para poder mostrarlo al usuario.
     /// </summary>
-    public static async Task<(string Texto, string Proveedor)> GenerarAsync(string prompt, CancellationToken ct = default)
+    public static async Task<(string Texto, string Proveedor)> GenerarAsync(
+        string prompt, CancellationToken ct = default, bool buscarEnWeb = false)
     {
         var proveedores = Proveedores().Where(p => p.Configurado).ToList();
         if (proveedores.Count == 0)
@@ -69,16 +70,22 @@ public static class AIProviderManager
         for (var i = 0; i < proveedores.Count; i++)
         {
             var proveedor = proveedores[i];
+            if (buscarEnWeb && !proveedor.Nombre.StartsWith("Google Gemini", StringComparison.Ordinal))
+                continue;
 
             try
             {
-                var texto = await proveedor.GenerarAsync(prompt, ct);
+                var texto = await proveedor.GenerarAsync(prompt, ct, buscarEnWeb);
                 UltimoProveedor = proveedor.Nombre;
                 return (texto, proveedor.Nombre);
             }
             catch (IAException ex) when (ex.CuotaAgotada)
             {
                 errores.Add($"{proveedor.Nombre}: saturada ({ex.Message})");
+                if (buscarEnWeb)
+                    throw new IAException(
+                        "Gemini no pudo realizar la búsqueda web ahora. Inténtalo más tarde; no se consultó otra IA para evitar presentar información no verificada como actual.",
+                        true);
 
                 if (i + 1 >= proveedores.Count)
                 {
@@ -98,10 +105,16 @@ public static class AIProviderManager
             }
             catch (Exception ex)
             {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException(ct);
+
                 // Otro error (sin conexión, respuesta inválida...): prueba la siguiente IA.
                 errores.Add($"{proveedor.Nombre}: {ex.Message}");
             }
         }
+
+        if (buscarEnWeb)
+            throw new IAException("No se pudo completar una búsqueda web con Gemini. No se generó una respuesta como si estuviera verificada con información actual.");
 
         throw new IAException("Ninguna IA pudo responder:\n" + string.Join("\n", errores));
     }

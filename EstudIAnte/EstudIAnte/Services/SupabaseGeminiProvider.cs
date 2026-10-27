@@ -34,13 +34,14 @@ public abstract class SupabaseIAProvider : IAIProvider
 
     public bool Configurado => SupabaseConfig.IsConfigured;
 
-    public async Task<string> GenerarAsync(string prompt, CancellationToken ct = default)
+    public async Task<string> GenerarAsync(
+        string prompt, CancellationToken ct = default, bool buscarEnWeb = false)
     {
         var url = $"{SupabaseConfig.Url}/functions/v1/gemini";
 
         using var peticion = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            Content = JsonContent.Create(new { prompt, proveedor = _proveedor })
+            Content = JsonContent.Create(new { prompt, proveedor = _proveedor, buscarEnWeb })
         };
         peticion.Headers.Add("apikey", SupabaseConfig.AnonKey);
         peticion.Headers.Add("Authorization", $"Bearer {SupabaseConfig.AnonKey}");
@@ -49,6 +50,10 @@ public abstract class SupabaseIAProvider : IAIProvider
         try
         {
             respuesta = await Http.SendAsync(peticion, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

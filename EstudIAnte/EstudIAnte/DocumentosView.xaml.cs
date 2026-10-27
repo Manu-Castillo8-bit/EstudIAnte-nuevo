@@ -7,8 +7,11 @@ public partial class DocumentosView : ContentView
 {
     const long MaxBytes = 20 * 1024 * 1024;
     bool _trabajando;
+    CancellationTokenSource? _analisisCts;
     string? _detalleId;
     bool? _compactLayout;
+    readonly Dictionary<string, byte[]> _archivosExternos = new();
+    public event EventHandler<bool>? LecturaCompletaChanged;
 
     public DocumentosView()
     {
@@ -70,6 +73,91 @@ public partial class DocumentosView : ContentView
     /// <summary>Recarga los documentos (la llama MainPage al volver a la sección).</summary>
     public async Task RefrescarAsync() => await CargarDocumentosAsync();
 
+    public async Task AbrirArchivoExternoAsync(string ruta, string nombre)
+    {
+        if (AuthService.UsuarioActual is not { } usuario)
+        {
+            await MostrarAsync("Inicia sesión", "Inicia sesión para abrir este documento en EstudIAnte.");
+            return;
+        }
+
+        string? rutaPersistente = null;
+        var guardadoLocal = false;
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(ruta);
+            if (bytes.Length > MaxBytes)
+            {
+                await MostrarAsync("Archivo demasiado grande", "El archivo supera el límite de 20 MB.");
+                return;
+            }
+
+            var doc = new Documento
+            {
+                UsuarioId = usuario.Id,
+                Nombre = nombre,
+                Tipo = "pdf",
+                TamanoBytes = bytes.Length,
+                RutaStorage = $"{usuario.Id}/{Guid.NewGuid():N}{Path.GetExtension(nombre)}",
+                Texto = await DocumentExtractor.ExtraerAsync(bytes, "pdf"),
+                Estado = "subido"
+            };
+
+            var conn = await LocalDatabase.GetAsync();
+            rutaPersistente = RutaDocumentoExterno(doc.Id);
+            Directory.CreateDirectory(Path.GetDirectoryName(rutaPersistente)!);
+            await File.WriteAllBytesAsync(rutaPersistente, bytes);
+            await conn.InsertAsync(doc);
+            guardadoLocal = true;
+
+            var client = await SupabaseService.GetClientAsync();
+            if (client is not null)
+            {
+                try
+                {
+                    await client.Storage.From("documentos").Upload(
+                        bytes,
+                        doc.RutaStorage!,
+                        new Supabase.Storage.FileOptions { ContentType = "application/pdf", Upsert = true });
+                    await client.From<Documento>().Insert(doc);
+                }
+                catch (Exception ex)
+                {
+                    Diag("No se pudo sincronizar el PDF abierto externamente: " + ex.Message);
+                }
+            }
+
+            await CargarDocumentosAsync();
+            await AbrirLecturaAsync(doc.Id, bytes);
+        }
+        catch (Exception ex)
+        {
+            if (!guardadoLocal && rutaPersistente is not null && File.Exists(rutaPersistente))
+            {
+                try
+                {
+                    File.Delete(rutaPersistente);
+                }
+                catch (Exception cleanupError)
+                {
+                    Diag("No se pudo limpiar un archivo externo incompleto: " + cleanupError.Message);
+                }
+            }
+            await MostrarAsync("No se pudo abrir el documento", ex.Message);
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(ruta);
+            }
+            catch (Exception ex)
+            {
+                Diag("No se pudo limpiar el archivo temporal externo: " + ex.Message);
+            }
+        }
+    }
+
     async void Detalle_Click(object? sender, TappedEventArgs e)
     {
         var id = (sender as TapGestureRecognizer)?.CommandParameter as string;
@@ -117,6 +205,12 @@ public partial class DocumentosView : ContentView
         PanelDetalle.IsVisible = false;
         await AbrirVisorAsync(id);
     }
+
+    async void DetalleSoloLeer_Click(object? sender, EventArgs e) =>
+        await AbrirLecturaAsync(_detalleId);
+
+    async void SoloLeer_Click(object? sender, EventArgs e) =>
+        await AbrirLecturaAsync((sender as Button)?.CommandParameter as string);
 
     async void DetalleAnalizar_Click(object? sender, EventArgs e) =>
         await AnalizarConTamanoAsync(_detalleId);
@@ -299,12 +393,23 @@ public partial class DocumentosView : ContentView
         await CargarDocumentosAsync();
         ActualizarDetalle();
 
+        _analisisCts = new CancellationTokenSource();
+        PanelCargando.IsVisible = true;
+        SpinnerAnalisis.IsRunning = true;
         try
         {
-            var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(doc, claveTamano);
+            var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(
+                doc, claveTamano, _analisisCts.Token);
             await CargarDocumentosAsync();
             ActualizarDetalle();
             await MostrarAsync("Análisis completo", $"Resumen ({claveTamano}) generado con {ia}:\n\n{resumen}");
+        }
+        catch (OperationCanceledException) when (_analisisCts?.IsCancellationRequested == true)
+        {
+            doc.Estado = "subido";
+            await conn.UpdateAsync(doc);
+            await CargarDocumentosAsync();
+            ActualizarDetalle();
         }
         catch (Exception ex)
         {
@@ -314,7 +419,16 @@ public partial class DocumentosView : ContentView
             ActualizarDetalle();
             await MostrarAsync("No se pudo analizar", ex.Message);
         }
+        finally
+        {
+            PanelCargando.IsVisible = false;
+            SpinnerAnalisis.IsRunning = false;
+            _analisisCts?.Dispose();
+            _analisisCts = null;
+        }
     }
+
+    void CancelarAnalisis_Click(object? sender, EventArgs e) => _analisisCts?.Cancel();
 
     void ActualizarDetalle()
     {
@@ -400,6 +514,7 @@ public partial class DocumentosView : ContentView
     // ---------------- VISOR DE CONTENIDO ----------------
 
     string? _visorId;
+    double _zoomLectura = 1;
 
     async void Ver_Click(object? sender, EventArgs e) =>
         await AbrirVisorAsync((sender as Button)?.CommandParameter as string);
@@ -433,51 +548,81 @@ public partial class DocumentosView : ContentView
         TituloVisor.Text = doc.Nombre;
         MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {(doc.Texto?.Length ?? 0)} caracteres";
 
-        // Si el tipo se puede mostrar "tal como es", descarga el archivo original
-        // y lo renderiza a HTML con estructura e imágenes incrustadas.
+        await CargarContenidoAsync(doc, VisorWeb, VisorTextoScroll, TextoVisor);
+
+        PanelVisor.IsVisible = true;
+    }
+
+    async Task AbrirLecturaAsync(string? id, byte[]? bytesOriginales = null)
+    {
+        if (id is null)
+            return;
+
+        var conn = await LocalDatabase.GetAsync();
+        var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
+        if (doc is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(doc.Texto) && !DocumentoHtmlService.EsVisualizable(doc.Tipo))
+        {
+            await MostrarAsync("Sin contenido",
+                "Este archivo no tiene texto extraíble ni puede mostrarse en el lector.");
+            return;
+        }
+
+        _visorId = id;
+        _zoomLectura = 1;
+        ZoomLectura.Text = "100%";
+        TextoLectura.FontSize = 15;
+        OpcionesLectura.IsVisible = false;
+        TituloLectura.Text = doc.Nombre;
+        MetaLectura.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)}";
+        if (bytesOriginales is null && !_archivosExternos.TryGetValue(id, out bytesOriginales))
+        {
+            var rutaLocal = RutaDocumentoExterno(id);
+            if (File.Exists(rutaLocal))
+                bytesOriginales = await File.ReadAllBytesAsync(rutaLocal);
+        }
+        await CargarContenidoAsync(doc, LecturaWeb, LecturaTextoScroll, TextoLectura,
+            bytesOriginales);
+        PanelLectura.IsVisible = true;
+        LecturaCompletaChanged?.Invoke(this, true);
+    }
+
+    async Task CargarContenidoAsync(Documento doc, WebView web, ScrollView textoScroll, Label texto,
+        byte[]? bytesOriginales = null)
+    {
         var mostradoFiel = false;
-        if (DocumentoHtmlService.EsVisualizable(doc.Tipo))
+        if (bytesOriginales is { Length: > 0 } && DocumentoHtmlService.EsVisualizable(doc.Tipo))
+        {
+            var htmlOriginal = DocumentoHtmlService.GenerarHtml(doc, bytesOriginales);
+            if (!string.IsNullOrWhiteSpace(htmlOriginal))
+            {
+                await MostrarHtmlAsync(web, htmlOriginal);
+                web.IsVisible = true;
+                textoScroll.IsVisible = false;
+                mostradoFiel = true;
+            }
+        }
+
+        if (DocumentoHtmlService.EsVisualizable(doc.Tipo) &&
+            !mostradoFiel && !string.IsNullOrWhiteSpace(doc.RutaStorage))
         {
             try
             {
                 var client = await SupabaseService.GetClientAsync();
                 if (client is null)
                     Diag("visor: sin conexión a Supabase (client null)");
-                if (!string.IsNullOrWhiteSpace(doc.RutaStorage))
-                {
-                    // hay ruta
-                    Diag($"visor: usando storage ruta={doc.RutaStorage}");
-                }
-                if (client is not null && !string.IsNullOrWhiteSpace(doc.RutaStorage))
+                else
                 {
                     var bytes = await client.Storage.From("documentos")
                         .Download(doc.RutaStorage, (Supabase.Storage.TransformOptions?)null, null);
-                    Diag($"doc={doc.Nombre} tipo={doc.Tipo} bytes={bytes?.Length}");
                     var html = DocumentoHtmlService.GenerarHtml(doc, bytes);
-                    Diag($"html={html.Length} chars");
                     if (!string.IsNullOrWhiteSpace(html))
                     {
-                        // WebView2 (NavigateToString) solo acepta ~2 MB; para HTML
-                        // grandes se escribe en un archivo temporal y se navega por URL.
-                        if (html.Length > 1_500_000)
-                        {
-                            var carpeta = Path.Combine(FileSystem.CacheDirectory, "visores");
-                            Directory.CreateDirectory(carpeta);
-                            var ruta = Path.Combine(carpeta, $"{Guid.NewGuid()}.html");
-                            await File.WriteAllTextAsync(ruta, html);
-                            Diag($"html grande → archivo temporal ({ruta})");
-                            VisorWeb.Source = new UrlWebViewSource
-                            {
-                                Url = "file:///" + ruta.Replace('\\', '/').TrimStart('/'),
-                            };
-                        }
-                        else
-                        {
-                            VisorWeb.Source = new HtmlWebViewSource { Html = html };
-                        }
-
-                        VisorWeb.IsVisible = true;
-                        VisorTextoScroll.IsVisible = false;
+                        await MostrarHtmlAsync(web, html);
+                        web.IsVisible = true;
+                        textoScroll.IsVisible = false;
                         mostradoFiel = true;
                     }
                 }
@@ -485,19 +630,34 @@ public partial class DocumentosView : ContentView
             catch (Exception exVisor)
             {
                 Diag("ERROR visor: " + exVisor.Message);
-                // sin conexión o error: usa el texto extraído
+            }
+        }
+
+        static async Task MostrarHtmlAsync(WebView web, string html)
+        {
+            if (html.Length > 1_500_000)
+            {
+                var carpeta = Path.Combine(FileSystem.CacheDirectory, "visores");
+                Directory.CreateDirectory(carpeta);
+                var ruta = Path.Combine(carpeta, $"{Guid.NewGuid()}.html");
+                await File.WriteAllTextAsync(ruta, html);
+                web.Source = new UrlWebViewSource
+                {
+                    Url = "file:///" + ruta.Replace('\\', '/').TrimStart('/'),
+                };
+            }
+            else
+            {
+                web.Source = new HtmlWebViewSource { Html = html };
             }
         }
 
         if (!mostradoFiel)
         {
-            Diag($"fallback TEXTO para {doc.Nombre}");
-            TextoVisor.Text = doc.Texto;
-            VisorWeb.IsVisible = false;
-            VisorTextoScroll.IsVisible = true;
+            texto.Text = doc.Texto;
+            web.IsVisible = false;
+            textoScroll.IsVisible = true;
         }
-
-        PanelVisor.IsVisible = true;
     }
 
     /// <summary>Log de diagnóstico del visor en %LOCALAPPDATA%\EstudIAnte\visor.log.</summary>
@@ -519,7 +679,62 @@ public partial class DocumentosView : ContentView
         _visorId = null;
     }
 
+    void CerrarLectura_Click(object? sender, EventArgs e)
+    {
+        PanelLectura.IsVisible = false;
+        if (_visorId is not null)
+            _archivosExternos.Remove(_visorId);
+        _visorId = null;
+        LecturaCompletaChanged?.Invoke(this, false);
+    }
+
+    void AlternarOpcionesLectura_Click(object? sender, EventArgs e) =>
+        OpcionesLectura.IsVisible = !OpcionesLectura.IsVisible;
+
+    void ReducirZoom_Click(object? sender, EventArgs e) => CambiarZoom(-0.1);
+
+    void AumentarZoom_Click(object? sender, EventArgs e) => CambiarZoom(0.1);
+
+    void CambiarZoom(double cambio)
+    {
+        _zoomLectura = Math.Clamp(Math.Round(_zoomLectura + cambio, 1), 0.6, 2.5);
+        ZoomLectura.Text = $"{_zoomLectura:P0}";
+        TextoLectura.FontSize = 15 * _zoomLectura;
+        _ = AplicarZoomWebAsync(LecturaWeb);
+    }
+
+    async void LecturaWeb_Navigated(object? sender, WebNavigatedEventArgs e) =>
+        await AplicarZoomWebAsync(LecturaWeb);
+
+    async Task AplicarZoomWebAsync(WebView web)
+    {
+        if (!web.IsVisible)
+            return;
+
+        try
+        {
+            await web.EvaluateJavaScriptAsync($"document.body.style.zoom='{_zoomLectura.ToString(System.Globalization.CultureInfo.InvariantCulture)}'");
+        }
+        catch (Exception ex)
+        {
+            Diag("No se pudo aplicar el zoom del lector: " + ex.Message);
+        }
+    }
+
     async void VisorResumen_Click(object? sender, EventArgs e) => await AnalizarConTamanoAsync(_visorId);
+
+    async void LecturaResumen_Click(object? sender, EventArgs e)
+    {
+        if (_visorId is null)
+            return;
+
+        var conn = await LocalDatabase.GetAsync();
+        var doc = await conn.Table<Documento>().Where(d => d.Id == _visorId).FirstOrDefaultAsync();
+        if (doc is not null)
+            await MostrarAsync("Resumen", string.IsNullOrWhiteSpace(doc.Resumen)
+                ? "Todavía no hay un resumen. Usa «Analizar documento» para generarlo."
+                : doc.Resumen);
+    }
 
     async void VisorCuestionario_Click(object? sender, EventArgs e)
     {
@@ -532,7 +747,11 @@ public partial class DocumentosView : ContentView
         if (id is null)
             return;
 
-        CerrarVisor_Click(sender, e);
+        PanelVisor.IsVisible = false;
+        PanelLectura.IsVisible = false;
+        _archivosExternos.Remove(id);
+        _visorId = null;
+        LecturaCompletaChanged?.Invoke(this, false);
         await CrearDiagramaDesdeAsync(id);
     }
 
@@ -571,6 +790,19 @@ public partial class DocumentosView : ContentView
 
             // 2) Borra local
             await conn.DeleteAsync(doc);
+            _archivosExternos.Remove(id);
+            var rutaExterna = RutaDocumentoExterno(id);
+            if (File.Exists(rutaExterna))
+            {
+                try
+                {
+                    File.Delete(rutaExterna);
+                }
+                catch (Exception ex)
+                {
+                    Diag("No se pudo eliminar la copia local del PDF: " + ex.Message);
+                }
+            }
 
             // 2) Borra en Supabase (archivo + registro), si hay conexión
             var client = await SupabaseService.GetClientAsync();
@@ -608,6 +840,9 @@ public partial class DocumentosView : ContentView
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         return page is null ? Task.CompletedTask : page.DisplayAlertAsync(titulo, mensaje, "OK");
     }
+
+    static string RutaDocumentoExterno(string id) =>
+        Path.Combine(FileSystem.AppDataDirectory, "DocumentosExternos", $"{id}.pdf");
 }
 
 public class DocumentoItem

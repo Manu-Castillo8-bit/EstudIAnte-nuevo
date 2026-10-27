@@ -21,14 +21,25 @@ public partial class InicioView : ContentView
             return;
 
         var compact = width < 760;
-        if (_compactLayout == compact)
-            return;
-
+        if (_compactLayout != compact)
+            HomeLayout.Padding = compact
+                ? new Thickness(14, 8, 14, 20)
+                : new Thickness(28, 8, 28, 28);
         _compactLayout = compact;
-        HomeLayout.Padding = compact
-            ? new Thickness(14, 8, 14, 20)
-            : new Thickness(28, 8, 28, 28);
         HeroRobot.IsVisible = width >= 760;
+        foreach (var card in QuickAccess.Children.OfType<Border>())
+        {
+            FlexLayout.SetBasis(card, new FlexBasis(compact ? 0.47f : 0.22f, true));
+            card.MinimumWidthRequest = compact ? Math.Max(112, (width - 72) / 2) : 180;
+            card.Margin = compact ? new Thickness(0, 0, 8, 8) : new Thickness(0, 0, 16, 16);
+        }
+
+        foreach (var card in DashboardStats.Children.OfType<Border>())
+        {
+            FlexLayout.SetBasis(card, new FlexBasis(compact ? 0.46f : 0.19f, true));
+            card.MinimumWidthRequest = compact ? 105 : 130;
+            card.Margin = new Thickness(0, 0, compact ? 6 : 10, 8);
+        }
     }
 
     /// <summary>Recarga el dashboard (MainPage lo llama al volver a Inicio).</summary>
@@ -87,7 +98,11 @@ public partial class InicioView : ContentView
         DashboardStats.Clear();
         foreach (var (emoji, valor, titulo, detalle) in stats)
         {
-            DashboardStats.Add(CrearStatCard(emoji, valor, titulo, detalle));
+            var card = CrearStatCard(emoji, valor, titulo, detalle);
+            FlexLayout.SetBasis(card, new FlexBasis(_compactLayout == true ? 0.48f : 0.19f, true));
+            card.MinimumWidthRequest = _compactLayout == true ? 105 : 130;
+            card.Margin = new Thickness(0, 0, _compactLayout == true ? 6 : 10, 8);
+            DashboardStats.Add(card);
         }
 
         // Contenido interactivo
@@ -239,6 +254,33 @@ public partial class InicioView : ContentView
 
     static Border FilaClicable(string emoji, string titulo, string detalle, Action accion)
     {
+        var contenido = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new(GridLength.Auto),
+                new(GridLength.Star),
+            },
+            ColumnSpacing = 10,
+        };
+        contenido.Children.Add(new Label
+        {
+            Text = emoji,
+            FontSize = 16,
+            VerticalOptions = LayoutOptions.Center,
+        });
+        var etiquetas = new VerticalStackLayout
+        {
+            Spacing = 1,
+            Children =
+            {
+                new Label { Text = titulo, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#E2E8F0"), LineBreakMode = LineBreakMode.TailTruncation },
+                new Label { Text = detalle, FontSize = 11, TextColor = Color.FromArgb("#94A3B8"), LineBreakMode = LineBreakMode.WordWrap },
+            },
+        };
+        Grid.SetColumn(etiquetas, 1);
+        contenido.Children.Add(etiquetas);
+
         var fila = new Border
         {
             BackgroundColor = Color.FromArgb("#0D1236"),
@@ -246,23 +288,7 @@ public partial class InicioView : ContentView
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(12) },
             Padding = new Thickness(14, 10),
             Margin = new Thickness(0, 0, 0, 8),
-            Content = new HorizontalStackLayout
-            {
-                Spacing = 10,
-                Children =
-                {
-                    new Label { Text = emoji, FontSize = 16, VerticalOptions = LayoutOptions.Center },
-                    new VerticalStackLayout
-                    {
-                        Spacing = 1,
-                        Children =
-                        {
-                            new Label { Text = titulo, FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#E2E8F0") },
-                            new Label { Text = detalle, FontSize = 11, TextColor = Color.FromArgb("#94A3B8") },
-                        },
-                    },
-                },
-            },
+            Content = contenido,
         };
         fila.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(accion) });
         return fila;

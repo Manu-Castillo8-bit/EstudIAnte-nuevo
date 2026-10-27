@@ -62,6 +62,9 @@
 
                     <ActivityIndicator x:Name="SpinnerGen" IsRunning="False" IsVisible="False"
                                        Color="{StaticResource Cyan}" HorizontalOptions="Start" />
+                    <controls:PulsarButton x:Name="BtnCancelarGen" Text="✕ Cancelar generación"
+                            Style="{StaticResource GhostButton}" IsVisible="False"
+                            Clicked="CancelarGeneracion_Click" />
                     <Label x:Name="LblEstadoGen" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
                 </VerticalStackLayout>
             </Border>

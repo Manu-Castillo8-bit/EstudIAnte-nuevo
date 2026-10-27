@@ -522,15 +522,17 @@ public static class DocumentoHtmlService
               for (let n = 1; n <= pdf.numPages; n++) {{
                 cadena = cadena.then(function () {{
                   return pdf.getPage(n).then(function (pagina) {{
-                    const anchoDisponible = Math.max(1, Math.min(CONT.clientWidth - 64, 900));
+                    const anchoDisponible = Math.max(1, Math.min(CONT.clientWidth - 32, 900));
                     const escala = anchoDisponible / pagina.getViewport({{scale: 1}}).width;
-                    const visor = pagina.getViewport({{ scale: escala }});
+                    const escalaSalida = window.devicePixelRatio || 1;
+                    const visor = pagina.getViewport({{ scale: escala * escalaSalida }});
                     // Cada página se ve como una hoja blanca separada (salto visible).
                     const hoja = document.createElement('div');
                     hoja.className = 'pagina';
                     const lienzo = document.createElement('canvas');
-                    lienzo.width = visor.width; lienzo.height = visor.height;
+                    lienzo.width = Math.ceil(visor.width); lienzo.height = Math.ceil(visor.height);
                     lienzo.style.width = '100%';
+                    lienzo.style.height = 'auto';
                     const pie = document.createElement('div');
                     pie.className = 'num-pagina';
                     pie.textContent = 'Página ' + n + ' de ' + pdf.numPages;

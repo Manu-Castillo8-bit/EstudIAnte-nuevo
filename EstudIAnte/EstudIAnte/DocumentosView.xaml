@@ -93,6 +93,10 @@
                                             HeightRequest="40" Clicked="Ver_Click" Margin="0,0,8,4"
                                             IsVisible="{Binding PuedeVer}"
                                             CommandParameter="{Binding Id}" />
+                                    <controls:PulsarButton Text="📖  Solo leer" Style="{StaticResource GhostButton}"
+                                            HeightRequest="40" Clicked="SoloLeer_Click" Margin="0,0,8,4"
+                                            IsVisible="{Binding PuedeVer}"
+                                            CommandParameter="{Binding Id}" />
                                     <controls:PulsarButton Text="{Binding TextoBotonAnalizar}" Style="{StaticResource GhostButton}"
                                             HeightRequest="40" Clicked="Analizar_Click" Margin="0,0,8,4"
                                             IsEnabled="{Binding PuedeAnalizar}"
@@ -168,6 +172,8 @@
                     <FlexLayout Grid.Row="4" Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
                         <controls:PulsarButton Text="👁 Ver contenido" Style="{StaticResource PrimaryButton}"
                                 HeightRequest="44" Clicked="DetalleVer_Click" Margin="0,0,10,6" />
+                        <controls:PulsarButton Text="📖 Solo leer" Style="{StaticResource GhostButton}"
+                                HeightRequest="44" Clicked="DetalleSoloLeer_Click" Margin="0,0,10,6" />
                         <controls:PulsarButton x:Name="BtnDetalleAnalizar" Text="✨ Analizar con IA"
                                 Style="{StaticResource GhostButton}" HeightRequest="44"
                                 Clicked="DetalleAnalizar_Click" Margin="0,0,10,6" />
@@ -216,6 +222,64 @@
                             Clicked="VisorDiagrama_Click" Margin="0,0,8,6" />
                 </FlexLayout>
             </Grid>
+        </Border>
+
+        <!-- ===== LECTOR DE PANTALLA COMPLETA ===== -->
+        <Border x:Name="PanelLectura" IsVisible="False" BackgroundColor="{StaticResource Bg}"
+                HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8"
+                  Padding="{OnIdiom Phone='10,8,10,8', Tablet='18,14,18,14', Default='22,16,22,16'}">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                        <Label x:Name="TituloLectura" Text="Documento"
+                               FontSize="{OnIdiom Phone=15, Default=18}" FontAttributes="Bold"
+                               TextColor="{StaticResource TextMain}" LineBreakMode="TailTruncation" />
+                        <Label x:Name="MetaLectura" Text="" FontSize="11" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+                    <controls:PulsarButton Grid.Column="1" Text="✕" Style="{StaticResource GhostButton}"
+                            WidthRequest="42" Clicked="CerrarLectura_Click" />
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+                    <controls:PulsarButton Text="−" Style="{StaticResource GhostButton}" WidthRequest="42"
+                            Clicked="ReducirZoom_Click" />
+                    <Label x:Name="ZoomLectura" Grid.Column="1" Text="100%" FontSize="13"
+                           TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                    <controls:PulsarButton x:Name="BtnOpcionesLectura" Grid.Column="3" Text="⋮ Opciones"
+                            Style="{StaticResource GhostButton}" Clicked="AlternarOpcionesLectura_Click" />
+                    <controls:PulsarButton Grid.Column="2" Text="+" Style="{StaticResource GhostButton}"
+                            WidthRequest="42" HorizontalOptions="End" Clicked="AumentarZoom_Click" />
+                </Grid>
+                <Grid Grid.Row="2" BackgroundColor="#0D1236">
+                    <WebView x:Name="LecturaWeb" IsVisible="False" Navigated="LecturaWeb_Navigated" />
+                    <ScrollView x:Name="LecturaTextoScroll" IsVisible="False" Padding="16">
+                        <Label x:Name="TextoLectura" Text="" TextColor="{StaticResource TextMain}"
+                               LineBreakMode="WordWrap" FontSize="15" />
+                    </ScrollView>
+                </Grid>
+                <FlexLayout x:Name="OpcionesLectura" Grid.Row="3" IsVisible="False"
+                            Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                    <controls:PulsarButton x:Name="BtnLecturaAnalizar" Text="✨ Analizar documento"
+                            Style="{StaticResource PrimaryButton}" Clicked="VisorResumen_Click" Margin="0,0,8,6" />
+                    <controls:PulsarButton Text="📝 Ver resumen" Style="{StaticResource GhostButton}"
+                            Clicked="LecturaResumen_Click" Margin="0,0,8,6" />
+                    <controls:PulsarButton Text="📋 Crear cuestionario" Style="{StaticResource GhostButton}"
+                            Clicked="VisorCuestionario_Click" Margin="0,0,8,6" />
+                    <controls:PulsarButton Text="🔀 Crear diagrama" Style="{StaticResource GhostButton}"
+                            Clicked="VisorDiagrama_Click" Margin="0,0,8,6" />
+                </FlexLayout>
+            </Grid>
+        </Border>
+
+        <Border x:Name="PanelCargando" IsVisible="False" ZIndex="10"
+                BackgroundColor="#D90B1030" HorizontalOptions="Fill" VerticalOptions="Fill">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
+                <ActivityIndicator x:Name="SpinnerAnalisis" IsRunning="False"
+                                   Color="{StaticResource Cyan}" WidthRequest="48" HeightRequest="48" />
+                <Label Text="Procesando con IA..." TextColor="{StaticResource TextMain}"
+                       FontSize="16" HorizontalOptions="Center" />
+                <controls:PulsarButton Text="✕ Cancelar" Style="{StaticResource GhostButton}"
+                                       Clicked="CancelarAnalisis_Click" />
+            </VerticalStackLayout>
         </Border>
     </Grid>
 </ContentView>

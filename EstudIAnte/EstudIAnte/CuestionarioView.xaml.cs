@@ -16,6 +16,7 @@ public partial class CuestionarioView : ContentView
     int _indice;
     bool _generando;
     bool? _compactLayout;
+    CancellationTokenSource? _generacionCts;
 
     // Cronómetro de la tarjeta de resumen.
     DateTime _inicioQuiz;
@@ -232,16 +233,23 @@ public partial class CuestionarioView : ContentView
 
         _generando = true;
         BtnGenerar.IsBusy = true;
+        BtnCancelarGen.IsVisible = true;
         SpinnerGen.IsRunning = SpinnerGen.IsVisible = true;
         LblEstadoGen.Text = "Generando con IA, espera un momento...";
+        _generacionCts = new CancellationTokenSource();
 
         try
         {
-            var (quiz, ia) = await QuizGenerator.GenerarAsync(usuario.Id, nombre, fuenteTexto, material, documentoId, cantidad);
+            var (quiz, ia) = await QuizGenerator.GenerarAsync(
+                usuario.Id, nombre, fuenteTexto, material, documentoId, cantidad, _generacionCts.Token);
             _cuestionario = quiz;
             ResumenIA.Text = ia;
             LblEstadoGen.Text = $"Cuestionario generado con {ia}.";
             await CargarPreguntasAsync();
+        }
+        catch (OperationCanceledException) when (_generacionCts?.IsCancellationRequested == true)
+        {
+            LblEstadoGen.Text = "Generación cancelada.";
         }
         catch (Exception ex)
         {
@@ -252,9 +260,14 @@ public partial class CuestionarioView : ContentView
         {
             _generando = false;
             BtnGenerar.IsBusy = false;
+            BtnCancelarGen.IsVisible = false;
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
+            _generacionCts?.Dispose();
+            _generacionCts = null;
         }
     }
+
+    void CancelarGeneracion_Click(object? sender, EventArgs e) => _generacionCts?.Cancel();
 
     async Task<string> ObtenerMensajesDeTemaAsync(string temaNombre)
     {

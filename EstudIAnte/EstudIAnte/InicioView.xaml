@@ -25,9 +25,9 @@
             </Border>
 
             <!-- Accesos rápidos -->
-            <FlexLayout Wrap="Wrap" Direction="Row" JustifyContent="Start"
+            <FlexLayout x:Name="QuickAccess" Wrap="Wrap" Direction="Row" JustifyContent="Start"
                         AlignItems="Start" AlignContent="Start">
-                <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
+                <Border FlexLayout.Basis="23%" MinimumWidthRequest="130" Margin="0,0,16,16"
                         Background="{StaticResource CardBlue}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
                     <Border.GestureRecognizers>
@@ -39,7 +39,7 @@
                         <Label Text="Explora por tema" FontSize="12" TextColor="#C7D2FE" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
-                <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
+                <Border FlexLayout.Basis="23%" MinimumWidthRequest="130" Margin="0,0,16,16"
                         Background="{StaticResource CardViolet}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
                     <Border.GestureRecognizers>
@@ -51,7 +51,7 @@
                         <Label Text="Evalúa tus conocimientos" FontSize="12" TextColor="#DDD6FE" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
-                <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
+                <Border FlexLayout.Basis="23%" MinimumWidthRequest="130" Margin="0,0,16,16"
                         Background="{StaticResource CardGreen}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
                     <Border.GestureRecognizers>
@@ -63,7 +63,7 @@
                         <Label Text="Visualiza conceptos" FontSize="12" TextColor="#A7F3D0" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
-                <Border FlexLayout.Basis="23%" MinimumWidthRequest="200" Margin="0,0,16,16"
+                <Border FlexLayout.Basis="23%" MinimumWidthRequest="130" Margin="0,0,16,16"
                         Background="{StaticResource CardPink}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 20" Padding="20" HeightRequest="170">
                     <Border.GestureRecognizers>

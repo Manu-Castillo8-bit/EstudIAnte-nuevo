@@ -9,6 +9,21 @@ namespace EstudIAnte
         {
             InitializeComponent();
             ActualizarUsuario();
+            VDocs.LecturaCompletaChanged += (_, abierta) => TopBar.IsVisible = !abierta;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            var solicitud = ExternalDocumentRequest.TakeAsync();
+            if (solicitud is null)
+                return;
+
+            var (archivo, error) = await solicitud;
+            if (!string.IsNullOrWhiteSpace(error))
+                await DisplayAlertAsync("No se pudo abrir el documento", error, "OK");
+            else if (archivo is not null)
+                await VDocs.AbrirArchivoExternoAsync(archivo.Path, archivo.FileName);
         }
 
         bool _compactLayout;
@@ -26,11 +41,17 @@ namespace EstudIAnte
             if (_compactLayout)
             {
                 MainLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-                MainLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                MainLayout.RowDefinitions.Clear();
                 MainLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
 
                 NavigationPanel.Padding = new Thickness(6, 4);
-                NavigationPanel.HeightRequest = 60;
+                NavigationPanel.HeightRequest = -1;
+                NavigationPanel.WidthRequest = 280;
+                NavigationPanel.HorizontalOptions = LayoutOptions.Start;
+                NavigationPanel.VerticalOptions = LayoutOptions.Fill;
+                NavigationPanel.ZIndex = 2;
+                NavigationPanel.IsVisible = false;
+                MenuBackdrop.IsVisible = false;
                 NavigationPanel.RowDefinitions.Clear();
                 NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
                 BrandHeader.IsVisible = false;
@@ -38,11 +59,12 @@ namespace EstudIAnte
                 Grid.SetRow(NavigationScroll, 0);
                 Grid.SetRow(NavigationPanel, 0);
                 Grid.SetColumn(NavigationPanel, 0);
-                Grid.SetRow(ContentPanel, 1);
+                Grid.SetRow(ContentPanel, 0);
                 Grid.SetColumn(ContentPanel, 0);
 
-                NavItems.Direction = FlexDirection.Row;
-                NavigationScroll.Orientation = ScrollOrientation.Horizontal;
+                NavItems.Direction = FlexDirection.Column;
+                NavigationScroll.Orientation = ScrollOrientation.Vertical;
+                BtnMenu.IsVisible = true;
                 TopBar.Padding = new Thickness(12, 10, 12, 8);
                 TopBar.ColumnSpacing = 8;
             }
@@ -54,6 +76,12 @@ namespace EstudIAnte
 
                 NavigationPanel.Padding = new Thickness(14);
                 NavigationPanel.HeightRequest = -1;
+                NavigationPanel.WidthRequest = -1;
+                NavigationPanel.HorizontalOptions = LayoutOptions.Fill;
+                NavigationPanel.VerticalOptions = LayoutOptions.Fill;
+                NavigationPanel.ZIndex = 0;
+                NavigationPanel.IsVisible = true;
+                MenuBackdrop.IsVisible = false;
                 NavigationPanel.RowDefinitions.Clear();
                 NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
                 NavigationPanel.RowDefinitions.Add(new RowDefinition(GridLength.Star));
@@ -70,13 +98,14 @@ namespace EstudIAnte
 
                 NavItems.Direction = FlexDirection.Column;
                 NavigationScroll.Orientation = ScrollOrientation.Vertical;
+                BtnMenu.IsVisible = false;
                 TopBar.Padding = new Thickness(28, 22, 28, 14);
                 TopBar.ColumnSpacing = 16;
             }
 
             foreach (var item in new[] { N1, N2, N3, N4, N5, N6, N7, N8 })
             {
-                item.WidthRequest = _compactLayout ? 150 : -1;
+                item.WidthRequest = _compactLayout ? 248 : -1;
                 item.HeightRequest = _compactLayout ? 48 : -1;
             }
         }
@@ -109,6 +138,11 @@ namespace EstudIAnte
             VArchivos.IsVisible = ReferenceEquals(radioButton, N6);
             VConfig.IsVisible = ReferenceEquals(radioButton, N7);
             VAdmin.IsVisible = ReferenceEquals(radioButton, N8);
+            if (_compactLayout)
+            {
+                NavigationPanel.IsVisible = false;
+                MenuBackdrop.IsVisible = false;
+            }
 
             // El panel admin solo se ve para administradores.
             if (ReferenceEquals(radioButton, N8) && AuthService.UsuarioActual?.Rol != "admin")
@@ -150,12 +184,37 @@ namespace EstudIAnte
         /// <summary>El avatar superior abre la sección de Configuración.</summary>
         void Avatar_Tapped(object? sender, EventArgs e) => IrA("config");
 
+        void Menu_Tapped(object? sender, EventArgs e)
+        {
+            NavigationPanel.IsVisible = !NavigationPanel.IsVisible;
+            MenuBackdrop.IsVisible = NavigationPanel.IsVisible;
+        }
+
+        void MenuBackdrop_Tapped(object? sender, TappedEventArgs e)
+        {
+            NavigationPanel.IsVisible = false;
+            MenuBackdrop.IsVisible = false;
+        }
+
         /// <summary>Acceso público al chat para navegación desde otras vistas.</summary>
     public ChatView VisorChat => VChat;
 
     /// <summary>Referencia a la MainPage activa, para navegar desde las vistas.</summary>
-        public static MainPage? Actual =>
-            Application.Current?.Windows.FirstOrDefault()?.Page as MainPage;
+        public static MainPage? Actual
+        {
+            get
+            {
+                Page? page = Application.Current?.Windows.FirstOrDefault()?.Page;
+                while (page is Shell shell)
+                    page = shell.CurrentPage;
+                while (page is NavigationPage navigation)
+                    page = navigation.CurrentPage;
+                return page as MainPage;
+            }
+        }
+
+        public Task AbrirDocumentoExternoAsync(string ruta, string nombre) =>
+            VDocs.AbrirArchivoExternoAsync(ruta, nombre);
 
         /// <summary>
         /// Cambia a la sección indicada: "inicio", "chat", "quiz", "diagramas", "documentos",

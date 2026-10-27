@@ -55,7 +55,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, proveedor } = await req.json();
+    const { prompt, proveedor, buscarEnWeb } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return json({ error: "Falta el campo 'prompt'." }, 400);
     }
@@ -71,7 +71,7 @@ serve(async (req) => {
         ? await llamarGroq(prompt)
         : elegido === "openrouter"
           ? await llamarOpenRouter(prompt)
-          : await llamarGemini(prompt);
+          : await llamarGemini(prompt, buscarEnWeb === true);
 
       return json({
         texto,
@@ -98,7 +98,7 @@ serve(async (req) => {
 
 // ---------------- Gemini (API de Google AI Studio) ----------------
 
-async function llamarGemini(prompt: string): Promise<string> {
+async function llamarGemini(prompt: string, buscarEnWeb = false): Promise<string> {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) {
     throw new IAError("El servidor no tiene configurada GEMINI_API_KEY.", false);
@@ -106,7 +106,10 @@ async function llamarGemini(prompt: string): Promise<string> {
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_GEMINI}:generateContent?key=${apiKey}`;
-  const cuerpo = { contents: [{ parts: [{ text: prompt }] }] };
+  const cuerpo = {
+    contents: [{ parts: [{ text: prompt }] }],
+    ...(buscarEnWeb ? { tools: [{ google_search: {} }] } : {}),
+  };
 
   let respuesta: Response | null = null;
   let detalle = "";
@@ -153,7 +156,16 @@ async function llamarGemini(prompt: string): Promise<string> {
 
   const data = await respuesta.json();
   const partes = data?.candidates?.[0]?.content?.parts ?? [];
-  const texto = partes.map((p: { text?: string }) => p.text ?? "").join("");
+  let texto = partes.map((p: { text?: string }) => p.text ?? "").join("");
+
+  if (buscarEnWeb) {
+    const fuentes: string[] = (data?.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [])
+      .flatMap((chunk: { web?: { title?: string; uri?: string } }) =>
+        chunk.web?.uri ? [`- ${chunk.web.title ?? "Fuente"}: ${chunk.web.uri}`] : []);
+    if (fuentes.length > 0) {
+      texto += `\n\nFuentes consultadas:\n${[...new Set(fuentes)].join("\n")}`;
+    }
+  }
 
   if (!texto.trim()) throw new IAError("devolvió una respuesta vacía.", false);
   return texto;

@@ -28,6 +28,7 @@ public partial class DiagramasView : ContentView
     Diagrama? _actual;
     bool _generando;
     bool? _compactLayout;
+    CancellationTokenSource? _generacionCts;
 
     public DiagramasView()
     {
@@ -239,18 +240,24 @@ public partial class DiagramasView : ContentView
 
         _generando = true;
         BtnGenerar.IsBusy = true;
+        BtnCancelarGen.IsVisible = true;
         SpinnerGen.IsRunning = SpinnerGen.IsVisible = true;
         LblEstadoGen.Text = "Generando diagrama con IA, espera un momento...";
+        _generacionCts = new CancellationTokenSource();
 
         try
         {
             var (diagrama, ia) = await DiagramaGenerator.GenerarAsync(
-                usuario.Id, nombre, fuenteTexto, material, documentoId, _tipo);
+                usuario.Id, nombre, fuenteTexto, material, documentoId, _tipo, _generacionCts.Token);
 
             _actual = diagrama;
             LblEstadoGen.Text = $"Diagrama generado con {ia}.";
             MostrarDiagrama(diagrama);
             await CargarHistorialAsync();
+        }
+        catch (OperationCanceledException) when (_generacionCts?.IsCancellationRequested == true)
+        {
+            LblEstadoGen.Text = "Generación cancelada.";
         }
         catch (Exception ex)
         {
@@ -261,9 +268,14 @@ public partial class DiagramasView : ContentView
         {
             _generando = false;
             BtnGenerar.IsBusy = false;
+            BtnCancelarGen.IsVisible = false;
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
+            _generacionCts?.Dispose();
+            _generacionCts = null;
         }
     }
+
+    void CancelarGeneracion_Click(object? sender, EventArgs e) => _generacionCts?.Cancel();
 
     async Task<string> ObtenerMensajesDeTemaAsync(string temaNombre)
     {
