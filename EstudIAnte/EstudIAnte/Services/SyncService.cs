@@ -53,6 +53,7 @@ public static class SyncService
                         case "preguntas": await client.From<Pregunta>().Where(x => x.Id == b.RegistroId).Delete(); break;
                         case "diagramas": await client.From<Diagrama>().Where(x => x.Id == b.RegistroId).Delete(); break;
                         case "resultados": await client.From<Resultado>().Where(x => x.Id == b.RegistroId).Delete(); break;
+                        case "usuarios": await client.From<Usuario>().Where(x => x.Id == b.RegistroId).Delete(); break;
                     }
 
                     await conn.DeleteAsync(b);

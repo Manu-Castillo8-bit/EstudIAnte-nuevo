@@ -121,19 +121,34 @@ public static class AdminService
         await CambiarPasswordAsync(u, u.Password); // reutiliza la actualización local+nube
     }
 
-    /// <summary>Elimina un usuario (los FK en Supabase borran su contenido en cascada).</summary>
+    /// <summary>Elimina un usuario y todo su contenido (local + nube; FKs cascada en Supabase).</summary>
     public static async Task EliminarUsuarioAsync(Usuario u)
     {
-        await SyncService.MarcarBorradoAsync("usuarios", u.Id);
-
         var conn = await LocalDatabase.GetAsync();
+
+        // Documentos con su Storage (los hijos: quizzes, preguntas, resultados, diagramas).
+        var docs = await conn.Table<Documento>().Where(d => d.UsuarioId == u.Id).ToListAsync();
+        await BorrarDocumentoAsync(conn, docs);
+        foreach (var doc in docs)
+            await SyncService.MarcarBorradoAsync("documentos", doc.Id);
+
+        // Chats y mensajes.
+        var chats = await conn.Table<Chat>().Where(c => c.UsuarioId == u.Id).ToListAsync();
+        await BorrarChatsAsync(conn, chats);
+
+        // Temas.
+        var temas = await conn.Table<Tema>().Where(t => t.UsuarioId == u.Id).ToListAsync();
+        await BorrarFilaAsync(conn, "temas", temas, t => t.Id);
+
+        // El usuario al final.
+        await SyncService.MarcarBorradoAsync("usuarios", u.Id);
         await conn.DeleteAsync(u);
 
         var client = await SupabaseService.GetClientAsync();
         if (client is not null)
         {
             try { await client.From<Usuario>().Where(x => x.Id == u.Id).Delete(); }
-            catch { /* se registra el borrado y se aplica al sincronizar */ }
+            catch { /* la tumba se aplica al sincronizar */ }
         }
     }
 
@@ -175,90 +190,193 @@ public static class AdminService
         return locales.OrderByDescending(ordenarPor).ToList();
     }
 
-    /// <summary>Elimina un documento (incluye su archivo en Storage).</summary>
+    // ---------------- BORRADO EN CASCADA ----------------
+
+    /// <summary>Borra de forma TOTAL: local + nube, con toda la cascada de datos hijos.</summary>
     public static async Task EliminarDocumentoAsync(Documento doc)
     {
-        await SyncService.MarcarBorradoAsync("documentos", doc.Id);
-
         var conn = await LocalDatabase.GetAsync();
-        await conn.DeleteAsync(doc);
-
-        var client = await SupabaseService.GetClientAsync();
-        if (client is null) return;
-
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(doc.RutaStorage))
-                await client.Storage.From("documentos").Remove(doc.RutaStorage);
-        }
-        catch { /* el archivo puede no existir */ }
-
-        try { await client.From<Documento>().Where(d => d.Id == doc.Id).Delete(); }
-        catch { /* la tumba se aplica al sincronizar */ }
+        await BorrarDocumentoAsync(conn, new List<Documento> { doc });
     }
 
-    /// <summary>Elimina un cuestionario (sus preguntas se borran por FK).</summary>
     public static async Task EliminarCuestionarioAsync(Cuestionario quiz)
     {
-        await SyncService.MarcarBorradoAsync("cuestionarios", quiz.Id);
-
         var conn = await LocalDatabase.GetAsync();
-        await conn.DeleteAsync(quiz);
-
-        var client = await SupabaseService.GetClientAsync();
-        if (client is null) return;
-
-        try { await client.From<Cuestionario>().Where(c => c.Id == quiz.Id).Delete(); }
-        catch { /* la tumba se aplica al sincronizar */ }
+        await BorrarCuestionarioAsync(conn, new List<Cuestionario> { quiz });
     }
 
-    /// <summary>Elimina un diagrama.</summary>
-    public static async Task EliminarDiagramaAsync(Diagrama d)
+    public static async Task EliminarDiagramaAsync(Diagrama diagrama)
     {
-        await SyncService.MarcarBorradoAsync("diagramas", d.Id);
-
         var conn = await LocalDatabase.GetAsync();
-        await conn.DeleteAsync(d);
-
-        var client = await SupabaseService.GetClientAsync();
-        if (client is null) return;
-
-        try { await client.From<Diagrama>().Where(x => x.Id == d.Id).Delete(); }
-        catch { /* la tumba se aplica al sincronizar */ }
+        await BorrarDiagramasAsync(conn, new List<Diagrama> { diagrama });
     }
 
-    /// <summary>Elimina un resultado de cuestionario.</summary>
-    public static async Task EliminarResultadoAsync(Resultado r)
+    public static async Task EliminarResultadoAsync(Resultado resultado)
     {
-        await SyncService.MarcarBorradoAsync("resultados", r.Id);
-
         var conn = await LocalDatabase.GetAsync();
-        await conn.DeleteAsync(r);
-
-        var client = await SupabaseService.GetClientAsync();
-        if (client is null) return;
-
-        try { await client.From<Resultado>().Where(x => x.Id == r.Id).Delete(); }
-        catch { /* la tumba se aplica al sincronizar */ }
+        await BorrarResultadosAsync(conn, new List<Resultado> { resultado });
     }
 
-    /// <summary>Elimina un chat junto con todos sus mensajes.</summary>
-    public static async Task EliminarChatAsync(Chat c)
+    public static async Task EliminarChatAsync(Chat chat)
     {
-        await SyncService.MarcarBorradoAsync("chats", c.Id);
-
         var conn = await LocalDatabase.GetAsync();
-        var antiguos = await conn.Table<Mensaje>().Where(m => m.ChatId == c.Id).ToListAsync();
-        foreach (var m in antiguos)
-            await SyncService.MarcarBorradoAsync("mensajes", m.Id);
-        await conn.DeleteAsync(c);
-        await conn.Table<Mensaje>().Where(m => m.ChatId == c.Id).DeleteAsync();
+        await BorrarChatsAsync(conn, new List<Chat> { chat });
+    }
+
+    /// <summary>
+    /// Borra de forma TOTAL una lista de documentos (los llama la vista/panel admin).
+    /// </summary>
+    public static async Task EliminarDocumentosAsync(IEnumerable<Documento> docs)
+    {
+        var conn = await LocalDatabase.GetAsync();
+        await BorrarDocumentoAsync(conn, docs.ToList());
+    }
+
+    // (Borrados en cascada internos)
+
+    /// <summary>Borra una fila localmente y la marca para borrarla en la nube.</summary>
+    static async Task BorrarFilaAsync<T>(SQLite.SQLiteAsyncConnection conn, string tabla, List<T> filas, Func<T, string> idDe)
+    {
+        foreach (var fila in filas)
+        {
+            await SyncService.MarcarBorradoAsync(tabla, idDe(fila));
+            await conn.DeleteAsync(fila);
+        }
+    }
+
+    /// <summary>
+    /// Borra TODO el contenido relacionado con un documento: el documento,
+    /// sus cuestionarios y preguntas, los resultados y sus diagramas.
+    /// </summary>
+    static async Task BorrarDocumentoAsync(SQLite.SQLiteAsyncConnection conn, List<Documento> docs)
+    {
+        var ids = docs.Select(d => d.Id).ToList();
+
+        var (quizzes, preguntas, diagramas, resultados, mensajes, chats, usuarios) = await RelacionadosDocAsync(conn, ids);
+
+        await BorrarFilaAsync(conn, "resultados", resultados, r => r.Id);
+        await BorrarFilaAsync(conn, "preguntas", preguntas, p => p.Id);
+        await BorrarFilaAsync(conn, "cuestionarios", quizzes, q => q.Id);
+        await BorrarFilaAsync(conn, "diagramas", diagramas, d => d.Id);
+        await BorrarFilaAsync(conn, "documentos", docs, d => d.Id);
 
         var client = await SupabaseService.GetClientAsync();
-        if (client is null) return;
+        if (client is not null)
+        {
+            foreach (var doc in docs)
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(doc.RutaStorage))
+                        await client.Storage.From("documentos").Remove(doc.RutaStorage);
+                }
+                catch { /* el archivo puede no existir */ }
+            }
 
-        try { await client.From<Chat>().Where(x => x.Id == c.Id).Delete(); }
-        catch { /* la tumba se aplica al sincronizar */ }
+            try
+            {
+                foreach (var doc in docs)
+                    await client.From<Documento>().Where(d => d.Id == doc.Id).Delete();
+            }
+            catch { /* las tumbas se aplican al sincronizar */ }
+        }
+    }
+
+    /// <summary>Devuelve todos los registros hijos de documentos dados (quizzes, preguntas, diagramas, resultados).</summary>
+    static async Task<(List<Cuestionario>, List<Pregunta>, List<Diagrama>, List<Resultado>, List<Mensaje>, List<Chat>, List<Usuario>)>
+        RelacionadosDocAsync(SQLite.SQLiteAsyncConnection conn, List<string> idsDocumentos)
+    {
+        var quizzes = (await conn.Table<Cuestionario>().ToListAsync())
+            .Where(q => q.DocumentoId is not null && idsDocumentos.Contains(q.DocumentoId)).ToList();
+        var idsQuizzes = quizzes.Select(q => q.Id).ToList();
+        var preguntas = (await conn.Table<Pregunta>().ToListAsync())
+            .Where(p => idsQuizzes.Contains(p.CuestionarioId ?? "")).ToList();
+        var diagramas = (await conn.Table<Diagrama>().ToListAsync())
+            .Where(d => d.DocumentoId is not null && idsDocumentos.Contains(d.DocumentoId)).ToList();
+        var resultados = (await conn.Table<Resultado>().ToListAsync())
+            .Where(r => idsQuizzes.Contains(r.CuestionarioId ?? "")).ToList();
+        return (quizzes, preguntas, diagramas, resultados, new List<Mensaje>(), new List<Chat>(), new List<Usuario>());
+    }
+
+    /// <summary>
+    /// Borra un cuestionario con sus preguntas y resultados.
+    /// </summary>
+    static async Task BorrarCuestionarioAsync(SQLite.SQLiteAsyncConnection conn, List<Cuestionario> quizzes)
+    {
+        var ids = quizzes.Select(q => q.Id).ToList();
+
+        var preguntas = (await conn.Table<Pregunta>().ToListAsync()).Where(p => ids.Contains(p.CuestionarioId ?? "")).ToList();
+        var resultados = (await conn.Table<Resultado>().ToListAsync()).Where(r => ids.Contains(r.CuestionarioId ?? "")).ToList();
+
+        await BorrarFilaAsync(conn, "resultados", resultados, r => r.Id);
+        await BorrarFilaAsync(conn, "preguntas", preguntas, p => p.Id);
+        await BorrarFilaAsync(conn, "cuestionarios", quizzes, q => q.Id);
+
+        var client = await SupabaseService.GetClientAsync();
+        if (client is not null)
+        {
+            try
+            {
+                foreach (var quiz in quizzes)
+                    await client.From<Cuestionario>().Where(q => q.Id == quiz.Id).Delete();
+            }
+            catch { /* las tumbas se aplican al sincronizar */ }
+        }
+    }
+
+    /// <summary>Borra una lista de chats con todos sus mensajes.</summary>
+    static async Task BorrarChatsAsync(SQLite.SQLiteAsyncConnection conn, List<Chat> chats)
+    {
+        var ids = chats.Select(c => c.Id).ToList();
+        var mensajes = (await conn.Table<Mensaje>().ToListAsync()).Where(m => ids.Contains(m.ChatId)).ToList();
+
+        await BorrarFilaAsync(conn, "mensajes", mensajes, m => m.Id);
+        await BorrarFilaAsync(conn, "chats", chats, c => c.Id);
+
+        var client = await SupabaseService.GetClientAsync();
+        if (client is not null)
+        {
+            try
+            {
+                foreach (var chat in chats)
+                    await client.From<Chat>().Where(c => c.Id == chat.Id).Delete();
+            }
+            catch { /* las tumbas se aplican al sincronizar */ }
+        }
+    }
+
+    /// <summary>Borra diagramas.</summary>
+    static async Task BorrarDiagramasAsync(SQLite.SQLiteAsyncConnection conn, List<Diagrama> diagramas)
+    {
+        await BorrarFilaAsync(conn, "diagramas", diagramas, d => d.Id);
+
+        var client = await SupabaseService.GetClientAsync();
+        if (client is not null)
+        {
+            try
+            {
+                foreach (var d in diagramas)
+                    await client.From<Diagrama>().Where(x => x.Id == d.Id).Delete();
+            }
+            catch { /* las tumbas se aplican al sincronizar */ }
+        }
+    }
+
+    /// <summary>Borra resultados de cuestionarios.</summary>
+    static async Task BorrarResultadosAsync(SQLite.SQLiteAsyncConnection conn, List<Resultado> resultados)
+    {
+        await BorrarFilaAsync(conn, "resultados", resultados, r => r.Id);
+
+        var client = await SupabaseService.GetClientAsync();
+        if (client is not null)
+        {
+            try
+            {
+                foreach (var r in resultados)
+                    await client.From<Resultado>().Where(x => x.Id == r.Id).Delete();
+            }
+            catch { /* las tumbas se aplican al sincronizar */ }
+        }
     }
 
     // ---------------- VALIDACIÓN ----------------
