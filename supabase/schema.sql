@@ -18,12 +18,16 @@ create table if not exists usuarios (
     actualizado_en timestamptz not null default now()
 );
 
+-- Nota para bases ya creadas con la versión anterior (solo pdf/docx/txt):
+--   alter table documentos drop constraint if exists documentos_tipo_check;
+--   alter table documentos add constraint documentos_tipo_check
+--     check (tipo in ('pdf','docx','txt','csv','xlsx','pptx','md','log','json'));
 -- ---------- DOCUMENTOS ----------
 create table if not exists documentos (
     id            text primary key,
     usuario_id    text not null references usuarios (id) on delete cascade,
     nombre        text not null,
-    tipo          text not null check (tipo in ('pdf', 'docx', 'txt')),
+    tipo          text not null check (tipo in ('pdf', 'docx', 'txt', 'csv', 'xlsx', 'pptx', 'md', 'log', 'json')),
     tamano_bytes  bigint not null default 0,
     ruta_storage  text,                -- ruta del archivo en Supabase Storage (bucket 'documentos')
     resumen       text not null default '',

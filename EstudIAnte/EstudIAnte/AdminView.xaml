@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:EstudIAnte.Controls"
+             x:Class="EstudIAnte.AdminView">
+    <ScrollView>
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="14">
+
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource CardViolet}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                    <Label Text="🛡" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Panel de administración" Style="{StaticResource PageTitle}" />
+                    <Label x:Name="FuenteDatos" Text="Cargando..." Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <controls:PulsarButton x:Name="BtnRefrescar" Grid.Column="2" Text="⟳  Refrescar"
+                        Style="{StaticResource GhostButton}" Clicked="Refrescar_Click" />
+            </Grid>
+
+            <!-- Estadísticas -->
+            <HorizontalStackLayout x:Name="StatsLayout" Spacing="10" />
+
+            <!-- Pestañas (se construyen en código para marcar la activa) -->
+            <HorizontalStackLayout x:Name="TabsLayout" Spacing="8" />
+
+            <!-- Estado / carga -->
+            <ActivityIndicator x:Name="Spinner" IsRunning="False" IsVisible="False" Color="{StaticResource Cyan}" />
+
+            <!-- USUARIOS -->
+            <VerticalStackLayout x:Name="PanelUsuarios" Spacing="10">
+                <controls:PulsarButton Text="＋  Crear usuario" Style="{StaticResource PrimaryButton}"
+                        HorizontalOptions="Start" Clicked="CrearUsuario_Click" />
+                <CollectionView x:Name="ListaUsuarios">
+                    <CollectionView.EmptyView>
+                        <Label Text="Sin usuarios." Style="{StaticResource Muted}" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                        <Border WidthRequest="46" HeightRequest="46" StrokeThickness="0"
+                                                Background="{StaticResource BrandGradient}" StrokeShape="RoundRectangle 12">
+                                            <Label Text="{Binding Inicial}" FontSize="18" FontAttributes="Bold"
+                                                   TextColor="{StaticResource OnCyan}"
+                                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                            <Label FontAttributes="Bold" TextColor="{StaticResource TextMain}">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="{Binding NombreUsuario}" />
+                                                        <Span Text="  ·  " TextColor="{StaticResource TextMuted}" />
+                                                        <Span Text="{Binding RolEstiqueta}" FontSize="12"
+                                                              TextColor="{Binding ColorRol}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                            <Label FontSize="12" TextColor="{StaticResource TextMuted}"
+                                                   Text="{Binding Contacto}" />
+                                            <Label FontSize="13" TextColor="{StaticResource Cyan}"
+                                                   IsVisible="{Binding MostrarPassword}">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="🔑 Contraseña: " />
+                                                        <Span Text="{Binding Password}" FontAttributes="Bold" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                    <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End">
+                                        <controls:PulsarButton Text="🔐  Cambiar clave" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" Clicked="Clave_Click" Margin="0,0,8,4"
+                                                CommandParameter="{Binding Id}" />
+                                        <controls:PulsarButton Text="{Binding TextoBotonRol}" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" Clicked="Rol_Click" Margin="0,0,8,4"
+                                                CommandParameter="{Binding Id}" />
+                                        <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                                IsVisible="{Binding PuedeEliminar}"
+                                                Clicked="EliminarUsuario_Click" CommandParameter="{Binding Id}" />
+                                    </FlexLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- DOCUMENTOS -->
+            <VerticalStackLayout x:Name="PanelDocumentos" Spacing="10" IsVisible="False">
+                <CollectionView x:Name="ListaDocumentos">
+                    <CollectionView.EmptyView>
+                        <Label Text="Sin documentos." Style="{StaticResource Muted}" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <VerticalStackLayout Grid.Row="0" Spacing="2">
+                                        <Label Text="{Binding Nombre}" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                                        <Label Text="{Binding Detalle}" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                                        <Label Text="{Binding Resumen}" FontSize="12" TextColor="{StaticResource Cyan}"
+                                               IsVisible="{Binding TieneResumen}" MaxLines="3" LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+                                    <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End">
+                                        <controls:PulsarButton Text="👁  Ver texto" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" Clicked="VerDocumento_Click" Margin="0,0,8,4"
+                                                CommandParameter="{Binding Id}" />
+                                        <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                                Clicked="EliminarDocumento_Click" CommandParameter="{Binding Id}" />
+                                    </FlexLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- CUESTIONARIOS -->
+            <VerticalStackLayout x:Name="PanelCuestionarios" Spacing="10" IsVisible="False">
+                <CollectionView x:Name="ListaCuestionarios">
+                    <CollectionView.EmptyView>
+                        <Label Text="Sin cuestionarios." Style="{StaticResource Muted}" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <VerticalStackLayout Grid.Row="0" Spacing="2">
+                                        <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                                        <Label Text="{Binding Detalle}" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                                    </VerticalStackLayout>
+                                    <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End">
+                                        <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                                Clicked="EliminarCuestionario_Click" CommandParameter="{Binding Id}" />
+                                    </FlexLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- DIAGRAMAS -->
+            <VerticalStackLayout x:Name="PanelDiagramas" Spacing="10" IsVisible="False">
+                <CollectionView x:Name="ListaDiagramas">
+                    <CollectionView.EmptyView>
+                        <Label Text="Sin diagramas." Style="{StaticResource Muted}" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <VerticalStackLayout Grid.Row="0" Spacing="2">
+                                        <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                                        <Label Text="{Binding Detalle}" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                                    </VerticalStackLayout>
+                                    <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End">
+                                        <controls:PulsarButton Text="👁  Ver código" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" Clicked="VerDiagrama_Click" Margin="0,0,8,4"
+                                                CommandParameter="{Binding Id}" />
+                                        <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                                Clicked="EliminarDiagrama_Click" CommandParameter="{Binding Id}" />
+                                    </FlexLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- RESULTADOS -->
+            <VerticalStackLayout x:Name="PanelResultados" Spacing="10" IsVisible="False">
+                <CollectionView x:Name="ListaResultados">
+                    <CollectionView.EmptyView>
+                        <Label Text="Sin resultados." Style="{StaticResource Muted}" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                                    <VerticalStackLayout Grid.Row="0" Spacing="2">
+                                        <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                                        <Label Text="{Binding Detalle}" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                                    </VerticalStackLayout>
+                                    <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End">
+                                        <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                                HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                                Clicked="EliminarResultado_Click" CommandParameter="{Binding Id}" />
+                                    </FlexLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

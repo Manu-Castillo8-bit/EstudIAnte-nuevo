@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.DocumentosView">
-    <ScrollView>
-        <VerticalStackLayout Padding="28,8,28,28" Spacing="16">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="28,8,28,28" Spacing="16">
 
             <!-- Encabezado -->
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
@@ -33,7 +34,7 @@
                            TextColor="{StaticResource Cyan}" />
                     <Label Text="Toca aquí o usa 'Subir documento'" FontSize="16" FontAttributes="Bold"
                            TextColor="{StaticResource TextMain}" HorizontalOptions="Center" />
-                    <Label Text="PDF, DOCX, TXT · máx. 20 MB" Style="{StaticResource Muted}" HorizontalOptions="Center" />
+                    <Label Text="PDF · DOCX · TXT · XLSX · CSV · PPTX · MD · LOG · máx. 20 MB" Style="{StaticResource Muted}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </Border>
 
@@ -79,6 +80,10 @@
                                 <!-- Botones: se acomodan en una o varias líneas según el ancho -->
                                 <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End"
                                             AlignItems="Center" AlignContent="Start">
+                                    <controls:PulsarButton Text="👁  Ver contenido" Style="{StaticResource GhostButton}"
+                                            HeightRequest="40" Clicked="Ver_Click" Margin="0,0,8,4"
+                                            IsVisible="{Binding PuedeVer}"
+                                            CommandParameter="{Binding Id}" />
                                     <controls:PulsarButton Text="{Binding TextoBotonAnalizar}" Style="{StaticResource GhostButton}"
                                             HeightRequest="40" Clicked="Analizar_Click" Margin="0,0,8,4"
                                             IsEnabled="{Binding PuedeAnalizar}"
@@ -101,5 +106,35 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+
+        <!-- ===== VISOR DE CONTENIDO (overlay) ===== -->
+        <Border x:Name="PanelVisor" IsVisible="False" BackgroundColor="{StaticResource Bg}"
+                HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12" Padding="24,18,24,18">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <VerticalStackLayout Spacing="2">
+                        <Label x:Name="TituloVisor" Text="Documento" FontSize="18" FontAttributes="Bold"
+                               TextColor="{StaticResource TextMain}" />
+                        <Label x:Name="MetaVisor" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+                    <controls:PulsarButton x:Name="BtnCerrarVisor" Grid.Column="1" Text="✕  Cerrar"
+                            Style="{StaticResource GhostButton}" Clicked="CerrarVisor_Click" />
+                </Grid>
+
+                <ScrollView Grid.Row="2">
+                    <Label x:Name="TextoVisor" Text="" TextColor="{StaticResource TextMain}" LineBreakMode="WordWrap" />
+                </ScrollView>
+
+                <HorizontalStackLayout Grid.Row="3" Spacing="8">
+                    <controls:PulsarButton x:Name="BtnVisorResumen" Text="📝  Resumen con IA"
+                            Style="{StaticResource PrimaryButton}" Clicked="VisorResumen_Click" />
+                    <controls:PulsarButton Text="📋  Cuestionario" Style="{StaticResource GhostButton}"
+                            Clicked="VisorCuestionario_Click" />
+                    <controls:PulsarButton Text="🔀  Diagrama" Style="{StaticResource GhostButton}"
+                            Clicked="VisorDiagrama_Click" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
 </ContentView>

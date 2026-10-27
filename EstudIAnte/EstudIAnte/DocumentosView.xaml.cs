@@ -74,10 +74,10 @@ public partial class DocumentosView : ContentView
                 PickerTitle = "Selecciona un documento",
                 FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                 {
-                    { DevicePlatform.WinUI, new[] { ".pdf", ".docx", ".txt" } },
-                    { DevicePlatform.Android, new[] { "application/pdf", "text/plain", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
-                    { DevicePlatform.iOS, new[] { "com.adobe.pdf", "public.plain-text" } },
-                    { DevicePlatform.MacCatalyst, new[] { "com.adobe.pdf", "public.plain-text" } },
+                    { DevicePlatform.WinUI, new[] { ".pdf", ".docx", ".txt", ".csv", ".xlsx", ".pptx", ".md", ".log", ".json" } },
+                    { DevicePlatform.Android, new[] { "application/pdf", "text/plain", "text/csv", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.presentationml.presentation" } },
+                    { DevicePlatform.iOS, new[] { "com.adobe.pdf", "public.plain-text", "public.comma-separated-values-text", "com.microsoft.excel.xlsx", "org.openxmlformats.presentationml.presentation" } },
+                    { DevicePlatform.MacCatalyst, new[] { "com.adobe.pdf", "public.plain-text", "public.comma-separated-values-text" } },
                 })
             });
         }
@@ -98,7 +98,18 @@ public partial class DocumentosView : ContentView
         try
         {
             var extension = Path.GetExtension(archivo.FileName).TrimStart('.').ToLowerInvariant();
-            var tipo = extension.StartsWith("doc") ? "docx" : extension == "txt" ? "txt" : "pdf";
+            var tipo = extension switch
+            {
+                "doc" or "docx" or "docm" => "docx",
+                "xlsx" or "xlsm" or "xls" => "xlsx",
+                "pptx" or "ppt" => "pptx",
+                "csv" => "csv",
+                "md" => "md",
+                "log" => "log",
+                "json" => "json",
+                "pdf" => "pdf",
+                _ => "txt",
+            };
 
             long tamano;
             byte[] bytes;
@@ -172,10 +183,24 @@ public partial class DocumentosView : ContentView
         }
     }
 
-    async void Analizar_Click(object? sender, EventArgs e)
+    async void Analizar_Click(object? sender, EventArgs e) => await AnalizarConTamanoAsync((sender as Button)?.CommandParameter as string);
+
+    async Task AnalizarConTamanoAsync(string? id)
     {
-        if ((sender as Button)?.CommandParameter is not string id)
+        if (id is null)
             return;
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is null)
+            return;
+
+        // El usuario elige el tamaño del resumen.
+        var tamano = await page.DisplayActionSheetAsync(
+            "¿De qué tamaño quieres el resumen?", "Cancelar", null,
+            "Corto (≈60 palabras)", "Medio (≈120)", "Detallado (≈350)", "Extenso (≈600)");
+        if (tamano is null || tamano == "Cancelar")
+            return;
+        var claveTamano = tamano.Split(' ')[0];
 
         var conn = await LocalDatabase.GetAsync();
         var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
@@ -188,9 +213,9 @@ public partial class DocumentosView : ContentView
 
         try
         {
-            var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(doc);
+            var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(doc, claveTamano);
             await CargarDocumentosAsync();
-            await MostrarAsync("Análisis completo", $"Resumen generado con {ia}:\n\n{resumen}");
+            await MostrarAsync("Análisis completo", $"Resumen ({claveTamano}) generado con {ia}:\n\n{resumen}");
         }
         catch (Exception ex)
         {
@@ -201,16 +226,21 @@ public partial class DocumentosView : ContentView
         }
     }
 
-    async void CrearCuestionario_Click(object? sender, EventArgs e)
+    async void CrearCuestionario_Click(object? sender, EventArgs e) =>
+        await CrearCuestionarioAsync((sender as Button)?.CommandParameter as string);
+
+    async Task CrearCuestionarioAsync(string? id)
     {
-        if ((sender as Button)?.CommandParameter is not string id)
+        if (id is null)
             return;
 
         var conn = await LocalDatabase.GetAsync();
         var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
         if (doc is null || string.IsNullOrWhiteSpace(doc.Texto))
         {
-            await MostrarAsync("Aviso", "Primero analiza el documento con IA.");
+            await MostrarAsync("Aviso", doc is null
+                ? "Documento no encontrado."
+                : "El documento no tiene texto extraíble para crear un cuestionario.");
             return;
         }
 
@@ -246,14 +276,71 @@ public partial class DocumentosView : ContentView
         }
     }
 
-    async void CrearDiagrama_Click(object? sender, EventArgs e)
+    async void CrearDiagrama_Click(object? sender, EventArgs e) =>
+        await CrearDiagramaDesdeAsync((sender as Button)?.CommandParameter as string);
+
+    async Task CrearDiagramaDesdeAsync(string? id)
     {
-        if ((sender as Button)?.CommandParameter is not string id)
+        if (id is null)
             return;
 
         // Navega a la sección Diagramas con este documento ya seleccionado.
         if (MainPage.Actual is not null)
             await MainPage.Actual.IrADiagramasAsync(id);
+    }
+
+    // ---------------- VISOR DE CONTENIDO ----------------
+
+    string? _visorId;
+
+    async void Ver_Click(object? sender, EventArgs e) =>
+        await AbrirVisorAsync((sender as Button)?.CommandParameter as string);
+
+    async Task AbrirVisorAsync(string? id)
+    {
+        if (id is null)
+            return;
+
+        var conn = await LocalDatabase.GetAsync();
+        var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
+        if (doc is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(doc.Texto))
+        {
+            await MostrarAsync("Sin contenido",
+                "Este archivo no tiene texto extraíble (por ejemplo, un PDF escaneado o una hoja de cálculo con fórmulas sin valores).");
+            return;
+        }
+
+        _visorId = id;
+        TituloVisor.Text = doc.Nombre;
+        MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {doc.Texto.Length} caracteres";
+        TextoVisor.Text = doc.Texto;
+        PanelVisor.IsVisible = true;
+    }
+
+    void CerrarVisor_Click(object? sender, EventArgs e)
+    {
+        PanelVisor.IsVisible = false;
+        _visorId = null;
+    }
+
+    async void VisorResumen_Click(object? sender, EventArgs e) => await AnalizarConTamanoAsync(_visorId);
+
+    async void VisorCuestionario_Click(object? sender, EventArgs e)
+    {
+        await CrearCuestionarioAsync(_visorId);
+    }
+
+    async void VisorDiagrama_Click(object? sender, EventArgs e)
+    {
+        var id = _visorId;
+        if (id is null)
+            return;
+
+        CerrarVisor_Click(sender, e);
+        await CrearDiagramaDesdeAsync(id);
     }
 
     async void Eliminar_Click(object? sender, EventArgs e)
@@ -334,6 +421,7 @@ public class DocumentoItem
     public bool TieneResumen { get; set; }
     public bool Listo { get; set; }
     public bool PuedeAnalizar { get; set; }
+    public bool PuedeVer { get; set; }
     public string TextoBotonAnalizar { get; set; } = "Analizar con IA";
     public Color ColorTexto { get; set; } = Colors.White;
     public Color ColorFondo { get; set; } = Colors.Transparent;
@@ -366,16 +454,19 @@ public class DocumentoItem
 
         Resumen = d.Resumen;
         TieneResumen = !string.IsNullOrWhiteSpace(d.Resumen);
+        PuedeVer = !string.IsNullOrWhiteSpace(d.Texto);
 
         (ColorTexto, ColorFondo) = d.Tipo switch
         {
+            "pdf" => (Color.FromArgb("#FB7185"), Color.FromArgb("#3F1D2B")),
             "docx" => (Color.FromArgb("#60A5FA"), Color.FromArgb("#14284F")),
-            "txt" => (Color.FromArgb("#34D399"), Color.FromArgb("#0F3D2E")),
-            _ => (Color.FromArgb("#FB7185"), Color.FromArgb("#3F1D2B")),
+            "xlsx" => (Color.FromArgb("#34D399"), Color.FromArgb("#0F3D2E")),
+            "pptx" => (Color.FromArgb("#FBBF24"), Color.FromArgb("#3D2E0F")),
+            _ => (Color.FromArgb("#34D399"), Color.FromArgb("#0F3D2E")), // txt, csv, md, log, json
         };
     }
 
-    static string FormatearTamano(long bytes) => bytes switch
+    internal static string FormatearTamano(long bytes) => bytes switch
     {
         >= 1024 * 1024 => $"{bytes / (1024.0 * 1024.0):0.#} MB",
         >= 1024 => $"{bytes / 1024.0:0.#} KB",

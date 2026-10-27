@@ -19,6 +19,7 @@ namespace EstudIAnte
             var nombre = !string.IsNullOrWhiteSpace(u.Nombre) ? u.Nombre : u.NombreUsuario;
             NombreUsuario.Text = nombre;
             RolUsuario.Text = u.Rol == "admin" ? "Administrador" : "Estudiante";
+            N8.IsVisible = u.Rol == "admin";
             var inicial = string.IsNullOrEmpty(nombre) ? "?" : nombre[..1].ToUpperInvariant();
             AvatarInicial.Text = inicial;
             AvatarSuperior.Text = inicial;
@@ -36,6 +37,14 @@ namespace EstudIAnte
             VDocs.IsVisible = ReferenceEquals(radioButton, N4);
             VArchivos.IsVisible = ReferenceEquals(radioButton, N6);
             VConfig.IsVisible = ReferenceEquals(radioButton, N7);
+            VAdmin.IsVisible = ReferenceEquals(radioButton, N8);
+
+            // El panel admin solo se ve para administradores.
+            if (ReferenceEquals(radioButton, N8) && AuthService.UsuarioActual?.Rol != "admin")
+            {
+                IrA("inicio");
+                return;
+            }
 
             // Refresca las listas cada vez que se entra a la sección.
             if (ReferenceEquals(radioButton, N5))
@@ -46,6 +55,8 @@ namespace EstudIAnte
                 _ = VArchivos.RefrescarAsync();
             if (ReferenceEquals(radioButton, N7))
                 _ = VConfig.RefrescarAsync();
+            if (ReferenceEquals(radioButton, N8))
+                _ = VAdmin.RefrescarAsync();
         }
 
         /// <summary>
@@ -85,6 +96,7 @@ namespace EstudIAnte
                 "documentos" => N4,
                 "archivos" => N6,
                 "config" => N7,
+                "admin" => AuthService.UsuarioActual?.Rol == "admin" ? N8 : null,
                 _ => null
             };
 

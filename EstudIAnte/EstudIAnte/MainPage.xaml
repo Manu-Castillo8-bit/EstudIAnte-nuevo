@@ -37,6 +37,8 @@
                              Content="📁   Documentos" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N6" Style="{StaticResource NavItem}" GroupName="nav"
                              Content="🗂   Mis Archivos" CheckedChanged="OnNavChanged" />
+                <RadioButton x:Name="N8" Style="{StaticResource NavItem}" GroupName="nav" IsVisible="False"
+                             Content="🛡   Panel Admin" CheckedChanged="OnNavChanged" />
                 <RadioButton x:Name="N7" Style="{StaticResource NavItem}" GroupName="nav"
                              Content="⚙   Configuración" CheckedChanged="OnNavChanged" />
             </VerticalStackLayout>
@@ -91,6 +93,7 @@
                 <views:DocumentosView x:Name="VDocs" IsVisible="False" />
                 <views:MisArchivosView x:Name="VArchivos" IsVisible="False" />
                 <views:ConfiguracionView x:Name="VConfig" IsVisible="False" />
+                <views:AdminView x:Name="VAdmin" IsVisible="False" />
             </Grid>
         </Grid>
     </Grid>
