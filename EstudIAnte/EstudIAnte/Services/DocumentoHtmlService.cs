@@ -6,20 +6,15 @@ using EstudIAnte.Models;
 namespace EstudIAnte.Services;
 
 /// <summary>
-/// Convierte un documento a HTML fiel: respeta estructura (títulos, listas,
-/// tablas, hojas de cálculo, diapositivas) e incrusta las imágenes en base64,
-/// para que el archivo se muestre "tal como es" en el visor de la app.
+/// Convierte documentos a HTML para el visor. Los DOCX se renderizan desde el
+/// paquete original para conservar sus estilos y configuración de página.
 /// </summary>
 public static class DocumentoHtmlService
 {
-    static readonly XNamespace W =
-        "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
     static readonly XNamespace A =
         "http://schemas.openxmlformats.org/drawingml/2006/main";
     static readonly XNamespace R =
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-    static readonly XNamespace V =
-        "urn:schemas-microsoft-com:vml";
     static readonly XNamespace Sx =
         "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 
@@ -84,9 +79,11 @@ public static class DocumentoHtmlService
 
         try
         {
+            if (doc.Tipo == "docx")
+                return HtmlDocx(bytes, doc.Nombre);
+
             var cuerpo = doc.Tipo switch
             {
-                "docx" => HtmlDocx(bytes),
                 "xlsx" => HtmlXlsx(bytes),
                 "pptx" => HtmlPptx(bytes),
                 "pdf"  => HtmlPdf(bytes),
@@ -100,7 +97,7 @@ public static class DocumentoHtmlService
 
             var paginado = doc.Tipo switch
             {
-                // PDF y PPTX ya se envuelven por página/diapositiva en su generador.
+                // PDF, PPTX y DOCX ya generan su propia paginación.
                 "pdf" or "pptx" => cuerpo,
                 _ => EnvolverPaginas(cuerpo),
             };
@@ -168,124 +165,102 @@ public static class DocumentoHtmlService
 
     // ---------------- DOCX ----------------
 
-    static string HtmlDocx(byte[] bytes)
+    static string HtmlDocx(byte[] bytes, string nombre)
     {
-        using var ms = new MemoryStream(bytes);
-        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+        var base64 = Convert.ToBase64String(bytes);
+        var escapedName = Escapar(nombre);
+        var rendererScript = """
+            (async function () {
+              const status = document.getElementById("word-status");
+              try {
+                if (!window.docx || !window.JSZip)
+                  throw new Error("No se pudo cargar el renderizador de Word. Verifica tu conexión.");
 
-        var entry = zip.GetEntry("word/document.xml");
-        if (entry is null)
-            return string.Empty;
+                const encoded = "__WORD_DOCUMENT__";
+                const binary = atob(encoded);
+                const data = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++)
+                  data[i] = binary.charCodeAt(i);
 
-        XDocument doc;
-        using (var s = entry.Open())
-            doc = XDocument.Load(s);
+                const container = document.getElementById("word-document");
+                const styles = document.getElementById("word-styles");
+                await window.docx.renderAsync(data, container, styles, {
+                  className: "docx",
+                  inWrapper: true,
+                  breakPages: true,
+                  ignoreLastRenderedPageBreak: false,
+                  ignoreWidth: false,
+                  ignoreHeight: false,
+                  ignoreFonts: false,
+                  renderHeaders: true,
+                  renderFooters: true,
+                  renderFootnotes: true,
+                  renderEndnotes: true,
+                  useBase64URL: true
+                });
 
-        var imagenes = CargarImagenes(zip, "word/_rels/document.xml.rels", "word/");
-
-        var body = doc.Root?.Element(W + "body");
-        if (body is null)
-            return string.Empty;
-
-        var sb = new StringBuilder();
-        foreach (var elemento in body.Elements())
-        {
-            if (elemento.Name == W + "p")
-            {
-                var html = HtmlParrafoDocx(elemento, imagenes);
-                if (html.Length == 0)
-                    continue;
-
-                var estilo = elemento.Elements(W + "pPr").Elements(W + "pStyle")
-                    .Select(e => e.Attribute(W + "val")?.Value).FirstOrDefault();
-
-                var nivelLetra = estilo is not null && estilo.StartsWith("Heading",
-                    StringComparison.OrdinalIgnoreCase) && estilo.Length > 0 ? estilo[^1] : '\0';
-
-                if (char.IsDigit(nivelLetra))
-                {
-                    var nivel = Math.Max(1, Math.Min(4, nivelLetra - '0'));
-                    sb.Append($"<h{nivel}>{html}</h{nivel}>");
+                const wrapper = container.querySelector(".docx-wrapper");
+                if (wrapper) {
+                  wrapper.querySelectorAll(":scope > section.docx").forEach((page, index) => {
+                    if (index === 0)
+                      return;
+                    const separator = document.createElement("div");
+                    separator.className = "word-page-break";
+                    separator.textContent = "SALTO DE PÁGINA";
+                    page.before(separator);
+                  });
                 }
-                else if (elemento.Elements(W + "pPr").Elements(W + "numPr").Any() ||
-                         estilo == "ListParagraph")
-                {
-                    sb.Append($"<li>{html}</li>");
-                }
-                else
-                {
-                    sb.Append($"<p>{html}</p>");
-                }
-            }
-            else if (elemento.Name == W + "tbl")
-            {
-                sb.Append(HtmlTablaWord(elemento, imagenes));
-            }
-        }
+                status.remove();
+              } catch (error) {
+                status.className = "word-error";
+                status.textContent = error && error.message
+                  ? error.message
+                  : "No se pudo mostrar el documento de Word.";
+              }
+            })();
+            """.Replace("__WORD_DOCUMENT__", base64, StringComparison.Ordinal);
 
-        return EnvolverListas(sb.ToString());
-    }
-
-    static string HtmlParrafoDocx(XElement parrafo, Dictionary<string, string> imagenes)
-    {
-        var sb = new StringBuilder();
-        foreach (var run in parrafo.Descendants(W + "r"))
-        {
-            var props = run.Element(W + "rPr");
-            var negrita = props?.Elements(W + "b").Any() == true;
-            var italica = props?.Elements(W + "i").Any() == true;
-
-            foreach (var br in run.Elements(W + "br"))
-                sb.Append("<br>");
-
-            foreach (var t in run.Elements(W + "t"))
-            {
-                if (t.Value.Length == 0)
-                    continue;
-                var x = Escapar(t.Value);
-                if (negrita) x = $"<b>{x}</b>";
-                if (italica) x = $"<i>{x}</i>";
-                sb.Append(x);
-            }
-
-            foreach (var blip in run.Descendants(A + "blip"))
-            {
-                var rel = blip.Attribute(R + "embed")?.Value;
-                if (rel is not null && imagenes.TryGetValue(rel, out var uri))
-                    sb.Append($"<img src='{uri}' />");
-            }
-
-            foreach (var imagen in run.Descendants(V + "imagedata"))
-            {
-                var rel = imagen.Attribute(R + "id")?.Value;
-                if (rel is not null && imagenes.TryGetValue(rel, out var uri))
-                    sb.Append($"<img src='{uri}' />");
-            }
-        }
-        return sb.ToString();
-    }
-
-    static string HtmlTablaWord(XElement tabla, Dictionary<string, string> imagenes)
-    {
-        var sb = new StringBuilder("<table>");
-        foreach (var fila in tabla.Elements(W + "tr"))
-        {
-            var celdas = fila.Elements(W + "tc").ToList();
-            var esCabecera = celdas.Count > 0 && celdas.All(c =>
-                c.Elements(W + "p").Elements(W + "r").Elements(W + "rPr").Elements(W + "b").Any());
-
-            sb.Append("<tr>");
-            foreach (var celda in celdas)
-            {
-                var contenidos = celda.Elements(W + "p")
-                    .Select(p => HtmlParrafoDocx(p, imagenes))
-                    .Where(t => t.Length > 0);
-                var etiqueta = esCabecera ? "th" : "td";
-                sb.Append($"<{etiqueta}>{string.Join("<br>", contenidos)}</{etiqueta}>");
-            }
-            sb.Append("</tr>");
-        }
-        return sb.Append("</table>").ToString();
+        return "<!DOCTYPE html><html><head><meta charset='utf-8'>" +
+               "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+               """
+               <style>
+                 * { box-sizing: border-box; }
+                 html, body { margin: 0; min-height: 100%; background: #0B1030; }
+                 body { font-family: 'Segoe UI', sans-serif; overflow-x: auto; }
+                 #word-status { color: #E2E8F0; padding: 20px; text-align: center; }
+                 .word-error { color: #FCA5A5 !important; }
+                 .docx-wrapper {
+                   background: #0B1030 !important;
+                   padding: 18px 10px 24px !important;
+                   align-items: center;
+                 }
+                 .docx-wrapper > section.docx {
+                   flex: 0 0 auto;
+                   margin: 0 auto 18px !important;
+                   box-shadow: 0 12px 30px rgba(0,0,0,.5) !important;
+                 }
+                 .word-page-break {
+                   width: 100%;
+                   color: #A5B4FC;
+                   text-align: center;
+                   font-size: 12px;
+                   letter-spacing: 2px;
+                   padding: 2px 8px 14px;
+                 }
+                 @media (max-width: 680px) {
+                   .docx-wrapper { align-items: flex-start; padding: 12px 6px 18px !important; }
+                   .docx-wrapper > section.docx { margin-left: 0 !important; margin-right: 0 !important; }
+                 }
+               </style>
+               """ +
+               "</head><body><div id='word-status'>Cargando documento de Word...</div>" +
+               "<div id='word-styles'></div>" +
+               "<div id='word-document'></div>" +
+               "<p class='deco' style='color:#64748B;font-size:12px;text-align:center;padding:0 10px 12px'>" +
+               $"📄 {escapedName} · visualizado con EstudIAnte</p>" +
+               "<script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'></script>" +
+               "<script src='https://unpkg.com/docx-preview@0.3.6/dist/docx-preview.min.js'></script>" +
+               "<script>" + rendererScript + "</script></body></html>";
     }
 
     /// <summary>Envuelve grupos de <li> consecutivos dentro de <ul>...</ul>.</summary>
