@@ -278,6 +278,7 @@ public partial class DocumentosView : ContentView
         doc.Estado = "analizando";
         await conn.UpdateAsync(doc);
         await CargarDocumentosAsync();
+        ActualizarDetalle();
 
         try
         {
@@ -617,7 +618,7 @@ public class DocumentoItem
         TipoEtiqueta = d.Tipo.ToUpperInvariant();
 
         Listo = d.Estado == "listo";
-        PuedeAnalizar = !Listo && d.Estado != "analizando";
+        PuedeAnalizar = d.Estado != "analizando";
         TextoBotonAnalizar = d.Estado switch
         {
             "listo" => "Re-analizar con IA",

@@ -24,6 +24,7 @@ public partial class DiagramasView : ContentView
 
     string _tipo = "flujo";
     readonly List<(string Id, string Nombre, bool EsDocumento)> _opciones = new();
+    readonly SemaphoreSlim _cargaFuentes = new(1, 1);
     Diagrama? _actual;
     bool _generando;
 
@@ -94,21 +95,40 @@ public partial class DiagramasView : ContentView
     /// </summary>
     public async Task PrepararAsync(string? documentoId = null)
     {
-        await CargarFuentesAsync();
+        await _cargaFuentes.WaitAsync();
+        try
+        {
+            await CargarFuentesAsync();
 
-        if (documentoId is null)
-            return;
+            if (documentoId is null)
+                return;
 
-        var indice = _opciones.FindIndex(o => o.Id == documentoId && o.EsDocumento);
-        if (indice >= 0)
-            Selector.SelectedIndex = indice;
+            var indice = _opciones.FindIndex(o => o.Id == documentoId && o.EsDocumento);
+            if (indice >= 0)
+                Selector.SelectedIndex = indice;
+            else
+                await MostrarAsync("Documento no disponible",
+                    "No se encontró el documento analizado. Actualiza la lista o vuelve a analizarlo.");
+        }
+        finally
+        {
+            _cargaFuentes.Release();
+        }
     }
 
     /// <summary>Recarga fuentes e historial (la llama MainPage al entrar a la sección).</summary>
     public async Task RefrescarAsync()
     {
-        await CargarFuentesAsync();
-        await CargarHistorialAsync();
+        await _cargaFuentes.WaitAsync();
+        try
+        {
+            await CargarFuentesAsync();
+            await CargarHistorialAsync();
+        }
+        finally
+        {
+            _cargaFuentes.Release();
+        }
     }
 
     // ---------------- GENERADOR ----------------
