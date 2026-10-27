@@ -16,6 +16,15 @@ public partial class ChatView : ContentView
         Loaded += (_, _) => _ = RefrescarTemasAsync();
     }
 
+    /// <summary>Abre el chat de un tema por su nombre (lo usa el dashboard del Inicio).</summary>
+    public async Task AbrirTemaPorNombreAsync(string nombre)
+    {
+        var temas = await TemasService.ListarAsync(AuthService.UsuarioActual?.Id ?? "");
+        var tema = temas.FirstOrDefault(t => t.Nombre == nombre) ?? temas.FirstOrDefault();
+        if (tema is not null)
+            await SeleccionarTemaAsync(tema);
+    }
+
     // ---------------- TEMAS ----------------
 
     async Task RefrescarTemasAsync()
@@ -299,11 +308,20 @@ public partial class ChatView : ContentView
             .ToListAsync();
 
         ListaMensajes.ItemsSource = mensajes.Select(m => new MensajeItem(m)).ToList();
+
+        // Mantiene la conversación anclada al último mensaje.
+        await Task.Delay(80); // deja que la lista termine de maquetar
+        try
+        {
+            if (mensajes.Count > 0)
+                ListaMensajes.ScrollTo(mensajes.Count - 1, position: ScrollToPosition.End, animate: true);
+        }
+        catch { /* la lista pudo vaciarse */ }
     }
 
     // ---------------- UTILIDADES ----------------
 
-    static Style? ChipStyle() =>
+    internal static Style? ChipStyle() =>
         Application.Current?.Resources.TryGetValue("ChipButton", out var s) == true ? s as Style : null;
 
     static Brush Gradient() =>

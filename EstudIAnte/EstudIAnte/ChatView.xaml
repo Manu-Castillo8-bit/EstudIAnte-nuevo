@@ -59,7 +59,8 @@
         <!-- Entrada -->
         <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
             <ActivityIndicator x:Name="SpinnerIA" Grid.Column="0" IsRunning="False" IsVisible="False"
-                               Color="{StaticResource Cyan}" WidthRequest="50" VerticalOptions="Center" />
+                               Color="{StaticResource Cyan}" WidthRequest="24" HeightRequest="24"
+                               HorizontalOptions="CenterAndExpand" VerticalOptions="Center" />
             <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,0" HeightRequest="50"
                     StrokeShape="RoundRectangle 25">
                 <Entry x:Name="MensajeEntry" Placeholder="Escribe tu mensaje aquí..." BackgroundColor="Transparent"

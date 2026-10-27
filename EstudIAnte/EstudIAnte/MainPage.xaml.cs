@@ -47,6 +47,8 @@ namespace EstudIAnte
             }
 
             // Refresca las listas cada vez que se entra a la sección.
+            if (ReferenceEquals(radioButton, N1))
+                _ = VInicio.RefrescarAsync();
             if (ReferenceEquals(radioButton, N5))
                 _ = VDiag.RefrescarAsync();
             if (ReferenceEquals(radioButton, N4))
@@ -77,7 +79,10 @@ namespace EstudIAnte
         /// <summary>El avatar superior abre la sección de Configuración.</summary>
         void Avatar_Tapped(object? sender, EventArgs e) => IrA("config");
 
-        /// <summary>Referencia a la MainPage activa, para navegar desde las vistas.</summary>
+        /// <summary>Acceso público al chat para navegación desde otras vistas.</summary>
+    public ChatView VisorChat => VChat;
+
+    /// <summary>Referencia a la MainPage activa, para navegar desde las vistas.</summary>
         public static MainPage? Actual =>
             Application.Current?.Windows.FirstOrDefault()?.Page as MainPage;
 
