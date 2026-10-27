@@ -151,6 +151,12 @@ public static class AdminService
     public static async Task<List<Resultado>> ListarResultadosAsync()
         => await ListarNubeOLocalAsync<Resultado>(r => r.Fecha);
 
+    public static async Task<List<Chat>> ListarChatsAsync()
+        => await ListarNubeOLocalAsync<Chat>(c => c.CreadoEn);
+
+    public static async Task<List<Mensaje>> ListarMensajesAsync()
+        => await ListarNubeOLocalAsync<Mensaje>(m => m.CreadoEn);
+
     static async Task<List<T>> ListarNubeOLocalAsync<T>(Func<T, string> ordenarPor) where T : SyncModel, new()
     {
         var client = await SupabaseService.GetClientAsync();

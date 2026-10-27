@@ -3,6 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.AdminView">
+    <ContentView.Resources>
+        <DataTemplate x:Key="PlantillaItemDetalle">
+            <Border Style="{StaticResource Card}" Padding="14" Margin="0,0,0,8">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                    <Label Text="{Binding Detalle}" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    <Label Text="{Binding Resumen}" FontSize="12" TextColor="{StaticResource Cyan}"
+                           IsVisible="{Binding TieneResumen}" MaxLines="2" LineBreakMode="TailTruncation" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentView.Resources>
+    <Grid>
     <ScrollView>
         <VerticalStackLayout Padding="28,8,28,28" Spacing="14">
 
@@ -40,6 +53,9 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="UsuarioCard_Tapped" CommandParameter="{Binding Id}" />
+                                </Border.GestureRecognizers>
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
                                         <Border WidthRequest="46" HeightRequest="46" StrokeThickness="0"
@@ -205,4 +221,100 @@
 
         </VerticalStackLayout>
     </ScrollView>
+
+        <!-- ===== DETALLE DE USUARIO (overlay) ===== -->
+        <Border x:Name="PanelDetalleUsuario" IsVisible="False" BackgroundColor="{StaticResource Bg}"
+                HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Grid RowDefinitions="Auto,*" Padding="24,18,24,18">
+                <ScrollView Grid.Row="1">
+                    <VerticalStackLayout Spacing="14">
+
+                        <!-- Cabecera del usuario -->
+                        <Border Style="{StaticResource Card}" Padding="18">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                                    <Border WidthRequest="54" HeightRequest="54" StrokeThickness="0"
+                                            Background="{StaticResource BrandGradient}" StrokeShape="RoundRectangle 16">
+                                        <Label x:Name="DetInicial" Text="?" FontSize="22" FontAttributes="Bold"
+                                               TextColor="{StaticResource OnCyan}"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label x:Name="DetTitulo" Text="Usuario" FontSize="19" FontAttributes="Bold"
+                                               TextColor="{StaticResource TextMain}" />
+                                        <Label x:Name="DetRol" Text="" FontSize="13" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0" RowSpacing="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Label Grid.Row="0" Grid.Column="0" Text="Usuario:" FontSize="13" TextColor="{StaticResource TextMuted}" />
+                                    <Label Grid.Row="0" Grid.Column="1" x:Name="DetNombreUsuario" FontSize="13" TextColor="{StaticResource TextMain}" />
+                                    <Label Grid.Row="1" Grid.Column="0" Text="Correo:" FontSize="13" TextColor="{StaticResource TextMuted}" />
+                                    <Label Grid.Row="1" Grid.Column="1" x:Name="DetEmail" FontSize="13" TextColor="{StaticResource TextMain}" />
+                                    <Label Grid.Row="2" Grid.Column="0" Text="Nombre:" FontSize="13" TextColor="{StaticResource TextMuted}" />
+                                    <Label Grid.Row="2" Grid.Column="1" x:Name="DetNombre" FontSize="13" TextColor="{StaticResource TextMain}" />
+                                </Grid>
+                                <Label Grid.Row="2" x:Name="DetPassword" FontSize="14" TextColor="{StaticResource Cyan}" Margin="0,10,0,0" />
+                                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,6,0,0">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="1">
+                                        <Label Text="Creado" FontSize="11" TextColor="{StaticResource TextMuted}" />
+                                        <Label x:Name="DetCreado" FontSize="12" TextColor="{StaticResource TextMain}" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="1">
+                                        <Label Text="Última modificación" FontSize="11" TextColor="{StaticResource TextMuted}" />
+                                        <Label x:Name="DetActualizado" FontSize="12" TextColor="{StaticResource TextMain}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Botones de gestión -->
+                        <HorizontalStackLayout Spacing="8">
+                            <controls:PulsarButton x:Name="BtnDetClave" Text="🔐  Cambiar clave" Style="{StaticResource PrimaryButton}"
+                                    Clicked="Clave_Click" CommandParameter="" />
+                            <controls:PulsarButton x:Name="BtnDetRol" Text="🎭  Rol" Style="{StaticResource GhostButton}"
+                                    Clicked="Rol_Click" CommandParameter="" />
+                            <controls:PulsarButton x:Name="BtnDetEliminar" Text="🗑  Eliminar usuario" Style="{StaticResource GhostButton}"
+                                    TextColor="{StaticResource Pink}" Clicked="EliminarUsuario_Click" CommandParameter="" />
+                            <controls:PulsarButton Text="✕  Cerrar" Style="{StaticResource GhostButton}"
+                                    Clicked="CerrarDetalleUsuario_Click" />
+                        </HorizontalStackLayout>
+
+                        <!-- Estadísticas del usuario -->
+                        <Label Text="Resumen de actividad" FontSize="15" FontAttributes="Bold"
+                               TextColor="{StaticResource TextMain}" />
+                        <HorizontalStackLayout x:Name="DetStatsLayout" Spacing="10" />
+
+                        <!-- Documentos -->
+                        <Label Text="📁 Documentos" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <CollectionView x:Name="DetListaDocumentos" ItemTemplate="{StaticResource PlantillaItemDetalle}" />
+                        <Label x:Name="DetSinDocumentos" Text="Sin documentos." Style="{StaticResource Muted}" />
+
+                        <!-- Chats -->
+                        <Label Text="💬 Chats" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <CollectionView x:Name="DetListaChats" ItemTemplate="{StaticResource PlantillaItemDetalle}" />
+                        <Label x:Name="DetSinChats" Text="Sin chats." Style="{StaticResource Muted}" />
+
+                        <!-- Cuestionarios -->
+                        <Label Text="📋 Cuestionarios" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <CollectionView x:Name="DetListaCuestionarios" ItemTemplate="{StaticResource PlantillaItemDetalle}" />
+                        <Label x:Name="DetSinCuestionarios" Text="Sin cuestionarios." Style="{StaticResource Muted}" />
+
+                        <!-- Diagramas -->
+                        <Label Text="🔀 Diagramas" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <CollectionView x:Name="DetListaDiagramas" ItemTemplate="{StaticResource PlantillaItemDetalle}" />
+                        <Label x:Name="DetSinDiagramas" Text="Sin diagramas." Style="{StaticResource Muted}" />
+
+                        <!-- Resultados -->
+                        <Label Text="🏁 Resultados de cuestionarios" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
+                        <CollectionView x:Name="DetListaResultados" ItemTemplate="{StaticResource PlantillaItemDetalle}" />
+                        <Label x:Name="DetSinResultados" Text="Sin resultados." Style="{StaticResource Muted}" />
+
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
+        </Border>
+    </Grid>
 </ContentView>

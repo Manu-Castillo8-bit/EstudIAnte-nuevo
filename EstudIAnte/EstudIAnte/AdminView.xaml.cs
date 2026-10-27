@@ -83,6 +83,131 @@ public partial class AdminView : ContentView
 
     async void Refrescar_Click(object? sender, EventArgs e) => await RefrescarAsync();
 
+    // ---------------- DETALLE DE USUARIO ----------------
+
+    async void UsuarioCard_Tapped(object? sender, TappedEventArgs e) =>
+        await AbrirDetalleUsuarioAsync(e.Parameter as string);
+
+    void CerrarDetalleUsuario_Click(object? sender, EventArgs e)
+    {
+        PanelDetalleUsuario.IsVisible = false;
+    }
+
+    async Task AbrirDetalleUsuarioAsync(string? id)
+    {
+        if (id is null || Pagina() is null)
+            return;
+
+        var (usuarios, _) = await AdminService.ListarUsuariosAsync();
+        var u = usuarios.FirstOrDefault(x => x.Id == id);
+        if (u is null)
+            return;
+
+        // Datos del perfil
+        DetInicial.Text = string.IsNullOrEmpty(u.NombreUsuario) ? "?" : u.NombreUsuario[..1].ToUpperInvariant();
+        DetTitulo.Text = !string.IsNullOrWhiteSpace(u.Nombre) ? u.Nombre : u.NombreUsuario;
+        DetRol.Text = u.Rol == "admin" ? "🛡 Administrador" : "Estudiante";
+        DetRol.TextColor = u.Rol == "admin" ? Color.FromArgb("#F472B6") : Color.FromArgb("#94A3B8");
+        DetNombreUsuario.Text = u.NombreUsuario;
+        DetEmail.Text = string.IsNullOrWhiteSpace(u.Email) ? "—" : u.Email;
+        DetNombre.Text = string.IsNullOrWhiteSpace(u.Nombre) ? "—" : u.Nombre;
+        DetPassword.Text = $"🔑 Contraseña (texto plano): {u.Password}";
+        DetCreado.Text = FormatearFecha(u.CreadoEn);
+        DetActualizado.Text = FormatearFecha(u.ActualizadoEn);
+
+        // Los botones de gestión del detalle actúan sobre este usuario.
+        BtnDetClave.CommandParameter = u.Id;
+        BtnDetRol.CommandParameter = u.Id;
+        BtnDetEliminar.CommandParameter = u.Id;
+
+        await CargarContenidoUsuarioAsync(u);
+
+        PanelDetalleUsuario.IsVisible = true;
+    }
+
+    async Task CargarContenidoUsuarioAsync(Usuario u)
+    {
+        var documentos = (await AdminService.ListarDocumentosAsync()).Where(d => d.UsuarioId == u.Id).ToList();
+        var cuestionarios = (await AdminService.ListarCuestionariosAsync()).Where(c => c.UsuarioId == u.Id).ToList();
+        var diagramas = (await AdminService.ListarDiagramasAsync()).Where(d => d.UsuarioId == u.Id).ToList();
+        var resultados = (await AdminService.ListarResultadosAsync()).Where(r => r.UsuarioId == u.Id).ToList();
+        var chats = (await AdminService.ListarChatsAsync()).Where(c => c.UsuarioId == u.Id).ToList();
+        var mensajes = (await AdminService.ListarMensajesAsync()).Where(m => chats.Any(c => c.Id == m.ChatId)).ToList();
+        var temasChats = chats.Select(c => c.Tema).Distinct().ToList();
+
+        // Estadísticas
+        DetStatsLayout.Clear();
+        var stats = new[]
+        {
+            (documentos.Count, "Documentos"),
+            (chats.Count, "Chats"),
+            (mensajes.Count, "Mensajes"),
+            (cuestionarios.Count, "Cuestionarios"),
+            (diagramas.Count, "Diagramas"),
+            (resultados.Count, "Resultados"),
+        };
+        foreach (var (valor, titulo) in stats)
+        {
+            DetStatsLayout.Add(new Border
+            {
+                Style = Res<Style>("Card"),
+                Padding = new Thickness(14, 10),
+                StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(14) },
+                Content = new VerticalStackLayout
+                {
+                    Spacing = 2,
+                    Children =
+                    {
+                        new Label { Text = valor.ToString(), FontAttributes = FontAttributes.Bold, FontSize = 20, TextColor = Colors.White },
+                        new Label { Text = titulo, FontSize = 11, TextColor = Color.FromArgb("#94A3B8") },
+                    },
+                },
+            });
+        }
+
+        // Documentos
+        DetSinDocumentos.IsVisible = documentos.Count == 0;
+        DetListaDocumentos.ItemsSource = documentos.Select(d => (ItemDetalle)new ItemDetalle(
+            "doc", d.Id, d.Nombre,
+            $"{d.Tipo.ToUpperInvariant()} · {FormatearTamano(d.TamanoBytes)} · {FormatearFecha(d.CreadoEn)}",
+            d.Resumen)).ToList();
+
+        // Chats por tema
+        DetSinChats.IsVisible = chats.Count == 0;
+        DetListaChats.ItemsSource = chats.Select(c => (ItemDetalle)new ItemDetalle(
+            "chat", c.Id, c.Titulo,
+            $"Tema: {c.Tema} · {FormatearFecha(c.CreadoEn)}",
+            string.Empty)).ToList();
+        if (temasChats.Count > 0)
+            DetSinChats.Text = $"Temas usados: {string.Join(", ", temasChats)}.";
+        else
+            DetSinChats.Text = "Sin chats.";
+
+        // Cuestionarios
+        DetSinCuestionarios.IsVisible = cuestionarios.Count == 0;
+        DetListaCuestionarios.ItemsSource = cuestionarios.Select(c => (ItemDetalle)new ItemDetalle(
+            "quiz", c.Id, c.Titulo,
+            $"{c.TotalPreguntas} preguntas · nivel {c.Nivel} · {FormatearFecha(c.CreadoEn)}",
+            string.Empty)).ToList();
+
+        // Diagramas
+        DetSinDiagramas.IsVisible = diagramas.Count == 0;
+        DetListaDiagramas.ItemsSource = diagramas.Select(d => (ItemDetalle)new ItemDetalle(
+            "diag", d.Id, d.Titulo,
+            $"tipo {d.Tipo} · {d.Fuente} · {FormatearFecha(d.CreadoEn)}",
+            string.Empty)).ToList();
+
+        // Resultados
+        DetSinResultados.IsVisible = resultados.Count == 0;
+        if (resultados.Count == 0)
+            DetSinResultados.Text = "Sin resultados.";
+        var titulosQuiz = cuestionarios.ToDictionary(c => c.Id, c => c.Titulo);
+        DetListaResultados.ItemsSource = resultados.Select(r => (ItemDetalle)new ItemDetalle(
+            "res", r.Id, $"{r.Puntaje} / {r.Total} correctas",
+            $"{titulosQuiz.GetValueOrDefault(r.CuestionarioId ?? "", "Cuestionario")} · {r.TiempoSegundos}s · {FormatearFecha(r.Fecha)}",
+            string.Empty)).ToList();
+    }
+
     public async Task RefrescarAsync()
     {
         if (_trabajando)
