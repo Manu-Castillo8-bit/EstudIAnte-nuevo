@@ -20,8 +20,6 @@ public static class DocumentoHtmlService
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     static readonly XNamespace Sx =
         "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-    static readonly XNamespace Px =
-        "http://schemas.openxmlformats.org/presentationml/2006/main";
 
     static readonly string Estilo = """
         <style>
@@ -34,7 +32,6 @@ public static class DocumentoHtmlService
           th, td { border:1px solid #2A3A6A; padding:6px 11px; font-size:14px; }
           th { background:#14204A; color:#7DD3FC; text-align:left; }
           tr:nth-child(even) td { background:#10173D; }
-          td:first-child { color:#7DD3FC; }
           ul { margin:8px 0; padding-left:26px; }
           li { margin:4px 0; }
           img { max-width:100%; border-radius:10px; margin:12px 0; display:block;
@@ -42,7 +39,6 @@ public static class DocumentoHtmlService
           pre { background:#10173D; border:1px solid #2A3A6A; border-radius:12px;
                 padding:16px; white-space:pre-wrap; word-wrap:break-word; font-size:13px;
                 color:#94E7C9; }
-          code { font-family:Consolas,monospace; }
           .deco { color:#64748B; font-size:12px; margin-top:30px; border-top:1px solid #2A3A6A; padding-top:10px; }
           b, strong { color:#FFFFFF; }
         </style>
@@ -183,24 +179,22 @@ public static class DocumentoHtmlService
         foreach (var fila in tabla.Elements(W + "tr"))
         {
             var celdas = fila.Elements(W + "tc").ToList();
-            var esCabecera = celdas.All(c =>
+            var esCabecera = celdas.Count > 0 && celdas.All(c =>
                 c.Elements(W + "p").Elements(W + "r").Elements(W + "rPr").Elements(W + "b").Any());
 
-            sb.Append(esCabecera ? "<tr>" : "<tr>");
+            sb.Append("<tr>");
             foreach (var celda in celdas)
             {
                 var textos = celda.Elements(W + "p")
                     .Select(p => p.Value.Trim())
                     .Where(t => t.Length > 0);
-                sb.Append(is_cabecera(esCabecera, textos));
+                var etiqueta = esCabecera ? "th" : "td";
+                sb.Append($"<{etiqueta}>{Escapar(string.Join("<br>", textos))}</{etiqueta}>");
             }
             sb.Append("</tr>");
         }
         return sb.Append("</table>").ToString();
     }
-
-    static string is_cabecera(bool cab, IEnumerable<string> textos) =>
-        $"<{(cab ? "th" : "td")}>{Escapar(string.Join("<br>", textos))}</{(cab ? "th" : "td")}>";
 
     /// <summary>Envuelve grupos de <li> consecutivos dentro de <ul>...</ul>.</summary>
     static string EnvolverListas(string html)
@@ -215,9 +209,10 @@ public static class DocumentoHtmlService
         while (posicion < html.Length)
         {
             var apertura = html.IndexOf("<li>", posicion, StringComparison.Ordinal);
-            var cierre = html.IndexOf("</li>", Math.Max(apertura, posicion), StringComparison.Ordinal);
-
-            if (apertura == -1 || cierre == -1)
+            if (apertura == -1)
+                break;
+            var cierre = html.IndexOf("</li>", apertura, StringComparison.Ordinal);
+            if (cierre == -1)
                 break;
 
             if (!enLista && apertura > posicion)
@@ -327,12 +322,18 @@ public static class DocumentoHtmlService
             using var s = entradas[i].Open();
             var hoja = XDocument.Load(s);
 
-            var primera = true;
-            foreach (var fila in hoja.Descendants(Sx + "row"))
+            var filas = hoja.Descendants(Sx + "row").ToList();
+            for (var f = 0; f < filas.Count; f++)
             {
-                var etiqueta = primera ? "<thead><tr>" : "<tr>";
-                sb.Append(etiqueta);
-                foreach (var celda in fila.Elements(Sx + "c"))
+                var primera = f == 0;
+                if (primera)
+                    sb.Append("<thead><tr>");
+                else if (f == 1)
+                    sb.Append("<tbody><tr>");
+                else
+                    sb.Append("<tr>");
+
+                foreach (var celda in filas[f].Elements(Sx + "c"))
                 {
                     var valor = celda.Element(Sx + "is") is { } inline
                         ? string.Concat(inline.Descendants(Sx + "t").Select(t => t.Value))
@@ -348,11 +349,10 @@ public static class DocumentoHtmlService
                         sb.Append($"<td>{Escapar(valor)}</td>");
                 }
                 sb.Append("</tr>");
-                if (primera && hoja.Descendants(Sx + "row").Any())
-                    sb.Append("</thead><tbody>");
-                primera = false;
             }
 
+            if (filas.Count > 1)
+                sb.Append("</tbody>");
             sb.Append("</table>");
         }
         return sb.ToString();
@@ -369,7 +369,7 @@ public static class DocumentoHtmlService
             .Where(e => e.FullName.StartsWith("ppt/slides/slide", StringComparison.OrdinalIgnoreCase) &&
                         e.FullName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
             .OrderBy(e => e.FullName, StringComparer.OrdinalIgnoreCase)
-            .Select((entry, indice) => (entry, indice: indice + 1))
+            .Select((entry, indice) => (entry, numero: indice + 1))
             .ToList();
 
         var sb = new StringBuilder();
@@ -407,15 +407,55 @@ public static class DocumentoHtmlService
     // ---------------- PDF ----------------
 
     /// <summary>
-    /// Los PDFs se muestran con el reproductor propio de WebView2: mantiene fotos,
-    /// diseño y paginación. Si el navegador no puede, el visor usa el texto extraído.
+    /// Los PDFs se renderizan CON pdf.js (dibuja cada página en un canvas):
+    /// mantiene imágenes, diseño y paginación. Chrome/WebView2 bloquea el
+    /// embebido directo de data:application/pdf, por eso se decodifica el
+    /// base64 en memoria con JS. Si no hay red (CDN de pdf.js), el visor
+    /// usa el texto extraído como respaldo.
     /// </summary>
     static string HtmlPdf(byte[] bytes)
     {
-        var data = "data:application/pdf;base64," + Convert.ToBase64String(bytes);
-        return $"<object data='{data}' type='application/pdf' width='100%' height='100%' style='min-height:1100px'>" +
-               "<p>Tu visor no pudo mostrar el PDF aquí; usa la sección Mis Archivos para descargarlo.</p>" +
-               "</object>";
+        var base64 = Convert.ToBase64String(bytes);
+        return $@"<style>#contenedor {{ text-align:center; }}</style>
+        <div id='contenedor'></div>
+        <div id='error' style='display:none; color:#FCA5A5; padding:30px;'>
+          No se pudo cargar el motor de PDF (pdf.js). Verifica conexión a internet la primera vez.
+        </div>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'></script>
+        <script>
+          const B64 = ""{base64}"";
+          function b64aBytes(b64) {{
+            const bin = atob(b64);
+            const u8 = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+            return u8;
+          }}
+          try {{
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+              'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const ANCHO_MAX = Math.min(window.innerWidth - 60, 900);
+            pdfjsLib.getDocument({{ data: b64aBytes(B64) }}).promise.then(function (pdf) {{
+              let cadena = Promise.resolve();
+              for (let n = 1; n <= pdf.numPages; n++) {{
+                cadena = cadena.then(function () {{
+                  return pdf.getPage(n).then(function (pagina) {{
+                    const escala = ANCHO_MAX / pagina.getViewport({{scale: 1}}).width;
+                    const visor = pagina.getViewport({{ scale: escala }});
+                    const lienzo = document.createElement('canvas');
+                    lienzo.width = visor.width; lienzo.height = visor.height;
+                    lienzo.style.margin = '14px auto'; lienzo.style.maxWidth = '100%';
+                    document.getElementById('contenedor').appendChild(lienzo);
+                    return pagina.render({{ canvasContext: lienzo.getContext('2d'), viewport: visor }}).promise;
+                  }});
+                }});
+              }}
+            }}).catch(function (e) {{
+              document.getElementById('error').style.display = 'block';
+            }});
+          }} catch (e) {{
+            document.getElementById('error').style.display = 'block';
+          }}
+        </script>";
     }
 
     // ---------------- CSV ----------------
@@ -449,7 +489,7 @@ public static class DocumentoHtmlService
     static string HtmlMarkdown(string md)
     {
         var sb = new StringBuilder();
-        bool enCodigo = false;
+        var enCodigo = false;
 
         foreach (var lineaCruda in md.Split('\n'))
         {
@@ -469,17 +509,17 @@ public static class DocumentoHtmlService
             }
 
             if (linea.StartsWith("# "))
-                sb.Append($"<h1>{Enriqueser(Escapar(linea[2..]))}</h1>");
+                sb.Append($"<h1>{Enriquecer(Escapar(linea[2..]))}</h1>");
             else if (linea.StartsWith("## "))
-                sb.Append($"<h2>{Enriqueser(Escapar(linea[3..]))}</h2>");
+                sb.Append($"<h2>{Enriquecer(Escapar(linea[3..]))}</h2>");
             else if (linea.StartsWith("### ") || linea.StartsWith("#### "))
-                sb.Append($"<h3>{Enriqueser(Escapar(linea[4..]))}</h3>");
+                sb.Append($"<h3>{Enriquecer(Escapar(linea[4..]))}</h3>");
             else if (linea.StartsWith("- ") || linea.StartsWith("* "))
-                sb.Append($"<li>{Enriqueser(Escapar(linea[2..]))}</li>");
+                sb.Append($"<li>{Enriquecer(Escapar(linea[2..]))}</li>");
             else if (linea.Length == 0)
                 sb.Append("<br>");
             else
-                sb.Append($"<p>{Enriqueser(Escapar(linea))}</p>");
+                sb.Append($"<p>{Enriquecer(Escapar(linea))}</p>");
         }
 
         if (enCodigo)
@@ -489,7 +529,7 @@ public static class DocumentoHtmlService
     }
 
     /// <summary>Convierte pares **…** en negritas.</summary>
-    static string Enriqueser(string texto)
+    static string Enriquecer(string texto)
     {
         var partes = texto.Split("**");
         var sb = new StringBuilder();

@@ -329,7 +329,9 @@ public partial class DocumentosView : ContentView
                 {
                     var bytes = await client.Storage.From("documentos")
                         .Download(doc.RutaStorage, (Supabase.Storage.TransformOptions?)null, null);
+                    Diag($"doc={doc.Nombre} tipo={doc.Tipo} bytes={bytes?.Length}");
                     var html = DocumentoHtmlService.GenerarHtml(doc, bytes);
+                    Diag($"html={html.Length} chars");
                     if (!string.IsNullOrWhiteSpace(html))
                     {
                         // WebView2 (NavigateToString) solo acepta ~2 MB; para HTML
@@ -356,20 +358,35 @@ public partial class DocumentosView : ContentView
                     }
                 }
             }
-            catch
+            catch (Exception exVisor)
             {
+                Diag("ERROR visor: " + exVisor.Message);
                 // sin conexión o error: usa el texto extraído
             }
         }
 
         if (!mostradoFiel)
         {
+            Diag($"fallback TEXTO para {doc.Nombre}");
             TextoVisor.Text = doc.Texto;
             VisorWeb.IsVisible = false;
             VisorTextoScroll.IsVisible = true;
         }
 
         PanelVisor.IsVisible = true;
+    }
+
+    /// <summary>Log de diagnóstico del visor en %LOCALAPPDATA%\EstudIAnte\visor.log.</summary>
+    static void Diag(string mensaje)
+    {
+        try
+        {
+            var carpeta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EstudIAnte");
+            Directory.CreateDirectory(carpeta);
+            File.AppendAllText(Path.Combine(carpeta, "visor.log"),
+                $"[{DateTime.Now:HH:mm:ss}] {mensaje}\n");
+        }
+        catch { }
     }
 
     void CerrarVisor_Click(object? sender, EventArgs e)
