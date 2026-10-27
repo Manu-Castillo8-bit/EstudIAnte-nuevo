@@ -18,6 +18,8 @@ public static class DocumentoHtmlService
         "http://schemas.openxmlformats.org/drawingml/2006/main";
     static readonly XNamespace R =
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+    static readonly XNamespace V =
+        "urn:schemas-microsoft-com:vml";
     static readonly XNamespace Sx =
         "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 
@@ -56,7 +58,8 @@ public static class DocumentoHtmlService
           .pagina td { border-color:#CBD5E1; }
           .pagina tr:nth-child(even) td { background:#F8FAFC; }
           .pagina pre { background:#F1F5F9; border-color:#CBD5E1; color:#0F172A; }
-          .pagina img { border-color:#E2E8F0; background:transparent; margin:10px 0; }
+          .pagina img { border-color:#E2E8F0; background:transparent; margin:10px 0;
+                        max-width:100%; height:auto; object-fit:contain; }
           .num-pagina { text-align:right; font-size:12px; color:#94A3B8;
                         border-top:1px dashed #CBD5E1; padding-top:6px; margin-top:26px; }
           .pagina canvas { display:block; max-width:100%; height:auto; margin:0 auto; }
@@ -130,19 +133,18 @@ public static class DocumentoHtmlService
 
         while (posicion < cuerpo.Length)
         {
-            var fin = Math.Min(posicion + MAX_POR_PAGINA, cuerpo.Length);
-            if (fin < cuerpo.Length)
+            var limite = Math.Min(posicion + MAX_POR_PAGINA, cuerpo.Length);
+            var fin = cuerpo.Length;
+            if (limite < cuerpo.Length)
             {
-                // Busca el corte más adelante del límite en la frontera de un bloque.
-                var corte = -1;
-                foreach (var marca in new[] { "</p>", "</li>", "</h1>", "</h2>", "</h3>", "</h4>", "</table>" })
+                // Nunca cortes dentro de una etiqueta o una imagen base64; pagina
+                // después del siguiente bloque completo, aunque supere el tamaño objetivo.
+                foreach (var marca in new[] { "</p>", "</h1>", "</h2>", "</h3>", "</h4>", "</table>", "</ul>" })
                 {
-                    var desde = cuerpo.LastIndexOf(marca, fin, StringComparison.Ordinal);
-                    if (desde >= posicion && desde + marca.Length > corte)
-                        corte = desde + marca.Length;
+                    var desde = cuerpo.IndexOf(marca, limite, StringComparison.Ordinal);
+                    if (desde >= posicion && desde + marca.Length < fin)
+                        fin = desde + marca.Length;
                 }
-                if (corte > posicion)
-                    fin = corte;
             }
 
             var contenido = cuerpo[posicion..fin].Trim();
@@ -217,7 +219,7 @@ public static class DocumentoHtmlService
             }
             else if (elemento.Name == W + "tbl")
             {
-                sb.Append(HtmlTablaWord(elemento));
+                sb.Append(HtmlTablaWord(elemento, imagenes));
             }
         }
 
@@ -227,7 +229,7 @@ public static class DocumentoHtmlService
     static string HtmlParrafoDocx(XElement parrafo, Dictionary<string, string> imagenes)
     {
         var sb = new StringBuilder();
-        foreach (var run in parrafo.Elements(W + "r"))
+        foreach (var run in parrafo.Descendants(W + "r"))
         {
             var props = run.Element(W + "rPr");
             var negrita = props?.Elements(W + "b").Any() == true;
@@ -252,11 +254,18 @@ public static class DocumentoHtmlService
                 if (rel is not null && imagenes.TryGetValue(rel, out var uri))
                     sb.Append($"<img src='{uri}' />");
             }
+
+            foreach (var imagen in run.Descendants(V + "imagedata"))
+            {
+                var rel = imagen.Attribute(R + "id")?.Value;
+                if (rel is not null && imagenes.TryGetValue(rel, out var uri))
+                    sb.Append($"<img src='{uri}' />");
+            }
         }
         return sb.ToString();
     }
 
-    static string HtmlTablaWord(XElement tabla)
+    static string HtmlTablaWord(XElement tabla, Dictionary<string, string> imagenes)
     {
         var sb = new StringBuilder("<table>");
         foreach (var fila in tabla.Elements(W + "tr"))
@@ -268,11 +277,11 @@ public static class DocumentoHtmlService
             sb.Append("<tr>");
             foreach (var celda in celdas)
             {
-                var textos = celda.Elements(W + "p")
-                    .Select(p => p.Value.Trim())
+                var contenidos = celda.Elements(W + "p")
+                    .Select(p => HtmlParrafoDocx(p, imagenes))
                     .Where(t => t.Length > 0);
                 var etiqueta = esCabecera ? "th" : "td";
-                sb.Append($"<{etiqueta}>{Escapar(string.Join("<br>", textos))}</{etiqueta}>");
+                sb.Append($"<{etiqueta}>{string.Join("<br>", contenidos)}</{etiqueta}>");
             }
             sb.Append("</tr>");
         }
@@ -345,13 +354,28 @@ public static class DocumentoHtmlService
                 "gif" => "image/gif",
                 "bmp" => "image/bmp",
                 "webp" => "image/webp",
+                "svg" => "image/svg+xml",
                 _ => string.Empty,
             };
             if (mime.Length == 0)
                 continue; // svg u otros no soportados
 
-            var ruta = destino.StartsWith("/word/") ? destino.TrimStart('/') : carpetaBase + destino;
-            var entry = zip.GetEntry(ruta.Replace("\\", "/"));
+            var ruta = destino.StartsWith('/') ? destino.TrimStart('/') : carpetaBase + destino;
+            var segmentos = new List<string>();
+            foreach (var segmento in Uri.UnescapeDataString(ruta).Replace('\\', '/').Split('/'))
+            {
+                if (segmento == "..")
+                {
+                    if (segmentos.Count > 0)
+                        segmentos.RemoveAt(segmentos.Count - 1);
+                }
+                else if (segmento.Length > 0 && segmento != ".")
+                {
+                    segmentos.Add(segmento);
+                }
+            }
+
+            var entry = zip.GetEntry(string.Join("/", segmentos));
             if (entry is null)
                 continue;
 
