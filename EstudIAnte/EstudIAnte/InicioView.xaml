@@ -4,7 +4,9 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.InicioView">
     <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="20">
+        <VerticalStackLayout x:Name="HomeLayout"
+                             Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}"
+                             Spacing="20">
 
             <!-- Hero -->
             <Border Background="{StaticResource HeroGradient}" StrokeThickness="0"
@@ -17,7 +19,7 @@
                         <controls:PulsarButton Text="Comenzar ahora   →" Style="{StaticResource PrimaryButton}"
                                 HorizontalOptions="Start" Margin="0,12,0,0" />
                     </VerticalStackLayout>
-                    <Label Grid.Column="1" Text="🤖" FontSize="120" VerticalOptions="Center" Margin="0,0,20,0"
+                    <Label x:Name="HeroRobot" Grid.Column="1" Text="🤖" FontSize="120" VerticalOptions="Center" Margin="0,0,20,0"
                            IsVisible="{OnIdiom Phone=False, Default=True}" />
                 </Grid>
             </Border>

@@ -4,22 +4,26 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.MisArchivosView">
     <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="16">
+        <VerticalStackLayout x:Name="FilesLayout"
+                             Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}"
+                             Spacing="16">
 
             <!-- Encabezado -->
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#1E3A8A"
-                        Stroke="{StaticResource Cyan}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
-                    <Label Text="🗂" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                    <Label Text="Mis Archivos" Style="{StaticResource PageTitle}" />
-                    <Label x:Name="Subtitulo" Text="Todo tu material en un solo lugar" Style="{StaticResource Muted}" />
-                </VerticalStackLayout>
-                <controls:PulsarButton x:Name="BtnSincronizar" Grid.Column="2" Text="🔄  Sincronizar"
-                        Style="{StaticResource GhostButton}" HeightRequest="42" VerticalOptions="Center"
-                        Clicked="Sincronizar_Click" />
-            </Grid>
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#1E3A8A"
+                            Stroke="{StaticResource Cyan}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
+                        <Label Text="🗂" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Mis Archivos" Style="{StaticResource PageTitle}" />
+                        <Label x:Name="Subtitulo" Text="Todo tu material en un solo lugar" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+                <controls:PulsarButton x:Name="BtnSincronizar" Text="🔄  Sincronizar"
+                        Style="{StaticResource GhostButton}" HeightRequest="42"
+                        HorizontalOptions="End" Clicked="Sincronizar_Click" />
+            </VerticalStackLayout>
 
             <Label x:Name="EstadoSync" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
 

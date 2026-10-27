@@ -15,6 +15,7 @@ public partial class CuestionarioView : ContentView
     readonly HashSet<int> _reveladas = new();
     int _indice;
     bool _generando;
+    bool? _compactLayout;
 
     // Cronómetro de la tarjeta de resumen.
     DateTime _inicioQuiz;
@@ -26,6 +27,64 @@ public partial class CuestionarioView : ContentView
         InitializeComponent();
         SelectorCantidad.SelectedIndex = 0;
         Loaded += (_, _) => _ = InicializarAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        QuizLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 20)
+            : new Thickness(28, 8, 28, 28);
+
+        SourceGrid.ColumnDefinitions.Clear();
+        SourceGrid.RowDefinitions.Clear();
+        QuizPanels.ColumnDefinitions.Clear();
+        QuizPanels.RowDefinitions.Clear();
+
+        if (compact)
+        {
+            SourceGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            SourceGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            SourceGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            SourceGrid.SetRow(BtnGenerar, 1);
+            SourceGrid.SetColumn(BtnGenerar, 0);
+
+            QuizPanels.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            QuizPanels.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            QuizPanels.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            QuizPanels.SetRow(QuizPanels.Children[0], 0);
+            QuizPanels.SetColumn(QuizPanels.Children[0], 0);
+            QuizPanels.SetRow(QuizPanels.Children[1], 1);
+            QuizPanels.SetColumn(QuizPanels.Children[1], 0);
+
+            PreguntaTexto.FontSize = 18;
+        }
+        else
+        {
+            SourceGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            SourceGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+            SourceGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            SourceGrid.SetRow(BtnGenerar, 0);
+            SourceGrid.SetColumn(BtnGenerar, 1);
+
+            QuizPanels.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            QuizPanels.ColumnDefinitions.Add(new ColumnDefinition(280));
+            QuizPanels.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            QuizPanels.SetRow(QuizPanels.Children[0], 0);
+            QuizPanels.SetColumn(QuizPanels.Children[0], 0);
+            QuizPanels.SetRow(QuizPanels.Children[1], 0);
+            QuizPanels.SetColumn(QuizPanels.Children[1], 1);
+
+            PreguntaTexto.FontSize = 21;
+        }
     }
 
     async Task InicializarAsync()

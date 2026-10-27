@@ -27,6 +27,7 @@ public partial class DiagramasView : ContentView
     readonly SemaphoreSlim _cargaFuentes = new(1, 1);
     Diagrama? _actual;
     bool _generando;
+    bool? _compactLayout;
 
     public DiagramasView()
     {
@@ -35,6 +36,61 @@ public partial class DiagramasView : ContentView
             SelectorTipo.Items.Add(t.Etiqueta);
         SelectorTipo.SelectedIndex = 0;
         Loaded += (_, _) => _ = CargarHistorialAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout != compact)
+        {
+            _compactLayout = compact;
+            DiagramasLayout.Padding = compact
+                ? new Thickness(14, 8, 14, 20)
+                : new Thickness(28, 8, 28, 28);
+
+            TipoGrid.ColumnDefinitions.Clear();
+            TipoGrid.RowDefinitions.Clear();
+            FuenteGrid.ColumnDefinitions.Clear();
+            FuenteGrid.RowDefinitions.Clear();
+
+            if (compact)
+            {
+                TipoGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                TipoGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                TipoGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                TipoSelectorBorder.WidthRequest = -1;
+                Grid.SetRow(LblTipoSel, 1);
+                Grid.SetColumn(LblTipoSel, 0);
+
+                FuenteGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                FuenteGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                FuenteGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                Grid.SetRow(BtnGenerar, 1);
+                Grid.SetColumn(BtnGenerar, 0);
+            }
+            else
+            {
+                TipoGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+                TipoGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                TipoGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                TipoSelectorBorder.WidthRequest = 290;
+                Grid.SetRow(LblTipoSel, 0);
+                Grid.SetColumn(LblTipoSel, 1);
+
+                FuenteGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                FuenteGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+                FuenteGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                Grid.SetRow(BtnGenerar, 0);
+                Grid.SetColumn(BtnGenerar, 1);
+            }
+        }
+
+        if (height > 0)
+            Visor.HeightRequest = Math.Clamp(height * 0.55, 300, 620);
     }
 
     // ---------------- TIPO ----------------

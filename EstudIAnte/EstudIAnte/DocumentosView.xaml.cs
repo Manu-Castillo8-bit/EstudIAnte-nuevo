@@ -8,11 +8,30 @@ public partial class DocumentosView : ContentView
     const long MaxBytes = 20 * 1024 * 1024;
     bool _trabajando;
     string? _detalleId;
+    bool? _compactLayout;
 
     public DocumentosView()
     {
         InitializeComponent();
         Loaded += (_, _) => _ = CargarDocumentosAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        BtnSubir.Text = width < 420 ? "＋ Subir" : "＋ Subir documento";
+        BtnSubir.HorizontalOptions = compact ? LayoutOptions.Fill : LayoutOptions.End;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        DocumentsLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 14)
+            : new Thickness(28, 8, 28, 28);
     }
 
     async Task CargarDocumentosAsync()

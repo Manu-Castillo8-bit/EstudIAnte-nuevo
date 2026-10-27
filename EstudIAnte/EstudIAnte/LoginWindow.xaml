@@ -5,10 +5,11 @@
              x:Class="EstudIAnte.LoginWindow"
              Title="Login"
              BackgroundColor="{StaticResource Bg}">
-    <Grid Background="{StaticResource LoginBg}" ColumnDefinitions="1.15*,*" Padding="40">
+    <Grid x:Name="LoginLayout" Background="{StaticResource LoginBg}"
+          ColumnDefinitions="1.15*,*" Padding="40">
 
         <!-- ========== PANEL DE MARCA ========== -->
-        <VerticalStackLayout Grid.Column="0" Spacing="26" VerticalOptions="Center"
+        <VerticalStackLayout x:Name="BrandPanel" Grid.Column="0" Spacing="26" VerticalOptions="Center"
                              Margin="30,0,30,0">
             <HorizontalStackLayout Spacing="14">
                 <Label Text="🎓" FontSize="52" VerticalOptions="Center" />
@@ -81,10 +82,11 @@
         </VerticalStackLayout>
 
         <!-- ========== TARJETA DE LOGIN ========== -->
-        <Border Grid.Column="1" Style="{StaticResource Card}" BackgroundColor="#CC101840"
+        <Border x:Name="LoginCard" Grid.Column="1" Style="{StaticResource Card}" BackgroundColor="#CC101840"
                 Padding="36" WidthRequest="420" MaximumWidthRequest="460"
                 StrokeShape="RoundRectangle 24"
                 HorizontalOptions="Center" VerticalOptions="Center">
+            <ScrollView>
             <VerticalStackLayout x:Name="Root" Spacing="14">
                 <!-- ========== PANEL DE LOGIN ========== -->
                 <VerticalStackLayout x:Name="PanelLogin" Spacing="14">
@@ -218,6 +220,7 @@
                        FontSize="12" HorizontalOptions="Center" HorizontalTextAlignment="Center"
                        TextColor="{StaticResource TextMuted}" Margin="0,10,0,0" />
             </VerticalStackLayout>
+            </ScrollView>
         </Border>
     </Grid>
 </ContentPage>

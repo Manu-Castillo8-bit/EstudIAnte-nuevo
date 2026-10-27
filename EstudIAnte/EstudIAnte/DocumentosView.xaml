@@ -5,23 +5,26 @@
              x:Class="EstudIAnte.DocumentosView">
     <Grid>
         <ScrollView>
-            <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,14', Tablet='18,8,18,18', Default='28,8,28,28'}"
+            <VerticalStackLayout x:Name="DocumentsLayout"
+                     Padding="{OnIdiom Phone='14,8,14,14', Tablet='18,8,18,18', Default='28,8,28,28'}"
                      Spacing="16">
 
             <!-- Encabezado -->
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource CardPink}"
-                        StrokeThickness="0" StrokeShape="RoundRectangle 16">
-                <Label Text="📁" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                    <Label Text="Documentos" Style="{StaticResource PageTitle}" />
-                    <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
-                </VerticalStackLayout>
-                <controls:PulsarButton x:Name="BtnSubir" Grid.Column="2"
-                        Text="{OnIdiom Phone='＋ Subir', Default='＋ Subir documento'}"
-                        Style="{StaticResource PrimaryButton}" Clicked="Subir_Click" />
-            </Grid>
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource CardPink}"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                        <Label Text="📁" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                        <Label Text="Documentos" Style="{StaticResource PageTitle}" />
+                        <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
+                    </VerticalStackLayout>
+                </Grid>
+                <controls:PulsarButton x:Name="BtnSubir" Text="＋ Subir documento"
+                        Style="{StaticResource PrimaryButton}" Clicked="Subir_Click"
+                        HorizontalOptions="End" />
+            </VerticalStackLayout>
 
             <!-- Zona de carga -->
             <Border Stroke="{StaticResource Violet}" StrokeThickness="1.5" StrokeDashArray="5,4"

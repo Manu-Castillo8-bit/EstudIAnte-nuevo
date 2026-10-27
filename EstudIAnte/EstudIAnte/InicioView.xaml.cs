@@ -6,10 +6,29 @@ namespace EstudIAnte;
 
 public partial class InicioView : ContentView
 {
+    bool? _compactLayout;
+
     public InicioView()
     {
         InitializeComponent();
         Loaded += (_, _) => _ = CargarDashboardAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        HomeLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 20)
+            : new Thickness(28, 8, 28, 28);
+        HeroRobot.IsVisible = width >= 760;
     }
 
     /// <summary>Recarga el dashboard (MainPage lo llama al volver a Inicio).</summary>

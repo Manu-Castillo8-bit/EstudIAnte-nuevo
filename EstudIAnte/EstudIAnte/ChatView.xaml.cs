@@ -9,11 +9,28 @@ public partial class ChatView : ContentView
     Tema? _temaActual;
     Chat? _chatActual;
     bool _ocupado;
+    bool? _compactLayout;
 
     public ChatView()
     {
         InitializeComponent();
         Loaded += (_, _) => _ = RefrescarTemasAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        ChatLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 18)
+            : new Thickness(28, 8, 28, 24);
     }
 
     /// <summary>Abre el chat de un tema por su nombre (lo usa el dashboard del Inicio).</summary>

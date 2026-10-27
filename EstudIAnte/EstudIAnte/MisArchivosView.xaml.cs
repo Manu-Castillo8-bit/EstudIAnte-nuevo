@@ -9,11 +9,31 @@ public partial class MisArchivosView : ContentView
     List<Documento> _docs = new();
     List<Diagrama> _diagramas = new();
     bool _trabajando;
+    bool? _compactLayout;
 
     public MisArchivosView()
     {
         InitializeComponent();
         Loaded += (_, _) => _ = CargarTodoAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        var muyEstrecho = width < 420;
+        BtnSincronizar.Text = muyEstrecho ? "🔄 Sincronizar" : "🔄  Sincronizar";
+        BtnSincronizar.HorizontalOptions = compact ? LayoutOptions.Fill : LayoutOptions.End;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        FilesLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 20)
+            : new Thickness(28, 8, 28, 28);
     }
 
     /// <summary>Recarga documentos y diagramas (la llama MainPage al entrar a la sección).</summary>

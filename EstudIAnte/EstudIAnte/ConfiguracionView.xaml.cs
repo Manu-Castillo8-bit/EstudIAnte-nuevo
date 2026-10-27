@@ -5,11 +5,28 @@ namespace EstudIAnte;
 public partial class ConfiguracionView : ContentView
 {
     bool _trabajando;
+    bool? _compactLayout;
 
     public ConfiguracionView()
     {
         InitializeComponent();
         Loaded += (_, _) => _ = ActualizarAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        ConfiguracionLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 20)
+            : new Thickness(28, 8, 28, 28);
     }
 
     /// <summary>Actualiza la información de cuenta y estado de la nube (la llama MainPage).</summary>

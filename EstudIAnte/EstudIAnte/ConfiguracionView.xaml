@@ -4,7 +4,8 @@
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.ConfiguracionView">
     <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}"
+        <VerticalStackLayout x:Name="ConfiguracionLayout"
+                             Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}"
                              Spacing="16" MaximumWidthRequest="760"
                              HorizontalOptions="Fill">
 
@@ -28,6 +29,7 @@
                         <Label Text="👤" FontSize="20" VerticalOptions="Center" />
                         <Label Grid.Column="1" Text="Usuario" Style="{StaticResource Muted}" VerticalOptions="Center" />
                         <Label x:Name="LblUsuario" Grid.Column="2" Text="—" FontAttributes="Bold"
+                               MaxLines="1" LineBreakMode="TailTruncation"
                                TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
@@ -45,12 +47,13 @@
                     <Label Text="Sincronización" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />
                     <Label x:Name="LblEstadoNube" Text="Comprobando conexión..."
                            FontSize="13" TextColor="{StaticResource TextMuted}" />
-                    <HorizontalStackLayout Spacing="10">
+                    <FlexLayout Wrap="Wrap" Direction="Row" AlignItems="Center"
+                                AlignContent="Start">
                         <controls:PulsarButton x:Name="BtnSincronizar" Text="🔄  Sincronizar ahora"
                                 Style="{StaticResource PrimaryButton}" Clicked="Sincronizar_Click" />
                         <controls:PulsarButton Text="🔎  Probar conexión" Style="{StaticResource GhostButton}"
                                 Clicked="ProbarConexion_Click" />
-                    </HorizontalStackLayout>
+                    </FlexLayout>
                     <Label x:Name="LblResultadoSync" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
                     <Label Text="Al sincronizar, todo lo creado sin conexión se sube a la nube y se descarga lo que hayas hecho en otros dispositivos con la misma cuenta."
                            FontSize="12" TextColor="{StaticResource TextMuted}" />

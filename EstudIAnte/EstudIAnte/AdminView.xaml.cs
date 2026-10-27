@@ -8,12 +8,29 @@ public partial class AdminView : ContentView
 {
     string _tab = "usuarios";
     bool _trabajando;
+    bool? _compactLayout;
 
     public AdminView()
     {
         InitializeComponent();
         ConstruirTabs();
         Loaded += (_, _) => _ = RefrescarAsync();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 760;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        AdminLayout.Padding = compact
+            ? new Thickness(14, 8, 14, 20)
+            : new Thickness(28, 8, 28, 28);
     }
 
     // ---------------- PESTAÑAS ----------------
@@ -38,7 +55,7 @@ public partial class AdminView : ContentView
             };
             boton.CommandParameter = id;
             boton.Clicked += Tab_Click;
-            TabsLayout.Add(boton);
+            TabsLayout.Children.Add(boton);
         }
     }
 
@@ -66,7 +83,7 @@ public partial class AdminView : ContentView
             _ => 0,
         };
 
-        for (var i = 0; i < TabsLayout.Count && TabsLayout[i] is Controls.PulsarButton b; i++)
+        for (var i = 0; i < TabsLayout.Children.Count && TabsLayout.Children[i] is Controls.PulsarButton b; i++)
         {
             var activo = i == indice;
             b.Opacity = activo ? 1 : 0.45;
@@ -203,7 +220,7 @@ public partial class AdminView : ContentView
         var temasChats = chats.Select(c => c.Tema).Distinct().ToList();
 
         // Estadísticas
-        DetStatsLayout.Clear();
+        DetStatsLayout.Children.Clear();
         var stats = new[]
         {
             (documentos.Count, "Documentos"),
@@ -215,7 +232,7 @@ public partial class AdminView : ContentView
         };
         foreach (var (valor, titulo) in stats)
         {
-            DetStatsLayout.Add(new Border
+            DetStatsLayout.Children.Add(new Border
             {
                 Style = Res<Style>("Card"),
                 Padding = new Thickness(14, 10),
@@ -303,7 +320,7 @@ public partial class AdminView : ContentView
     async Task CargarStatsAsync()
     {
         var stats = await AdminService.StatsAsync();
-        StatsLayout.Clear();
+        StatsLayout.Children.Clear();
 
         var tarjetas = stats.Select(kv => (kv.Key, kv.Value));
         foreach (var (clave, valor) in tarjetas)
@@ -333,7 +350,7 @@ public partial class AdminView : ContentView
                     },
                 },
             };
-            StatsLayout.Add(card);
+            StatsLayout.Children.Add(card);
         }
     }
 

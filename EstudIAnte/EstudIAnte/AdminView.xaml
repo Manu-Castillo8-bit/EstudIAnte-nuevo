@@ -22,7 +22,9 @@
     </ContentView.Resources>
     <Grid>
         <ScrollView>
-        <VerticalStackLayout Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}" Spacing="14">
+        <VerticalStackLayout x:Name="AdminLayout"
+                             Padding="{OnIdiom Phone='14,8,14,20', Tablet='20,8,20,20', Default='28,8,28,28'}"
+                             Spacing="14">
 
             <!-- Encabezado -->
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
@@ -39,10 +41,12 @@
             </Grid>
 
             <!-- Estadísticas -->
-            <HorizontalStackLayout x:Name="StatsLayout" Spacing="10" />
+            <FlexLayout x:Name="StatsLayout" Wrap="Wrap" Direction="Row"
+                        AlignItems="Start" AlignContent="Start" />
 
             <!-- Pestañas (se construyen en código para marcar la activa) -->
-            <HorizontalStackLayout x:Name="TabsLayout" Spacing="8" />
+            <FlexLayout x:Name="TabsLayout" Wrap="Wrap" Direction="Row"
+                        AlignItems="Center" AlignContent="Start" />
 
             <!-- Estado / carga -->
             <ActivityIndicator x:Name="Spinner" IsRunning="False" IsVisible="False" Color="{StaticResource Cyan}" />
@@ -287,7 +291,8 @@
                         <!-- Estadísticas del usuario -->
                         <Label Text="Resumen de actividad" FontSize="15" FontAttributes="Bold"
                                TextColor="{StaticResource TextMain}" />
-                        <HorizontalStackLayout x:Name="DetStatsLayout" Spacing="10" />
+                        <FlexLayout x:Name="DetStatsLayout" Wrap="Wrap" Direction="Row"
+                                    AlignItems="Start" AlignContent="Start" />
 
                         <!-- Documentos -->
                         <Label Text="📁 Documentos" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextMain}" />

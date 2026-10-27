@@ -3,27 +3,31 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.ChatView">
-    <Grid RowDefinitions="Auto,Auto,*,Auto"
+    <Grid x:Name="ChatLayout" RowDefinitions="Auto,Auto,*,Auto"
           Padding="{OnIdiom Phone='14,8,14,18', Tablet='20,8,20,20', Default='28,8,28,24'}"
           RowSpacing="14">
 
         <!-- Encabezado -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="14">
-            <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource BrandGradient}"
-                    StrokeThickness="0" StrokeShape="RoundRectangle 16">
-                <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
-            </Border>
-            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                <Label Text="Chat Temático" Style="{StaticResource PageTitle}" />
-                <Label x:Name="Subtitulo" Text="Crea un tema para empezar una conversación"
-                       Style="{StaticResource Muted}" />
-            </VerticalStackLayout>
-            <controls:PulsarButton x:Name="BtnNuevoTema" Grid.Column="2" Text="＋  Crear tema"
-                    Style="{StaticResource PrimaryButton}" Clicked="CrearTema_Click" VerticalOptions="Center" />
-            <controls:PulsarButton x:Name="BtnEliminarTema" Grid.Column="3" Text="🗑  Eliminar tema"
-                    Style="{StaticResource GhostButton}" Clicked="EliminarTema_Click"
-                    IsVisible="False" VerticalOptions="Center" />
-        </Grid>
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource BrandGradient}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 16">
+                    <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Chat Temático" Style="{StaticResource PageTitle}" />
+                    <Label x:Name="Subtitulo" Text="Crea un tema para empezar una conversación"
+                           Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+            </Grid>
+            <FlexLayout Wrap="Wrap" JustifyContent="End" AlignItems="Center">
+                <controls:PulsarButton x:Name="BtnNuevoTema" Text="＋  Crear tema"
+                        Style="{StaticResource PrimaryButton}" Clicked="CrearTema_Click" Margin="0,0,8,4" />
+                <controls:PulsarButton x:Name="BtnEliminarTema" Text="🗑  Eliminar tema"
+                        Style="{StaticResource GhostButton}" Clicked="EliminarTema_Click"
+                        IsVisible="False" Margin="0,0,8,4" />
+            </FlexLayout>
+        </VerticalStackLayout>
 
         <!-- Temas (chips dinámicos, se acomodan en varias líneas) -->
         <FlexLayout Grid.Row="1" x:Name="TemasPanel" Wrap="Wrap" JustifyContent="Start"
@@ -41,9 +45,9 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="22,8">
+                        <Grid Padding="{OnIdiom Phone='10,8', Default='22,8'}">
                             <Border HorizontalOptions="{Binding Alineacion}" MaximumWidthRequest="620"
-                                    Margin="40,0,0,0" BackgroundColor="{Binding ColorFondo}"
+                                    BackgroundColor="{Binding ColorFondo}"
                                     Stroke="{Binding ColorTexto}" StrokeThickness="1"
                                     StrokeShape="RoundRectangle 18" Padding="16,12">
                                 <VerticalStackLayout Spacing="4">

@@ -4,9 +4,54 @@ namespace EstudIAnte;
 
 public partial class LoginWindow : ContentPage
 {
+    bool? _compactLayout;
+
     public LoginWindow()
     {
         InitializeComponent();
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0)
+            return;
+
+        var compact = width < 820;
+        if (_compactLayout == compact)
+            return;
+
+        _compactLayout = compact;
+        LoginLayout.ColumnDefinitions.Clear();
+        LoginLayout.RowDefinitions.Clear();
+
+        if (compact)
+        {
+            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+            LoginLayout.Padding = new Thickness(12);
+            BrandPanel.IsVisible = false;
+            LoginCard.WidthRequest = -1;
+            LoginCard.Padding = new Thickness(20);
+            LoginCard.HorizontalOptions = LayoutOptions.Fill;
+            Grid.SetColumn(LoginCard, 0);
+            Grid.SetRow(LoginCard, 0);
+        }
+        else
+        {
+            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1.15, GridUnitType.Star)));
+            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+            LoginLayout.Padding = new Thickness(40);
+            BrandPanel.IsVisible = true;
+            LoginCard.WidthRequest = 420;
+            LoginCard.Padding = new Thickness(36);
+            LoginCard.HorizontalOptions = LayoutOptions.Center;
+            Grid.SetColumn(BrandPanel, 0);
+            Grid.SetColumn(LoginCard, 1);
+            Grid.SetRow(BrandPanel, 0);
+            Grid.SetRow(LoginCard, 0);
+        }
     }
 
     protected override async void OnAppearing()
