@@ -304,18 +304,26 @@ public partial class DocumentosView : ContentView
         var conn = await LocalDatabase.GetAsync();
         var doc = await conn.Table<Documento>().Where(d => d.Id == id).FirstOrDefaultAsync();
         if (doc is null)
+        {
+            Diag($"Ver: doc id={id} NO ENCONTRADO");
             return;
+        }
 
-        if (string.IsNullOrWhiteSpace(doc.Texto))
+        Diag($"Ver: doc={doc.Nombre} tipo={doc.Tipo} texto={doc.Texto?.Length} ruta={(doc.RutaStorage ?? "(vacía)")}");
+
+        // Solo se bloquea de entrada si NO hay texto y el tipo tampoco es visualizable.
+        if (string.IsNullOrWhiteSpace(doc.Texto) && !DocumentoHtmlService.EsVisualizable(doc.Tipo))
         {
             await MostrarAsync("Sin contenido",
                 "Este archivo no tiene texto extraíble (por ejemplo, un PDF escaneado o una hoja de cálculo con fórmulas sin valores).");
             return;
         }
+        if (string.IsNullOrWhiteSpace(doc.Texto))
+            Diag("texto vacío pero tipo visualizable → intentando render fiel");
 
         _visorId = id;
         TituloVisor.Text = doc.Nombre;
-        MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {doc.Texto.Length} caracteres";
+        MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {(doc.Texto?.Length ?? 0)} caracteres";
 
         // Si el tipo se puede mostrar "tal como es", descarga el archivo original
         // y lo renderiza a HTML con estructura e imágenes incrustadas.
@@ -325,6 +333,13 @@ public partial class DocumentosView : ContentView
             try
             {
                 var client = await SupabaseService.GetClientAsync();
+                if (client is null)
+                    Diag("visor: sin conexión a Supabase (client null)");
+                if (!string.IsNullOrWhiteSpace(doc.RutaStorage))
+                {
+                    // hay ruta
+                    Diag($"visor: usando storage ruta={doc.RutaStorage}");
+                }
                 if (client is not null && !string.IsNullOrWhiteSpace(doc.RutaStorage))
                 {
                     var bytes = await client.Storage.From("documentos")
@@ -342,6 +357,7 @@ public partial class DocumentosView : ContentView
                             Directory.CreateDirectory(carpeta);
                             var ruta = Path.Combine(carpeta, $"{Guid.NewGuid()}.html");
                             await File.WriteAllTextAsync(ruta, html);
+                            Diag($"html grande → archivo temporal ({ruta})");
                             VisorWeb.Source = new UrlWebViewSource
                             {
                                 Url = "file:///" + ruta.Replace('\\', '/').TrimStart('/'),
@@ -523,7 +539,11 @@ public class DocumentoItem
 
         Resumen = d.Resumen;
         TieneResumen = !string.IsNullOrWhiteSpace(d.Resumen);
-        PuedeVer = !string.IsNullOrWhiteSpace(d.Texto);
+        // El botón "Ver contenido" aparece si hay texto extraído O si el tipo
+        // se puede renderizar fielmente (los Word/PowerPoint de solo imágenes
+        // tienen Texto vacío pero el visor los muestra igual con imágenes).
+        PuedeVer = !string.IsNullOrWhiteSpace(d.Texto) ||
+                   (DocumentoHtmlService.EsVisualizable(d.Tipo) && d.TamanoBytes > 0);
 
         (ColorTexto, ColorFondo) = d.Tipo switch
         {
