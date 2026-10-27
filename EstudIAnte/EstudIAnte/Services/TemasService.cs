@@ -40,10 +40,16 @@ public static class TemasService
         var chats = await conn.Table<Chat>().Where(c => c.Tema == tema.Nombre && c.UsuarioId == tema.UsuarioId).ToListAsync();
         foreach (var chat in chats)
         {
+            var mensajes = await conn.Table<Mensaje>().Where(m => m.ChatId == chat.Id).ToListAsync();
+            foreach (var mensaje in mensajes)
+                await SyncService.MarcarBorradoAsync("mensajes", mensaje.Id);
+
             await conn.Table<Mensaje>().Where(m => m.ChatId == chat.Id).DeleteAsync();
+            await SyncService.MarcarBorradoAsync("chats", chat.Id);
             await conn.DeleteAsync(chat);
         }
 
+        await SyncService.MarcarBorradoAsync("temas", tema.Id);
         await conn.DeleteAsync(tema);
 
         var client = await SupabaseService.GetClientAsync();

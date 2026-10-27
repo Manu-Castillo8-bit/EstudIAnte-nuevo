@@ -21,6 +21,8 @@ public partial class LoginWindow : ContentPage
         EstadoSupabase.TextColor = Color.FromArgb(ok ? "#34D399" : "#F87171");
     }
 
+    // ---------------- LOGIN ----------------
+
     async void Login_Click(object? sender, EventArgs e)
     {
         if (string.IsNullOrWhiteSpace(Usuario.Text) ||
@@ -60,15 +62,116 @@ public partial class LoginWindow : ContentPage
                 await AuthService.LoginAsync(usuario, clave, Recordar.IsChecked);
             }
 
-            // Sincroniza datos de la nube en segundo plano
-            _ = SyncService.PullAsync();
-
-            Application.Current!.Windows[0].Page = new AppShell();
+            await EntrarAsync();
         }
         finally
         {
             if (boton is not null) boton.IsEnabled = true;
         }
+    }
+
+    // ---------------- REGISTRO ----------------
+
+    void IrRegistro_Tapped(object? sender, EventArgs e) => MostrarRegistro(true);
+
+    void VolverLogin_Tapped(object? sender, EventArgs e) => MostrarRegistro(false);
+
+    void MostrarRegistro(bool registro)
+    {
+        PanelLogin.IsVisible = !registro;
+        PanelRegistro.IsVisible = registro;
+
+        EstadoSupabase.Text = registro
+            ? "La cuenta se creará en la nube y quedará disponible en todos tus dispositivos."
+            : "Comprobando conexión con Supabase...";
+        EstadoSupabase.TextColor = Color.FromArgb(registro ? "#22D3EE" : "#94A3B8");
+    }
+
+    async void Registrar_Click(object? sender, EventArgs e)
+    {
+        var usuario = RegUsuario.Text?.Trim() ?? string.Empty;
+        var email = RegEmail.Text?.Trim();
+        var clave = RegClave.Text ?? string.Empty;
+        var clave2 = RegClave2.Text ?? string.Empty;
+
+        if (usuario.Length < 3)
+        {
+            await DisplayAlertAsync("Aviso", "El nombre de usuario debe tener al menos 3 caracteres.", "OK");
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(email) && !email.Contains('@'))
+        {
+            await DisplayAlertAsync("Aviso", "Ingresa un correo válido (o déjalo vacío).", "OK");
+            return;
+        }
+
+        if (clave.Length < 4)
+        {
+            await DisplayAlertAsync("Aviso", "La contraseña debe tener al menos 4 caracteres.", "OK");
+            return;
+        }
+
+        if (clave != clave2)
+        {
+            await DisplayAlertAsync("Aviso", "Las contraseñas no coinciden.", "OK");
+            return;
+        }
+
+        var boton = sender as Button;
+        if (boton is not null) boton.IsEnabled = false;
+
+        try
+        {
+            EstadoSupabase.Text = "⏳ Creando cuenta...";
+            EstadoSupabase.TextColor = Color.FromArgb("#FBBF24");
+
+            var (ok, error) = await AuthService.RegistrarAsync(usuario, clave, email);
+            if (!ok)
+            {
+                EstadoSupabase.Text = "🔴 " + error;
+                EstadoSupabase.TextColor = Color.FromArgb("#F87171");
+                await DisplayAlertAsync("No se pudo registrar", error, "OK");
+                return;
+            }
+
+            // Inicia sesión automáticamente con la cuenta recién creada.
+            await AuthService.LoginAsync(usuario, clave, Recordar.IsChecked);
+
+            await EntrarAsync();
+        }
+        finally
+        {
+            if (boton is not null) boton.IsEnabled = true;
+        }
+    }
+
+    async void Olvidaste_Tapped(object? sender, EventArgs e)
+    {
+        await DisplayAlertAsync("Recuperar contraseña",
+            "Si tienes conexión, tu contraseña se guarda en la nube del sistema.\n\n" +
+            "Pide al administrador que la revise desde el panel de Supabase " +
+            "(tabla «usuarios») o prueba con tus datos habituales.\n\n" +
+            "Cuenta de ejemplo: admin / admin123", "OK");
+    }
+
+    // ---------------- ENTRADA CON SINCRONIZACIÓN ----------------
+
+    /// <summary>
+    /// Sincroniza (sube lo local y baja lo de la nube) antes de entrar, para que
+    /// en otro dispositivo con la misma cuenta aparezca todo el contenido.
+    /// </summary>
+    async Task EntrarAsync()
+    {
+        EstadoSupabase.Text = "🔄 Sincronizando tus datos...";
+        EstadoSupabase.TextColor = Color.FromArgb("#22D3EE");
+
+        var (ok, mensaje) = await SyncService.SincronizarTodoAsync();
+
+        EstadoSupabase.Text = (ok ? "🟢 " : "⚠ ") + mensaje;
+        EstadoSupabase.TextColor = Color.FromArgb(ok ? "#34D399" : "#FBBF24");
+
+        Application.Current!.Windows[0].Page = new AppShell();
     }
 
     void Ver_Click(object? sender, EventArgs e) => Clave.IsPassword = !Clave.IsPassword;

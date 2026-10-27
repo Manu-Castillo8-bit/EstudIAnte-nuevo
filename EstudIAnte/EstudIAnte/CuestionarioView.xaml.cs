@@ -16,6 +16,11 @@ public partial class CuestionarioView : ContentView
     int _indice;
     bool _generando;
 
+    // Cronómetro de la tarjeta de resumen.
+    DateTime _inicioQuiz;
+    IDispatcherTimer? _cronometro;
+    bool _quizFinalizado;
+
     public CuestionarioView()
     {
         InitializeComponent();
@@ -230,12 +235,78 @@ public partial class CuestionarioView : ContentView
         _indice = 0;
 
         ResumenPreguntas.Text = _preguntas.Count.ToString();
-        ResumenTiempo.Text = $"{_cuestionario.TiempoLimite} min";
         TituloQuiz.Text = _cuestionario.Titulo;
         BadgeNivel.Text = "Nivel: " + _cuestionario.Nivel;
-        ResumenPuntaje.Text = $"0 / {_preguntas.Count}";
+
+        // El cronómetro arranca (o se reinicia) cada vez que se carga un cuestionario.
+        _quizFinalizado = false;
+        IniciarCronometro();
+
+        // Si el cuestionario ya tenía respuestas guardadas en esta sesión, muestra el puntaje real.
+        ActualizarPuntaje();
+        ResumenPuntaje.TextColor = Color.FromArgb("#EC4899");
 
         MostrarPregunta();
+    }
+
+    // ---------------- CRONÓMETRO ----------------
+
+    void IniciarCronometro()
+    {
+        DetenerCronometro();
+        _inicioQuiz = DateTime.Now;
+
+        _cronometro = Application.Current?.Dispatcher.CreateTimer();
+        if (_cronometro is null)
+        {
+            ActualizarTiempoVisual(DateTime.Now - _inicioQuiz);
+            return;
+        }
+
+        _cronometro.Interval = TimeSpan.FromSeconds(1);
+        _cronometro.Tick += (_, _) =>
+        {
+            if (_quizFinalizado)
+            {
+                DetenerCronometro();
+                return;
+            }
+            ActualizarTiempoVisual(DateTime.Now - _inicioQuiz);
+        };
+        _cronometro.Start();
+        ActualizarTiempoVisual(TimeSpan.Zero);
+    }
+
+    void DetenerCronometro()
+    {
+        _cronometro?.Stop();
+        _cronometro = null;
+    }
+
+    void ActualizarTiempoVisual(TimeSpan transcurrido)
+    {
+        ResumenTiempo.Text = transcurrido.TotalHours >= 1
+            ? $"{(int)transcurrido.TotalHours}:{transcurrido.Minutes:00}:{transcurrido.Seconds:00}"
+            : $"{(int)transcurrido.TotalMinutes:00}:{transcurrido.Seconds:00}";
+    }
+
+    /// <summary>Cantidad de respuestas correctas marcadas hasta ahora.</summary>
+    int CorrectasCount() => _respuestas.Count(kv =>
+        kv.Key < _preguntas.Count && _preguntas[kv.Key].RespuestaCorrecta == kv.Value);
+
+    /// <summary>
+    /// Actualiza el puntaje de la tarjeta de resumen al instante y lo resalta
+    /// en verde si la última respuesta fue correcta, o en rosa si fue incorrecta.
+    /// </summary>
+    void ActualizarPuntaje(bool? ultimaFueCorrecta = null)
+    {
+        var correctas = CorrectasCount();
+        ResumenPuntaje.Text = $"{correctas} / {_preguntas.Count}";
+
+        if (ultimaFueCorrecta is true)
+            ResumenPuntaje.TextColor = Color.FromArgb("#10B981");
+        else if (ultimaFueCorrecta is false)
+            ResumenPuntaje.TextColor = Color.FromArgb("#EC4899");
     }
 
     void MostrarPregunta()
@@ -295,6 +366,11 @@ public partial class CuestionarioView : ContentView
 
         _respuestas[_indice] = valor;
         _reveladas.Add(_indice);
+
+        // Marca el resultado al instante en la tarjeta de resumen.
+        var esCorrecta = _indice < _preguntas.Count && valor == _preguntas[_indice].RespuestaCorrecta;
+        ActualizarPuntaje(esCorrecta);
+
         MostrarPregunta();
     }
 
@@ -426,6 +502,15 @@ public partial class CuestionarioView : ContentView
 
     async Task FinalizarAsync()
     {
+        if (_quizFinalizado)
+            return;
+
+        // Detiene el cronómetro y guarda el tiempo real invertido.
+        _quizFinalizado = true;
+        DetenerCronometro();
+        var transcurrido = DateTime.Now - _inicioQuiz;
+        ActualizarTiempoVisual(transcurrido);
+
         var correctas = 0;
         for (var i = 0; i < _preguntas.Count; i++)
         {
@@ -442,7 +527,7 @@ public partial class CuestionarioView : ContentView
                 UsuarioId = usuario.Id,
                 Puntaje = correctas,
                 Total = _preguntas.Count,
-                TiempoSegundos = 0
+                TiempoSegundos = (int)transcurrido.TotalSeconds
             };
 
             var conn = await LocalDatabase.GetAsync();
@@ -456,11 +541,12 @@ public partial class CuestionarioView : ContentView
             }
         }
 
-        ResumenPuntaje.Text = $"{correctas} / {_preguntas.Count}";
+        ActualizarPuntaje(correctas == _preguntas.Count && _preguntas.Count > 0 ? true : null);
         ProgresoPct.Text = "100%";
-        ProgresoTexto.Text = "Cuestionario finalizado";
+        ProgresoTexto.Text = $"Cuestionario finalizado en {ResumenTiempo.Text}";
 
-        await MostrarAsync("Resultado", $"Obtuviste {correctas} de {_preguntas.Count} respuestas correctas.");
+        await MostrarAsync("Resultado",
+            $"Obtuviste {correctas} de {_preguntas.Count} respuestas correctas.\nTiempo: {ResumenTiempo.Text}");
     }
 
     Task MostrarAsync(string titulo, string mensaje)

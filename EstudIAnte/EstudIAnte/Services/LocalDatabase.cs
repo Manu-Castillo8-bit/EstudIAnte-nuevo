@@ -35,6 +35,7 @@ public static class LocalDatabase
             await conn.CreateTableAsync<Models.Pregunta>();
             await conn.CreateTableAsync<Models.Diagrama>();
             await conn.CreateTableAsync<Models.Resultado>();
+            await conn.CreateTableAsync<Models.SyncBorrado>();
 
             await SembrarAdminAsync(conn);
 

@@ -128,7 +128,7 @@
                                        TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
                             </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                <Label Text="⏱" FontSize="22" VerticalOptions="Center" />
+                                <Label Text="⭐" FontSize="22" VerticalOptions="Center" />
                                 <Label Grid.Column="1" Text="Puntaje" Style="{StaticResource Muted}" VerticalOptions="Center" />
                                 <Label x:Name="ResumenPuntaje" Grid.Column="2" Text="0 / 0" FontAttributes="Bold"
                                        TextColor="{StaticResource Pink}" VerticalOptions="Center" />

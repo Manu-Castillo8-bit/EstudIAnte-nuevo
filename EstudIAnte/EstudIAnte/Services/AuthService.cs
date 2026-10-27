@@ -53,6 +53,9 @@ public static class AuthService
 
     public static async Task<(bool Ok, string Error)> RegistrarAsync(string usuario, string clave, string? email = null)
     {
+        usuario = usuario.Trim();
+        email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
+
         var nuevo = new Usuario
         {
             NombreUsuario = usuario,
@@ -61,7 +64,26 @@ public static class AuthService
             Nombre = usuario
         };
 
-        // Guarda siempre en SQLite (funciona offline)
+        var client = await SupabaseService.GetClientAsync();
+
+        // 1) Valida contra la nube primero (para que el usuario esté disponible en todos los dispositivos).
+        if (client is not null)
+        {
+            try
+            {
+                var resp = await client.From<Usuario>()
+                    .Where(u => u.NombreUsuario == usuario)
+                    .Get();
+                if (resp?.Models?.Any() == true)
+                    return (false, "Ya existe una cuenta con ese usuario.");
+            }
+            catch
+            {
+                // Sin internet: la validación local basta.
+            }
+        }
+
+        // 2) Guarda en SQLite (funciona offline; SyncService la sube después si faltó la nube)
         var conn = await LocalDatabase.GetAsync();
         var existe = await conn.Table<Usuario>()
             .Where(u => u.NombreUsuario == usuario)
@@ -71,8 +93,7 @@ public static class AuthService
 
         await conn.InsertAsync(nuevo);
 
-        // Intenta sincronizar a la nube (si no hay internet queda pendiente)
-        var client = await SupabaseService.GetClientAsync();
+        // 3) Crea la cuenta en la nube (si falla queda pendiente y la sube SyncService)
         if (client is not null)
         {
             try

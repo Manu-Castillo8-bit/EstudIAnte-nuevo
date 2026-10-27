@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
+             x:Class="EstudIAnte.MisArchivosView">
+    <ScrollView>
+        <VerticalStackLayout Padding="28,8,28,28" Spacing="16">
+
+            <!-- Encabezado -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                <Border WidthRequest="54" HeightRequest="54" BackgroundColor="#1E3A8A"
+                        Stroke="{StaticResource Cyan}" StrokeThickness="1" StrokeShape="RoundRectangle 16">
+                    <Label Text="🗂" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Mis Archivos" Style="{StaticResource PageTitle}" />
+                    <Label x:Name="Subtitulo" Text="Todo tu material en un solo lugar" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <controls:PulsarButton x:Name="BtnSincronizar" Grid.Column="2" Text="🔄  Sincronizar"
+                        Style="{StaticResource GhostButton}" HeightRequest="42" VerticalOptions="Center"
+                        Clicked="Sincronizar_Click" />
+            </Grid>
+
+            <Label x:Name="EstadoSync" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
+
+            <SearchBar x:Name="BuscadorArchivos" Placeholder="🔍   Buscar en mis archivos..."
+                       BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                       PlaceholderColor="{StaticResource TextMuted}" Margin="0,4,0,0"
+                       TextChanged="Buscador_TextChanged" />
+
+            <!-- ============ DOCUMENTOS ============ -->
+            <Label x:Name="TituloDocs" Text="📄  Documentos" FontSize="15" FontAttributes="Bold"
+                   TextColor="{StaticResource TextMain}" Margin="0,6,0,0" />
+
+            <CollectionView x:Name="ListaDocumentos">
+                <CollectionView.EmptyView>
+                    <Label Text="No hay documentos. Súbelos en la sección Documentos." Style="{StaticResource Muted}" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                    <Border WidthRequest="48" HeightRequest="48" BackgroundColor="{Binding ColorFondo}"
+                                            Stroke="{Binding ColorTexto}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                                        <Label Text="{Binding TipoEtiqueta}" FontSize="12" FontAttributes="Bold"
+                                               TextColor="{Binding ColorTexto}"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding Nombre}" FontAttributes="Bold"
+                                               TextColor="{StaticResource TextMain}" />
+                                        <Label FontSize="12" TextColor="{StaticResource TextMuted}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding TamanoTexto}" />
+                                                    <Span Text="  ·  " />
+                                                    <Span Text="{Binding Estado}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Text="{Binding Resumen}" FontSize="12" TextColor="{StaticResource Cyan}"
+                                               IsVisible="{Binding TieneResumen}" MaxLines="2" LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End"
+                                            AlignItems="Center" AlignContent="Start">
+                                    <controls:PulsarButton Text="⬇  Exportar documento" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="ExportarDocumento_Click" Margin="0,0,8,4"
+                                            CommandParameter="{Binding Id}" />
+                                    <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                            Clicked="EliminarDocumento_Click" CommandParameter="{Binding Id}" />
+                                </FlexLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ============ DIAGRAMAS ============ -->
+            <Label x:Name="TituloDiags" Text="🔀  Diagramas" FontSize="15" FontAttributes="Bold"
+                   TextColor="{StaticResource TextMain}" Margin="0,10,0,0" />
+
+            <CollectionView x:Name="ListaDiagramas">
+                <CollectionView.EmptyView>
+                    <Label Text="No hay diagramas. Genéralos en la sección Diagramas." Style="{StaticResource Muted}" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                    <Border WidthRequest="48" HeightRequest="48" BackgroundColor="#134E4A"
+                                            Stroke="{StaticResource Emerald}" StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                                        <Label Text="{Binding Icono}" FontSize="20"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                        <Label Text="{Binding Titulo}" FontAttributes="Bold"
+                                               TextColor="{StaticResource TextMain}" />
+                                        <Label FontSize="12" TextColor="{StaticResource TextMuted}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding Fuente}" />
+                                                    <Span Text="  ·  " />
+                                                    <Span Text="{Binding FechaTexto}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                </Grid>
+                                <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="End"
+                                            AlignItems="Center" AlignContent="Start">
+                                    <controls:PulsarButton Text="⬇  Exportar HTML" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="ExportarDiagrama_Click" Margin="0,0,8,4"
+                                            CommandParameter="{Binding Id}" />
+                                    <controls:PulsarButton Text="📋  Copiar código" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" Clicked="CopiarDiagrama_Click" Margin="0,0,8,4"
+                                            CommandParameter="{Binding Id}" />
+                                    <controls:PulsarButton Text="🗑  Eliminar" Style="{StaticResource GhostButton}"
+                                            HeightRequest="38" TextColor="{StaticResource Pink}" Margin="0,0,8,4"
+                                            Clicked="EliminarDiagrama_Click" CommandParameter="{Binding Id}" />
+                                </FlexLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

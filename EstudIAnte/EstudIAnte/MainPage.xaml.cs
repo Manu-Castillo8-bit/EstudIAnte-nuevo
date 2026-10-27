@@ -34,20 +34,45 @@ namespace EstudIAnte
             VQuiz.IsVisible = ReferenceEquals(radioButton, N3);
             VDiag.IsVisible = ReferenceEquals(radioButton, N5);
             VDocs.IsVisible = ReferenceEquals(radioButton, N4);
+            VArchivos.IsVisible = ReferenceEquals(radioButton, N6);
+            VConfig.IsVisible = ReferenceEquals(radioButton, N7);
 
             // Refresca las listas cada vez que se entra a la sección.
             if (ReferenceEquals(radioButton, N5))
                 _ = VDiag.RefrescarAsync();
             if (ReferenceEquals(radioButton, N4))
                 _ = VDocs.RefrescarAsync();
+            if (ReferenceEquals(radioButton, N6))
+                _ = VArchivos.RefrescarAsync();
+            if (ReferenceEquals(radioButton, N7))
+                _ = VConfig.RefrescarAsync();
         }
+
+        /// <summary>
+        /// La búsqueda global filtra Mis Archivos (documentos y diagramas) en vivo.
+        /// </summary>
+        void BuscadorGlobal_TextChanged(object? sender, TextChangedEventArgs e)
+        {
+            var texto = BuscadorGlobal.Text?.Trim() ?? string.Empty;
+            if (texto.Length == 0)
+                return;
+
+            if (!VArchivos.IsVisible)
+                IrA("archivos");
+
+            VArchivos.AplicarBusqueda(texto);
+        }
+
+        /// <summary>El avatar superior abre la sección de Configuración.</summary>
+        void Avatar_Tapped(object? sender, EventArgs e) => IrA("config");
 
         /// <summary>Referencia a la MainPage activa, para navegar desde las vistas.</summary>
         public static MainPage? Actual =>
             Application.Current?.Windows.FirstOrDefault()?.Page as MainPage;
 
         /// <summary>
-        /// Cambia a la sección indicada: "inicio", "chat", "quiz", "diagramas" o "documentos".
+        /// Cambia a la sección indicada: "inicio", "chat", "quiz", "diagramas", "documentos",
+        /// "archivos" o "config".
         /// </summary>
         public void IrA(string seccion)
         {
@@ -58,6 +83,8 @@ namespace EstudIAnte
                 "quiz" => N3,
                 "diagramas" => N5,
                 "documentos" => N4,
+                "archivos" => N6,
+                "config" => N7,
                 _ => null
             };
 

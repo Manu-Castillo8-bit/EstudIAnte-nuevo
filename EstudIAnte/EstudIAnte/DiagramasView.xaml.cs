@@ -274,7 +274,7 @@ public partial class DiagramasView : ContentView
         </html>
         """;
 
-    static string HtmlDiagrama(string codigo, string tipo)
+    public static string HtmlDiagrama(string codigo, string tipo)
     {
         var json = DiagramaGenerator.AJson(codigo, tipo).Replace("</", "<\\/");
         var esTabla = tipo == "comparativo" || tipo == "tabla";
@@ -352,6 +352,7 @@ public partial class DiagramasView : ContentView
         if (!confirmar)
             return;
 
+        await SyncService.MarcarBorradoAsync("diagramas", diagrama.Id);
         await conn.DeleteAsync(diagrama);
 
         var client = await SupabaseService.GetClientAsync();

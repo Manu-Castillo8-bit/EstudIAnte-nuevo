@@ -281,7 +281,10 @@ public partial class DocumentosView : ContentView
         _trabajando = true;
         try
         {
-            // 1) Borra local
+            // 1) Registra el borrado para aplicarlo en la nube al sincronizar
+            await SyncService.MarcarBorradoAsync("documentos", doc.Id);
+
+            // 2) Borra local
             await conn.DeleteAsync(doc);
 
             // 2) Borra en Supabase (archivo + registro), si hay conexión

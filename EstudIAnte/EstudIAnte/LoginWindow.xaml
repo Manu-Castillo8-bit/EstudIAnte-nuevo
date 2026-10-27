@@ -86,54 +86,133 @@
                 StrokeShape="RoundRectangle 24"
                 HorizontalOptions="Center" VerticalOptions="Center">
             <VerticalStackLayout x:Name="Root" Spacing="14">
-                <Label Text="Iniciar sesión" FontSize="30" FontAttributes="Bold"
-                       TextColor="{StaticResource Cyan}" HorizontalOptions="Center" />
-                <Label Text="Ingresa a tu cuenta para continuar" Style="{StaticResource Muted}"
-                       HorizontalOptions="Center" Margin="0,0,0,10" />
+                <!-- ========== PANEL DE LOGIN ========== -->
+                <VerticalStackLayout x:Name="PanelLogin" Spacing="14">
+                    <Label Text="Iniciar sesión" FontSize="30" FontAttributes="Bold"
+                           TextColor="{StaticResource Cyan}" HorizontalOptions="Center" />
+                    <Label Text="Ingresa a tu cuenta para continuar" Style="{StaticResource Muted}"
+                           HorizontalOptions="Center" Margin="0,0,0,10" />
 
-                <Label Text="Usuario o correo" FontSize="12" TextColor="{StaticResource TextMuted}" />
-                <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
-                        StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                        <Label Text="✉" FontSize="18" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
-                        <Entry x:Name="Usuario" Grid.Column="1" Placeholder="ejemplo@correo.com"
-                               BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
-                               PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                    <Label Text="Usuario o correo" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="✉" FontSize="18" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="Usuario" Grid.Column="1" Placeholder="ejemplo@correo.com"
+                                   BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Label Text="🔒" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="Clave" Grid.Column="1" Placeholder="Ingresa tu contraseña" IsPassword="True"
+                                   BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <controls:PulsarButton Grid.Column="2" Text="👁" BackgroundColor="Transparent" Padding="0"
+                                    WidthRequest="36" HeightRequest="36" Clicked="Ver_Click" />
+                        </Grid>
+                    </Border>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,6">
+                        <CheckBox x:Name="Recordar" Color="{StaticResource Cyan}" IsChecked="True" />
+                        <Label Grid.Column="1" Text="Recordar sesión" FontSize="13"
+                               TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                        <Label Grid.Column="2" Text="¿Olvidaste tu contraseña?" FontSize="12"
+                               TextColor="{StaticResource Cyan}" VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="Olvidaste_Tapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
                     </Grid>
-                </Border>
 
-                <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
-                <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
-                        StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                        <Label Text="🔒" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
-                        <Entry x:Name="Clave" Grid.Column="1" Placeholder="Ingresa tu contraseña" IsPassword="True"
-                               BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
-                               PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
-                        <controls:PulsarButton Grid.Column="2" Text="👁" BackgroundColor="Transparent" Padding="0"
-                                WidthRequest="36" HeightRequest="36" Clicked="Ver_Click" />
-                    </Grid>
-                </Border>
+                    <controls:PulsarButton Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
+                            Clicked="Login_Click" HeightRequest="52" />
 
-                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,6">
-                    <CheckBox x:Name="Recordar" Color="{StaticResource Cyan}" IsChecked="True" />
-                    <Label Grid.Column="1" Text="Recordar sesión" FontSize="13"
-                           TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
-                    <Label Grid.Column="2" Text="¿Olvidaste tu contraseña?" FontSize="12"
-                           TextColor="{StaticResource Cyan}" VerticalOptions="Center" />
-                </Grid>
+                    <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="¿No tienes una cuenta?  " TextColor="{StaticResource TextMuted}" />
+                                <Span Text="Regístrate aquí" TextColor="{StaticResource Cyan}" FontAttributes="Bold">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="IrRegistro_Tapped" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
 
-                <controls:PulsarButton Text="➜   Iniciar sesión" Style="{StaticResource PrimaryButton}"
-                        Clicked="Login_Click" HeightRequest="52" />
+                <!-- ========== PANEL DE REGISTRO ========== -->
+                <VerticalStackLayout x:Name="PanelRegistro" Spacing="14" IsVisible="False">
+                    <Label Text="Crear cuenta" FontSize="30" FontAttributes="Bold"
+                           TextColor="{StaticResource Cyan}" HorizontalOptions="Center" />
+                    <Label Text="Regístrate para guardar tu progreso en la nube" Style="{StaticResource Muted}"
+                           HorizontalOptions="Center" Margin="0,0,0,10" />
 
-                <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="¿No tienes una cuenta?  " TextColor="{StaticResource TextMuted}" />
-                            <Span Text="Regístrate aquí" TextColor="{StaticResource Cyan}" />
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
+                    <Label Text="Nombre de usuario" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="👤" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="RegUsuario" Grid.Column="1" Placeholder="Tu nombre de usuario"
+                                   BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Correo (opcional)" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="✉" FontSize="18" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="RegEmail" Grid.Column="1" Placeholder="ejemplo@correo.com"
+                                   Keyboard="Email" BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Contraseña (mínimo 4 caracteres)" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="🔒" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="RegClave" Grid.Column="1" Placeholder="Crea una contraseña" IsPassword="True"
+                                   BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Confirmar contraseña" FontSize="12" TextColor="{StaticResource TextMuted}" Margin="0,6,0,0" />
+                    <Border Style="{StaticResource Card}" Padding="14,0" HeightRequest="50"
+                            StrokeShape="RoundRectangle 12" BackgroundColor="#0B1233">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="🔒" FontSize="16" TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                            <Entry x:Name="RegClave2" Grid.Column="1" Placeholder="Repite la contraseña" IsPassword="True"
+                                   BackgroundColor="Transparent" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <controls:PulsarButton Text="✚   Crear cuenta" Style="{StaticResource PrimaryButton}"
+                            Clicked="Registrar_Click" HeightRequest="52" Margin="0,10,0,0" />
+
+                    <Label HorizontalOptions="Center" FontSize="13" Margin="0,8,0,0">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="¿Ya tienes cuenta?  " TextColor="{StaticResource TextMuted}" />
+                                <Span Text="Inicia sesión" TextColor="{StaticResource Cyan}" FontAttributes="Bold">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="VolverLogin_Tapped" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
 
                 <Label x:Name="EstadoSupabase" Text="Comprobando conexión con Supabase..."
                        FontSize="12" HorizontalOptions="Center" HorizontalTextAlignment="Center"
