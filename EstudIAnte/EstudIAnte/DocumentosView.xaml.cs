@@ -316,7 +316,42 @@ public partial class DocumentosView : ContentView
         _visorId = id;
         TituloVisor.Text = doc.Nombre;
         MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {doc.Texto.Length} caracteres";
-        TextoVisor.Text = doc.Texto;
+
+        // Si el tipo se puede mostrar "tal como es", descarga el archivo original
+        // y lo renderiza a HTML con estructura e imágenes incrustadas.
+        var mostradoFiel = false;
+        if (DocumentoHtmlService.EsVisualizable(doc.Tipo))
+        {
+            try
+            {
+                var client = await SupabaseService.GetClientAsync();
+                if (client is not null && !string.IsNullOrWhiteSpace(doc.RutaStorage))
+                {
+                    var bytes = await client.Storage.From("documentos")
+                        .Download(doc.RutaStorage, (Supabase.Storage.TransformOptions?)null, null);
+                    var html = DocumentoHtmlService.GenerarHtml(doc, bytes);
+                    if (!string.IsNullOrWhiteSpace(html))
+                    {
+                        VisorWeb.Source = new HtmlWebViewSource { Html = html };
+                        VisorWeb.IsVisible = true;
+                        VisorTextoScroll.IsVisible = false;
+                        mostradoFiel = true;
+                    }
+                }
+            }
+            catch
+            {
+                // sin conexión o error: usa el texto extraído
+            }
+        }
+
+        if (!mostradoFiel)
+        {
+            TextoVisor.Text = doc.Texto;
+            VisorWeb.IsVisible = false;
+            VisorTextoScroll.IsVisible = true;
+        }
+
         PanelVisor.IsVisible = true;
     }
 

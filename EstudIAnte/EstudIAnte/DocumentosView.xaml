@@ -122,9 +122,12 @@
                             Style="{StaticResource GhostButton}" Clicked="CerrarVisor_Click" />
                 </Grid>
 
-                <ScrollView Grid.Row="2">
-                    <Label x:Name="TextoVisor" Text="" TextColor="{StaticResource TextMain}" LineBreakMode="WordWrap" />
-                </ScrollView>
+                <Grid Grid.Row="2">
+                    <WebView x:Name="VisorWeb" IsVisible="False" />
+                    <ScrollView x:Name="VisorTextoScroll">
+                        <Label x:Name="TextoVisor" Text="" TextColor="{StaticResource TextMain}" LineBreakMode="WordWrap" />
+                    </ScrollView>
+                </Grid>
 
                 <HorizontalStackLayout Grid.Row="3" Spacing="8">
                     <controls:PulsarButton x:Name="BtnVisorResumen" Text="📝  Resumen con IA"
