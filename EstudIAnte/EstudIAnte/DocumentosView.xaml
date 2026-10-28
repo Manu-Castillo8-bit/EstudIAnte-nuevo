@@ -21,9 +21,12 @@
                         <Label Text="Sube archivos y obtén respuestas desde ellos" Style="{StaticResource Muted}" />
                     </VerticalStackLayout>
                 </Grid>
-                <controls:PulsarButton x:Name="BtnSubir" Text="＋ Subir documento"
-                        Style="{StaticResource PrimaryButton}" Clicked="Subir_Click"
-                        HorizontalOptions="End" />
+                <FlexLayout Wrap="Wrap" JustifyContent="End" AlignItems="Center">
+                    <controls:PulsarButton x:Name="BtnSincronizarDocs" Text="🔄 Sincronizar"
+                            Style="{StaticResource GhostButton}" Clicked="SincronizarDocs_Click" Margin="0,0,8,0" />
+                    <controls:PulsarButton x:Name="BtnSubir" Text="＋ Subir documento"
+                            Style="{StaticResource PrimaryButton}" Clicked="Subir_Click" />
+                </FlexLayout>
             </VerticalStackLayout>
 
             <!-- Zona de carga -->

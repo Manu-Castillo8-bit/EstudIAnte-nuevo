@@ -44,6 +44,13 @@
             <FlexLayout x:Name="StatsLayout" Wrap="Wrap" Direction="Row"
                         AlignItems="Start" AlignContent="Start" />
 
+            <!-- Control de límite de IA por cuenta -->
+            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                <Switch x:Name="SwitchLimiteIA" Toggled="SwitchLimiteIA_Toggled" />
+                <Label Text="Límite IA: 3 peticiones/día por cuenta (activar para pruebas)" VerticalOptions="Center"
+                       TextColor="{StaticResource TextMain}" />
+            </HorizontalStackLayout>
+
             <!-- Pestañas (se construyen en código para marcar la activa) -->
             <FlexLayout x:Name="TabsLayout" Wrap="Wrap" Direction="Row"
                         AlignItems="Center" AlignContent="Start" />

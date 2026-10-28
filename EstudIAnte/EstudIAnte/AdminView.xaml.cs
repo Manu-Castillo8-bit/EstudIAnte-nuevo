@@ -14,7 +14,19 @@ public partial class AdminView : ContentView
     {
         InitializeComponent();
         ConstruirTabs();
+        _cambiandoLimite = true;
+        try { SwitchLimiteIA.IsToggled = Microsoft.Maui.Storage.Preferences.Get("ia_limite_3", false); } catch { }
+        _cambiandoLimite = false;
         Loaded += (_, _) => _ = RefrescarAsync();
+    }
+
+    bool _cambiandoLimite;
+
+    void SwitchLimiteIA_Toggled(object? sender, ToggledEventArgs e)
+    {
+        if (_cambiandoLimite)
+            return;
+        Microsoft.Maui.Storage.Preferences.Set("ia_limite_3", e.Value);
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -229,6 +241,7 @@ public partial class AdminView : ContentView
             (cuestionarios.Count, "Cuestionarios"),
             (diagramas.Count, "Diagramas"),
             (resultados.Count, "Resultados"),
+            (await UsoIAService.TotalLlamadasAsync(u.Id), "Llamadas IA"),
         };
         foreach (var (valor, titulo) in stats)
         {

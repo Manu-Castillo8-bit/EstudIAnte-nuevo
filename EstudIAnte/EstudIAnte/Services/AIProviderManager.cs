@@ -64,8 +64,11 @@ public static class AIProviderManager
         if (!proveedor.Configurado)
             throw new IAException($"{proveedor.Nombre} no está configurado.");
 
+        await VerificarLimiteIndividualAsync();
         var texto = await proveedor.GenerarAsync(prompt, ct, buscarEnWeb);
         UltimoProveedor = proveedor.Nombre;
+        await UsoIAService.RegistrarUsoAsync(AuthService.UsuarioActual?.Id, proveedor.Nombre,
+            (prompt.Length + (texto?.Length ?? 0)) / 4);
         return (texto, proveedor.Nombre);
     }
 
@@ -83,6 +86,8 @@ public static class AIProviderManager
         if (proveedores.Count == 0)
             throw new IAException("No hay ninguna IA configurada. Agrega una API key en ApiKeys.cs.");
 
+        await VerificarLimiteIndividualAsync();
+
         if (buscarEnWeb)
             proveedores = proveedores.OrderBy(p => p is SupabaseExaProvider ? 0 : 1).ToList();
 
@@ -98,6 +103,8 @@ public static class AIProviderManager
             {
                 var texto = await proveedor.GenerarAsync(prompt, ct, buscarEnWeb);
                 UltimoProveedor = proveedor.Nombre;
+                await UsoIAService.RegistrarUsoAsync(AuthService.UsuarioActual?.Id, proveedor.Nombre,
+                    (prompt.Length + (texto?.Length ?? 0)) / 4);
                 return (texto, proveedor.Nombre);
             }
             catch (IAException ex) when (ex.CuotaAgotada)
@@ -146,6 +153,21 @@ public static class AIProviderManager
     }
 
     static bool EsProveedorWeb(IAIProvider proveedor) => proveedor is SupabaseExaProvider;
+
+    static async Task VerificarLimiteIndividualAsync()
+    {
+        var usuarioId = AuthService.UsuarioActual?.Id;
+        if (string.IsNullOrWhiteSpace(usuarioId))
+            return;
+
+        var (permitido, usadas, restantes) = await UsoIAService.PuedeUsarAsync(usuarioId);
+        if (permitido)
+            return;
+
+        throw new IAException(
+            $"Tu cuenta alcanzó el límite diario de uso de IA ({UsoIAService.LimiteDiario} llamadas). " +
+            $"Usadas hoy: {usadas}. Disponibles mañana.", true);
+    }
 
     /// <summary>
     /// Pregunta al usuario si quiere cambiar a la IA alternativa.
