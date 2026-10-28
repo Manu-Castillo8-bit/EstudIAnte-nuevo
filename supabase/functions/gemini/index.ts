@@ -60,26 +60,32 @@ serve(async (req) => {
       return json({ error: "Falta el campo 'prompt'." }, 400);
     }
 
-    const elegido = proveedor === "groq"
-      ? "groq"
-      : proveedor === "openrouter"
-        ? "openrouter"
-        : "gemini";
+    const elegido = proveedor === "exa"
+      ? "exa"
+      : proveedor === "groq"
+        ? "groq"
+        : proveedor === "openrouter"
+          ? "openrouter"
+          : "gemini";
 
     try {
       const texto = elegido === "groq"
         ? await llamarGroq(prompt)
         : elegido === "openrouter"
           ? await llamarOpenRouter(prompt)
-          : await llamarGemini(prompt, buscarEnWeb === true);
+          : elegido === "exa"
+            ? await llamarExa(prompt)
+            : await llamarGemini(prompt, buscarEnWeb === true);
 
       return json({
         texto,
-        modelo: elegido === "groq"
-          ? MODELO_GROQ
-          : elegido === "openrouter"
-            ? MODELO_OPENROUTER
-            : MODELO_GEMINI,
+        modelo: elegido === "exa"
+          ? "Exa Answer"
+          : elegido === "groq"
+            ? MODELO_GROQ
+            : elegido === "openrouter"
+              ? MODELO_OPENROUTER
+              : MODELO_GEMINI,
         proveedor: elegido,
       });
     } catch (e) {
@@ -95,6 +101,58 @@ serve(async (req) => {
     return json({ error: `Error inesperado: ${e}` }, 500);
   }
 });
+
+// ---------------- Exa (búsqueda web y respuesta con fuentes) ----------------
+
+async function llamarExa(prompt: string): Promise<string> {
+  const apiKey = Deno.env.get("EXA_API_KEY");
+  if (!apiKey) {
+    throw new IAError("El servidor no tiene configurada EXA_API_KEY.", false);
+  }
+
+  const respuesta = await fetch("https://api.exa.ai/answer", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      query: prompt,
+      model: "exa",
+      systemPrompt: "Responde siempre en español, con información reciente y factual. Incluye citas a las fuentes consultadas.",
+    }),
+    signal: AbortSignal.timeout(TIEMPO_POR_INTENTO_MS),
+  });
+  const cuerpo = await respuesta.text();
+
+  if (!respuesta.ok) {
+    const saturada = respuesta.status === 402 || respuesta.status === 429 || respuesta.status >= 500;
+    throw new IAError(
+      `Exa respondió ${respuesta.status}. ${cuerpo.slice(0, 200)}`,
+      saturada,
+    );
+  }
+
+  let datos: { answer?: unknown; citations?: Array<{ title?: string; url?: string }> };
+  try {
+    datos = JSON.parse(cuerpo);
+  } catch {
+    throw new IAError("Exa devolvió una respuesta inválida.");
+  }
+
+  if (typeof datos.answer !== "string" || !datos.answer.trim()) {
+    throw new IAError("Exa no devolvió una respuesta.");
+  }
+
+  const fuentes = Array.isArray(datos.citations)
+    ? datos.citations
+      .filter((cita) => typeof cita.url === "string" && cita.url.length > 0)
+      .map((cita) => `- ${cita.title || "Fuente"}: ${cita.url}`)
+    : [];
+  return fuentes.length > 0
+    ? `${datos.answer}\n\nFuentes consultadas:\n${[...new Set(fuentes)].join("\n")}`
+    : datos.answer;
+}
 
 // ---------------- Gemini (API de Google AI Studio) ----------------
 

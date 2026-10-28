@@ -17,7 +17,8 @@
                         <Label Text="Tu asistente educativo con IA está listo para ayudarte a aprender de forma más inteligente."
                                FontSize="16" TextColor="#D6DBFF" MaximumWidthRequest="440" />
                         <controls:PulsarButton Text="Comenzar ahora   →" Style="{StaticResource PrimaryButton}"
-                                HorizontalOptions="Start" Margin="0,12,0,0" />
+                                HorizontalOptions="Start" Margin="0,12,0,0"
+                                Clicked="ComenzarAhora_Click" />
                     </VerticalStackLayout>
                     <Label x:Name="HeroRobot" Grid.Column="1" Text="🤖" FontSize="120" VerticalOptions="Center" Margin="0,0,20,0"
                            IsVisible="{OnIdiom Phone=False, Default=True}" />

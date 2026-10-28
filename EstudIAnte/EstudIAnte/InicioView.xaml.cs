@@ -74,7 +74,8 @@ public partial class InicioView : ContentView
             .OrderByDescending(c => c.CreadoEn).ToList();
         var mensajes = (await conn.Table<Mensaje>().ToListAsync())
             .Where(m => chats.Any(c => c.Id == m.ChatId)).OrderBy(m => m.CreadoEn).ToList();
-        var quizzes = await conn.Table<Cuestionario>().Where(q => q.UsuarioId == usuario.Id).ToListAsync();
+        var quizzes = (await conn.Table<Cuestionario>().Where(q => q.UsuarioId == usuario.Id).ToListAsync())
+            .OrderByDescending(q => q.CreadoEn).ToList();
         var resultados = (await conn.Table<Resultado>().Where(r => r.UsuarioId == usuario.Id).ToListAsync())
             .OrderByDescending(r => r.Fecha).ToList();
         var documentos = await conn.Table<Documento>().Where(d => d.UsuarioId == usuario.Id).ToListAsync();
@@ -156,11 +157,25 @@ public partial class InicioView : ContentView
 
         // 3) Cuestionarios: últimos resultados y promedio
         PanelDashboard.Children.Add(Encabezado("🧠", "Tus cuestionarios"));
+        var titulosCuestionario = quizzes.ToDictionary(q => q.Id, q => q.Titulo);
         if (resultados.Count == 0)
-            PanelDashboard.Children.Add(Muted(
-                quizzes.Count == 0
-                    ? "Aún no creas cuestionarios. Genera uno desde tus documentos o temas."
-                    : $"Tienes {quizzes.Count} cuestionario(s) sin responder. ¡Anímate!"));
+        {
+            if (quizzes.Count == 0)
+                PanelDashboard.Children.Add(Muted("Aún no creas cuestionarios. Genera uno desde tus documentos o temas."));
+            else
+            {
+                PanelDashboard.Children.Add(Muted($"Tienes {quizzes.Count} cuestionario(s) sin responder."));
+                foreach (var quiz in quizzes.Take(5))
+                {
+                    var (fechaQuiz, _) = ParsearFecha(quiz.CreadoEn);
+                    PanelDashboard.Children.Add(FilaClicable(
+                        "📋",
+                        quiz.Titulo,
+                        $"Sin responder · {fechaQuiz}",
+                        () => MainPage.Actual?.IrA("quiz")));
+                }
+            }
+        }
         else
         {
             var (ultimoResult, _) = ParsearFecha(resultados[0].Fecha);
@@ -173,10 +188,24 @@ public partial class InicioView : ContentView
                 var icon = r.Total > 0 && r.Puntaje * 100 / r.Total >= 60 ? "🟢" : "🔴";
                 var fila = FilaClicable(
                     icon,
-                    $"{r.Puntaje} / {r.Total} correctas",
-                    $"{fechaRes} · tiempo {minutos}",
+                    titulosCuestionario.GetValueOrDefault(r.CuestionarioId, "Cuestionario sin título"),
+                    $"{r.Puntaje}/{r.Total} correctas · {fechaRes} · tiempo {minutos}",
                     () => MainPage.Actual?.IrA("quiz"));
                 PanelDashboard.Children.Add(fila);
+            }
+
+            var cuestionariosSinResponder = quizzes
+                .Where(q => resultados.All(r => r.CuestionarioId != q.Id))
+                .Take(5)
+                .ToList();
+            foreach (var quiz in cuestionariosSinResponder)
+            {
+                var (fechaQuiz, _) = ParsearFecha(quiz.CreadoEn);
+                PanelDashboard.Children.Add(FilaClicable(
+                    "📋",
+                    quiz.Titulo,
+                    $"Sin responder · {fechaQuiz}",
+                    () => MainPage.Actual?.IrA("quiz")));
             }
         }
 
@@ -310,6 +339,8 @@ public partial class InicioView : ContentView
         }
         catch { return (iso, false); }
     }
+
+    void ComenzarAhora_Click(object? sender, EventArgs e) => MainPage.Actual?.IrA("chat");
 
     void Card_Chat(object? sender, TappedEventArgs e) => MainPage.Actual?.IrA("chat");
 

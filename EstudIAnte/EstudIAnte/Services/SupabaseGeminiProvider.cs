@@ -29,6 +29,7 @@ public abstract class SupabaseIAProvider : IAIProvider
     {
         "groq" => "Groq (IA alternativa, servidor)",
         "openrouter" => "OpenRouter (IA alternativa 2, servidor)",
+        "exa" => "Exa (búsqueda web)",
         _ => "Google Gemini (servidor)"
     };
 

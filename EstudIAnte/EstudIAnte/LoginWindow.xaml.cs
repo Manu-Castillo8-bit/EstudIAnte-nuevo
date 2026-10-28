@@ -4,6 +4,9 @@ namespace EstudIAnte;
 
 public partial class LoginWindow : ContentPage
 {
+    // Por debajo de este ancho se usa el diseño "teléfono" (sin panel de marca).
+    const double AnchoEscritorio = 820;
+
     bool? _compactLayout;
 
     public LoginWindow()
@@ -11,68 +14,82 @@ public partial class LoginWindow : ContentPage
         InitializeComponent();
     }
 
+    // ---------------- RESPONSIVO ----------------
+
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
-        if (width <= 0)
+        if (width <= 0 || height <= 0)
             return;
 
-        var compact = width < 820;
-        if (_compactLayout == compact)
+        bool compact = width < AnchoEscritorio;
+
+        // 1) Estructura (columnas, filas, visibilidad): solo cuando cambia de modo.
+        if (_compactLayout != compact)
         {
+            _compactLayout = compact;
+
+            LoginLayout.ColumnDefinitions.Clear();
+            LoginLayout.RowDefinitions.Clear();
+            LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+
             if (compact)
             {
-                LoginCard.MaximumHeightRequest = Math.Max(0, height - 16);
-                LoginScroll.HeightRequest = Math.Max(0, height - 56);
-                LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
+                // Teléfono / ventana angosta: solo la tarjeta, a todo el ancho.
+                LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                LoginLayout.Padding = new Thickness(12, 8);
+
+                BrandPanel.IsVisible = false;
+
+                LoginCard.Padding = new Thickness(20);
+                LoginCard.HorizontalOptions = LayoutOptions.Center;
+                LoginCard.VerticalOptions = LayoutOptions.Center;
+
+                Grid.SetColumn(BrandPanel, 0);
+                Grid.SetRow(BrandPanel, 0);
+                Grid.SetColumn(LoginCard, 0);
+                Grid.SetRow(LoginCard, 0);
             }
-            return;
+            else
+            {
+                // PC: panel de marca a la izquierda y tarjeta a la derecha.
+                LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1.15, GridUnitType.Star)));
+                LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+                LoginLayout.Padding = new Thickness(40);
+
+                BrandPanel.IsVisible = true;
+
+                LoginCard.Padding = new Thickness(36);
+                LoginCard.HorizontalOptions = LayoutOptions.Center;
+                LoginCard.VerticalOptions = LayoutOptions.Center;
+
+                Grid.SetColumn(BrandPanel, 0);
+                Grid.SetRow(BrandPanel, 0);
+                Grid.SetColumn(LoginCard, 1);
+                Grid.SetRow(LoginCard, 0);
+            }
         }
 
-        _compactLayout = compact;
-        LoginLayout.ColumnDefinitions.Clear();
-        LoginLayout.RowDefinitions.Clear();
+        // 2) Medidas que dependen del tamaño actual (se recalculan en cada cambio).
+        double altoDisponible = Math.Max(0, height - LoginLayout.Padding.VerticalThickness);
+
+        // La tarjeta nunca será más alta que la pantalla; si el contenido no cabe, el ScrollView hace scroll.
+        LoginCard.MaximumHeightRequest = altoDisponible;
 
         if (compact)
         {
-            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-            LoginLayout.Padding = new Thickness(12, 8);
-            BrandPanel.IsVisible = false;
-            LoginCard.WidthRequest = -1;
-            LoginCard.MaximumHeightRequest = Math.Max(0, height - 16);
-            LoginCard.Padding = new Thickness(20);
-            LoginCard.HorizontalOptions = LayoutOptions.Fill;
-            LoginCard.VerticalOptions = LayoutOptions.Center;
-            LoginScroll.HeightRequest = Math.Max(0, height - 56);
-            LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
-            Grid.SetColumn(LoginCard, 0);
-            Grid.SetRow(LoginCard, 0);
+            double anchoDisponible = Math.Max(0, width - LoginLayout.Padding.HorizontalThickness);
+            LoginCard.WidthRequest = Math.Min(anchoDisponible, 460);
+
+            // Alto mínimo del contenido = alto de la tarjeta, así queda centrado verticalmente
+            // (filas *,Auto,*) pero si el contenido es más alto (registro) se puede hacer scroll.
+            LoginContentGrid.MinimumHeightRequest =
+                Math.Max(0, altoDisponible - LoginCard.Padding.VerticalThickness - 4);
         }
         else
         {
-            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1.15, GridUnitType.Star)));
-            LoginLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            LoginLayout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
-            LoginLayout.Padding = new Thickness(40);
-            BrandPanel.IsVisible = true;
             LoginCard.WidthRequest = 420;
-            LoginCard.MaximumHeightRequest = -1;
-            LoginCard.Padding = new Thickness(36);
-            LoginCard.HorizontalOptions = LayoutOptions.Center;
-            LoginCard.VerticalOptions = LayoutOptions.Center;
-            LoginScroll.HeightRequest = -1;
-            LoginContentGrid.HeightRequest = -1;
-            Grid.SetColumn(BrandPanel, 0);
-            Grid.SetColumn(LoginCard, 1);
-            Grid.SetRow(BrandPanel, 0);
-            Grid.SetRow(LoginCard, 0);
-        }
-
-        if (compact)
-        {
-            LoginScroll.HeightRequest = Math.Max(0, height - 56);
-            LoginContentGrid.HeightRequest = Math.Max(0, height - 56);
+            LoginContentGrid.MinimumHeightRequest = -1; // -1 = sin mínimo (valor por defecto de Minimum*)
         }
     }
 

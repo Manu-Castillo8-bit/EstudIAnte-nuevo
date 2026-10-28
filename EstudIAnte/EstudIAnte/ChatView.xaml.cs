@@ -6,13 +6,17 @@ namespace EstudIAnte;
 
 public partial class ChatView : ContentView
 {
+    // Tiempo máximo que se espera a un proveedor antes de pasar al siguiente.
+    static readonly TimeSpan TimeoutIntento = TimeSpan.FromSeconds(40);
+
     Tema? _temaActual;
     Chat? _chatActual;
     bool _ocupado;
     bool? _compactLayout;
-    CancellationTokenSource? _envioCts;
+    CancellationTokenSource? _envioCts;      // cancela TODA la petición
     Task? _operacionActual;
     string? _ultimoMensajeUsuarioId;
+    List<MensajeItem> _items = new();
 
     public ChatView()
     {
@@ -34,6 +38,9 @@ public partial class ChatView : ContentView
         ChatLayout.Padding = compact
             ? new Thickness(14, 8, 14, 18)
             : new Thickness(28, 8, 28, 24);
+
+        // Al cambiar el tamaño, mantener el último mensaje visible.
+        _ = ScrollAlFinalAsync();
     }
 
     /// <summary>Abre el chat de un tema por su nombre (lo usa el dashboard del Inicio).</summary>
@@ -293,15 +300,28 @@ public partial class ChatView : ContentView
         BtnEditarPregunta.IsVisible = true;
         SpinnerIA.IsRunning = SpinnerIA.IsVisible = true;
         _envioCts = new CancellationTokenSource();
+        var subtituloOriginal = Subtitulo.Text;
 
         try
         {
             var historial = await ObtenerHistorialAsync();
-            var buscarWeb = BuscarActualizado.IsChecked;
+
+            // Búsqueda web: la casilla, o detección automática de preguntas que piden datos recientes.
+            var buscarWeb = BuscarActualizado.IsChecked || PideInformacionReciente(texto);
             var prompt = ConstruirPromptChat(_temaActual.Nombre, historial, buscarWeb);
-            var (respuesta, proveedor) = await AIProviderManager.GenerarAsync(
-                prompt, _envioCts.Token, buscarWeb);
+            var promptSinWeb = buscarWeb
+                ? ConstruirPromptChat(_temaActual.Nombre, historial, false)
+                    + "\nNo tienes acceso a búsqueda web para esta respuesta; indica explícitamente que no puedes verificar información actual."
+                : prompt;
+
+            var (respuesta, proveedor) = await GenerarConConmutacionAsync(
+                prompt, promptSinWeb, texto, buscarWeb, _envioCts.Token);
             _envioCts.Token.ThrowIfCancellationRequested();
+            if (buscarWeb && !PuedeBuscarEnWeb(proveedor))
+            {
+                respuesta = "⚠ No se pudo consultar la web. Esta respuesta alternativa no está verificada en tiempo real.\n\n"
+                    + respuesta;
+            }
 
             await GuardarMensajeAsync(new Mensaje
             {
@@ -309,6 +329,7 @@ public partial class ChatView : ContentView
                 Rol = "assistant",
                 Contenido = $"{respuesta}\n\n— {proveedor}"
             });
+            Subtitulo.Text = subtituloOriginal;
         }
         catch (OperationCanceledException) when (_envioCts?.IsCancellationRequested == true)
         {
@@ -322,6 +343,7 @@ public partial class ChatView : ContentView
                 Rol = "assistant",
                 Contenido = "⚠ " + ex.Message
             });
+            Subtitulo.Text = subtituloOriginal;
         }
         finally
         {
@@ -334,6 +356,112 @@ public partial class ChatView : ContentView
             _envioCts = null;
             await CargarMensajesAsync();
         }
+    }
+
+    /// <summary>
+    /// Prueba todos los proveedores disponibles antes de ofrecer cambiar a uno manualmente.
+    /// Cancelar aborta toda la operación.
+    /// </summary>
+    async Task<(string, string)> GenerarConConmutacionAsync(
+        string prompt, string promptSinWeb, string preguntaUsuario, bool buscarWeb, CancellationToken ct)
+    {
+        var proveedores = AIProviderManager.Proveedores().Where(p => p.Configurado).ToList();
+        if (proveedores.Count == 0)
+            throw new IAException("No hay ninguna IA configurada.");
+
+        if (buscarWeb)
+            proveedores = proveedores.OrderBy(p => p is SupabaseExaProvider ? 0 : 1).ToList();
+
+        var errores = new List<string>();
+        var pendientes = proveedores;
+
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            foreach (var proveedor in pendientes)
+            {
+                ct.ThrowIfCancellationRequested();
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeoutIntento);
+
+                try
+                {
+                    var esExa = proveedor is SupabaseExaProvider;
+                    var promptProveedor = esExa
+                        ? preguntaUsuario
+                        : buscarWeb ? promptSinWeb : prompt;
+                    var tarea = AIProviderManager.GenerarConProveedorAsync(
+                        promptProveedor, proveedor, cts.Token);
+                    return await EsperarAsync(tarea, cts.Token);
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    errores.Add($"{proveedor.Nombre}: no respondió a tiempo.");
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    errores.Add($"{proveedor.Nombre}: {ex.Message}");
+                }
+                finally
+                {
+                    cts.Dispose();
+                }
+
+                Subtitulo.Text = $"No respondió {proveedor.Nombre}. Probando otra IA…";
+            }
+
+            ct.ThrowIfCancellationRequested();
+            var cambiar = await PreguntarCambiarProveedorAsync(proveedores, errores);
+            if (cambiar is null)
+                throw new IAException("Ninguna IA pudo responder:\n" + string.Join("\n", errores));
+
+            pendientes = new List<IAIProvider> { cambiar };
+            Subtitulo.Text = $"Reintentando con {cambiar.Nombre}…";
+        }
+    }
+
+    async Task<IAIProvider?> PreguntarCambiarProveedorAsync(
+        List<IAIProvider> proveedores, List<string> errores)
+    {
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is null)
+            return null;
+
+        var continuar = await page.DisplayAlertAsync(
+            "No se pudo responder",
+            "Se probaron todas las IAs disponibles. ¿Quieres elegir otra y continuar la búsqueda?\n\n"
+                + string.Join("\n", errores),
+            "Cambiar IA",
+            "Detener búsqueda");
+        if (!continuar)
+            return null;
+
+        var opciones = proveedores.Select(p => p.Nombre).ToArray();
+        var elegida = await page.DisplayActionSheetAsync(
+            "Elige una IA para continuar", "Cancelar", null, opciones);
+        return proveedores.FirstOrDefault(p => p.Nombre == elegida);
+    }
+
+    static bool PuedeBuscarEnWeb(string nombreProveedor) =>
+        nombreProveedor.StartsWith("Exa", StringComparison.Ordinal);
+
+    static bool PuedeBuscarEnWeb(IAIProvider proveedor) => PuedeBuscarEnWeb(proveedor.Nombre);
+
+    /// <summary>Devuelve en cuanto se cancela el token aunque el proveedor ignore la cancelación.</summary>
+    static async Task<T> EsperarAsync<T>(Task<T> tarea, CancellationToken ct)
+    {
+        var cancelada = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var registro = ct.Register(() => cancelada.TrySetResult(true));
+
+        if (await Task.WhenAny(tarea, cancelada.Task) != tarea)
+        {
+            // Evita excepciones no observadas si la tarea abandonada falla después.
+            _ = tarea.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            throw new OperationCanceledException(ct);
+        }
+
+        return await tarea;
     }
 
     void Cancelar_Click(object? sender, EventArgs e) => _envioCts?.Cancel();
@@ -363,7 +491,6 @@ public partial class ChatView : ContentView
         if (_operacionActual is not null)
             await _operacionActual;
 
-        BuscarActualizado.IsChecked = false;
         _operacionActual = EnviarMensajeAsync(mensaje.Id, texto);
         await _operacionActual;
     }
@@ -396,15 +523,42 @@ public partial class ChatView : ContentView
             .ToListAsync();
     }
 
+    static readonly string[] PistasActualidad =
+    {
+        "hoy", "actual", "actualmente", "reciente", "recientes", "último", "ultimo", "última", "ultima",
+        "últimas", "ultimas", "noticia", "noticias", "ahora", "este año", "esta semana", "este mes",
+        "precio", "cotización", "cotizacion", "versión", "version", "2025", "2026", "vigente", "nuevo", "nueva"
+    };
+
+    static bool PideInformacionReciente(string texto)
+    {
+        var t = texto.ToLowerInvariant();
+        return PistasActualidad.Any(p => t.Contains(p));
+    }
+
+    static string QuitarFirmaProveedor(string contenido)
+    {
+        // Las respuestas se guardan como "texto\n\n— Proveedor"; no se reenvía la firma a la IA.
+        var i = contenido.LastIndexOf("\n\n— ", StringComparison.Ordinal);
+        return i >= 0 ? contenido[..i] : contenido;
+    }
+
     static string ConstruirPromptChat(string tema, List<Mensaje> historial, bool buscarWeb)
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Eres un tutor educativo amable y claro. Estás ayudando a un estudiante con el tema: \"{tema}\".");
         sb.AppendLine("Responde en español, de forma concisa y didáctica.");
+        sb.AppendLine($"La fecha actual es {DateTime.Today:yyyy-MM-dd}.");
         if (buscarWeb)
         {
-            sb.AppendLine($"La fecha actual es {DateTime.Today:yyyy-MM-dd}. Prioriza información reciente, distingue hechos actuales de conocimiento general e incluye fuentes consultadas si la herramienta de búsqueda las proporciona.");
-            sb.AppendLine("Si la búsqueda web no está disponible, aclara que no puedes verificar la vigencia en vez de presentar datos inciertos como actuales.");
+            sb.AppendLine("Usa la herramienta de búsqueda web y basa tu respuesta en las fuentes más recientes disponibles. " +
+                          "Indica la fecha o el año de los datos y menciona las fuentes consultadas.");
+            sb.AppendLine("No des por vigentes datos de tu entrenamiento si pueden haber cambiado. " +
+                          "Si la búsqueda web no está disponible, aclara que no puedes verificar la vigencia en vez de presentar datos inciertos como actuales.");
+        }
+        else
+        {
+            sb.AppendLine("Si la pregunta depende de datos que cambian con el tiempo, avisa que podrían estar desactualizados.");
         }
         sb.AppendLine();
         sb.AppendLine("Conversación hasta ahora:");
@@ -413,7 +567,8 @@ public partial class ChatView : ContentView
         foreach (var m in historial.TakeLast(12))
         {
             var etiqueta = m.Rol == "user" ? "Estudiante" : "Tutor";
-            sb.AppendLine($"{etiqueta}: {m.Contenido}");
+            var contenido = m.Rol == "user" ? m.Contenido : QuitarFirmaProveedor(m.Contenido);
+            sb.AppendLine($"{etiqueta}: {contenido}");
         }
 
         sb.AppendLine("Tutor:");
@@ -431,19 +586,31 @@ public partial class ChatView : ContentView
             .OrderBy(m => m.CreadoEn)
             .ToListAsync();
 
-        ListaMensajes.ItemsSource = mensajes.Select(m => new MensajeItem(m)).ToList();
+        _items = mensajes.Select(m => new MensajeItem(m)).ToList();
+        ListaMensajes.ItemsSource = _items;
         var ultimoUsuario = mensajes.LastOrDefault(m => m.Rol == "user");
         _ultimoMensajeUsuarioId = ultimoUsuario?.Id;
         BtnEditarPregunta.IsVisible = !_ocupado && ultimoUsuario is not null;
 
-        // Mantiene la conversación anclada al último mensaje.
-        await Task.Delay(80); // deja que la lista termine de maquetar
-        try
+        await ScrollAlFinalAsync();
+    }
+
+    /// <summary>Ancla la conversación al último mensaje (se reintenta porque la lista maqueta de forma asíncrona).</summary>
+    async Task ScrollAlFinalAsync()
+    {
+        foreach (var espera in new[] { 60, 200, 450 })
         {
-            if (mensajes.Count > 0)
-                ListaMensajes.ScrollTo(mensajes.Count - 1, position: ScrollToPosition.End, animate: true);
+            await Task.Delay(espera);
+            try
+            {
+                var ultimo = _items.LastOrDefault();
+                if (ultimo is null)
+                    return;
+
+                ListaMensajes.ScrollTo(ultimo, position: ScrollToPosition.End, animate: false);
+            }
+            catch { /* la lista pudo vaciarse o cambiar */ }
         }
-        catch { /* la lista pudo vaciarse */ }
     }
 
     // ---------------- UTILIDADES ----------------

@@ -5,7 +5,8 @@ namespace EstudIAnte.Services;
 ///   1. Google Gemini (vía Supabase)
 ///   2. Groq / GPT-OSS (vía Supabase)
 ///   3. OpenRouter, modelos gratuitos (vía Supabase)
-///   4. Gemini local con clave propia (opcional, solo si hay api-key-gemini.txt)
+///   4. Exa, búsqueda web con fuentes (vía Supabase)
+///   5. Gemini local con clave propia (opcional, solo si hay api-key-gemini.txt)
 ///
 /// ---- COMPORTAMIENTO ANTE SATURACIÓN ----
 /// Cuando una IA está saturada (cuota agotada) se muestra un aviso al usuario:
@@ -38,7 +39,10 @@ public static class AIProviderManager
             new SupabaseGroqProvider(),
 
             // 3) OpenRouter vía Supabase: segunda alternativa (modelos gratuitos).
-            new SupabaseOpenRouterProvider()
+            new SupabaseOpenRouterProvider(),
+
+            // 4) Exa vía Supabase: búsqueda web y respuestas con fuentes.
+            new SupabaseExaProvider()
         };
 
         // 3) Respaldo opcional: Gemini con clave propia (api-key-gemini.txt o
@@ -53,6 +57,18 @@ public static class AIProviderManager
 
     public static bool HayAlgunProveedor => Proveedores().Any(p => p.Configurado);
 
+    /// <summary>Genera una respuesta usando un proveedor concreto, sin probar otros.</summary>
+    public static async Task<(string Texto, string Proveedor)> GenerarConProveedorAsync(
+        string prompt, IAIProvider proveedor, CancellationToken ct = default, bool buscarEnWeb = false)
+    {
+        if (!proveedor.Configurado)
+            throw new IAException($"{proveedor.Nombre} no está configurado.");
+
+        var texto = await proveedor.GenerarAsync(prompt, ct, buscarEnWeb);
+        UltimoProveedor = proveedor.Nombre;
+        return (texto, proveedor.Nombre);
+    }
+
     /// <summary>
     /// Genera texto con la primera IA disponible. Si una IA está saturada, pregunta
     /// al usuario si desea cambiar a la siguiente. Devuelve también el nombre de la
@@ -61,16 +77,21 @@ public static class AIProviderManager
     public static async Task<(string Texto, string Proveedor)> GenerarAsync(
         string prompt, CancellationToken ct = default, bool buscarEnWeb = false)
     {
-        var proveedores = Proveedores().Where(p => p.Configurado).ToList();
+        var proveedores = Proveedores()
+            .Where(p => p.Configurado && (buscarEnWeb || p is not SupabaseExaProvider))
+            .ToList();
         if (proveedores.Count == 0)
             throw new IAException("No hay ninguna IA configurada. Agrega una API key en ApiKeys.cs.");
+
+        if (buscarEnWeb)
+            proveedores = proveedores.OrderBy(p => p is SupabaseExaProvider ? 0 : 1).ToList();
 
         var errores = new List<string>();
 
         for (var i = 0; i < proveedores.Count; i++)
         {
             var proveedor = proveedores[i];
-            if (buscarEnWeb && !proveedor.Nombre.StartsWith("Google Gemini", StringComparison.Ordinal))
+            if (buscarEnWeb && !EsProveedorWeb(proveedor))
                 continue;
 
             try
@@ -82,9 +103,12 @@ public static class AIProviderManager
             catch (IAException ex) when (ex.CuotaAgotada)
             {
                 errores.Add($"{proveedor.Nombre}: saturada ({ex.Message})");
+                if (buscarEnWeb && proveedor is not SupabaseExaProvider)
+                    continue;
+
                 if (buscarEnWeb)
                     throw new IAException(
-                        "Gemini no pudo realizar la búsqueda web ahora. Inténtalo más tarde; no se consultó otra IA para evitar presentar información no verificada como actual.",
+                        "No se pudo completar la búsqueda web con Exa. Inténtalo de nuevo más tarde.",
                         true);
 
                 if (i + 1 >= proveedores.Count)
@@ -114,10 +138,14 @@ public static class AIProviderManager
         }
 
         if (buscarEnWeb)
-            throw new IAException("No se pudo completar una búsqueda web con Gemini. No se generó una respuesta como si estuviera verificada con información actual.");
+            throw new IAException(
+                "No se pudo completar una búsqueda web con Exa. No se generó una respuesta como si estuviera verificada con información actual.\n"
+                + string.Join("\n", errores));
 
         throw new IAException("Ninguna IA pudo responder:\n" + string.Join("\n", errores));
     }
+
+    static bool EsProveedorWeb(IAIProvider proveedor) => proveedor is SupabaseExaProvider;
 
     /// <summary>
     /// Pregunta al usuario si quiere cambiar a la IA alternativa.

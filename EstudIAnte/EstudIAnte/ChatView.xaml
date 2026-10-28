@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-                     xmlns:controls="clr-namespace:EstudIAnte.Controls"
+             xmlns:controls="clr-namespace:EstudIAnte.Controls"
              x:Class="EstudIAnte.ChatView">
     <Grid x:Name="ChatLayout" RowDefinitions="Auto,Auto,*,Auto,Auto"
           Padding="{OnIdiom Phone='14,8,14,18', Tablet='20,8,20,20', Default='28,8,28,24'}"
@@ -12,20 +12,25 @@
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                 <Border WidthRequest="54" HeightRequest="54" Background="{StaticResource BrandGradient}"
                         StrokeThickness="0" StrokeShape="RoundRectangle 16">
-                    <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Label Text="💬" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center"
+                           FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
                 </Border>
                 <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                    <Label Text="Chat Temático" Style="{StaticResource PageTitle}" />
+                    <Label Text="Chat Temático" Style="{StaticResource PageTitle}" LineBreakMode="WordWrap" />
                     <Label x:Name="Subtitulo" Text="Crea un tema para empezar una conversación"
-                           Style="{StaticResource Muted}" />
+                           Style="{StaticResource Muted}" LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </Grid>
             <FlexLayout Wrap="Wrap" JustifyContent="End" AlignItems="Center">
                 <controls:PulsarButton x:Name="BtnNuevoTema" Text="＋  Crear tema"
-                        Style="{StaticResource PrimaryButton}" Clicked="CrearTema_Click" Margin="0,0,8,4" />
+                        Style="{StaticResource PrimaryButton}" Clicked="CrearTema_Click" Margin="0,0,8,4"
+                        MinimumHeightRequest="40" LineBreakMode="WordWrap"
+                        FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
                 <controls:PulsarButton x:Name="BtnEliminarTema" Text="🗑  Eliminar tema"
                         Style="{StaticResource GhostButton}" Clicked="EliminarTema_Click"
-                        IsVisible="False" Margin="0,0,8,4" />
+                        IsVisible="False" Margin="0,0,8,4"
+                        MinimumHeightRequest="40" LineBreakMode="WordWrap"
+                        FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
             </FlexLayout>
         </VerticalStackLayout>
 
@@ -38,7 +43,7 @@
 
         <!-- Conversación -->
         <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
-            <CollectionView x:Name="ListaMensajes">
+            <CollectionView x:Name="ListaMensajes" ItemsUpdatingScrollMode="KeepLastItemInView">
                 <CollectionView.EmptyView>
                     <Label Text="Escribe tu primer mensaje para conversar sobre el tema."
                            Style="{StaticResource Muted}" Margin="22" />
@@ -51,11 +56,14 @@
                                     Stroke="{Binding ColorTexto}" StrokeThickness="1"
                                     StrokeShape="RoundRectangle 18" Padding="16,12">
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding Texto}" TextColor="{Binding ColorTextoTexto}" />
+                                    <Label Text="{Binding Texto}" TextColor="{Binding ColorTextoTexto}"
+                                           LineBreakMode="WordWrap"
+                                           FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
                                     <controls:PulsarButton Text="📋 Copiar" Style="{StaticResource GhostButton}"
-                                            HeightRequest="34" Padding="8,2" FontSize="12"
+                                            MinimumHeightRequest="36" Padding="10,4" FontSize="12"
                                             HorizontalOptions="Start" IsVisible="{Binding EsIA}"
-                                            CommandParameter="{Binding Texto}" Clicked="CopiarMensaje_Click" />
+                                            CommandParameter="{Binding Texto}" Clicked="CopiarMensaje_Click"
+                                            FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
                                     <Label Text="{Binding Hora}" FontSize="10" TextColor="{Binding ColorHora}"
                                            HorizontalOptions="End" />
                                 </VerticalStackLayout>
@@ -66,32 +74,38 @@
             </CollectionView>
         </Border>
 
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                <CheckBox x:Name="BuscarActualizado" Color="{StaticResource Cyan}" />
+        <!-- Opciones (se acomodan en varias líneas si no caben) -->
+        <FlexLayout Grid.Row="3" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center" Margin="0,0,8,4">
+                <CheckBox x:Name="BuscarActualizado" Color="{StaticResource Cyan}" IsChecked="True" />
                 <Label Text="Buscar información actualizada (web)" FontSize="12"
-                       TextColor="{StaticResource TextMuted}" VerticalOptions="Center" />
+                       TextColor="{StaticResource TextMuted}" VerticalOptions="Center"
+                       LineBreakMode="WordWrap" />
             </HorizontalStackLayout>
-            <controls:PulsarButton x:Name="BtnEditarPregunta" Grid.Column="1"
-                    Text="✎ Editar" Style="{StaticResource GhostButton}" HeightRequest="38"
-                    IsVisible="False" Clicked="EditarPregunta_Click" />
-        </Grid>
+            <controls:PulsarButton x:Name="BtnEditarPregunta"
+                    Text="✎ Editar" Style="{StaticResource GhostButton}" MinimumHeightRequest="40"
+                    Padding="12,4" IsVisible="False" Clicked="EditarPregunta_Click" Margin="0,0,0,4"
+                    FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
+        </FlexLayout>
 
         <!-- Entrada -->
         <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
             <ActivityIndicator x:Name="SpinnerIA" Grid.Column="0" IsRunning="False" IsVisible="False"
                                Color="{StaticResource Cyan}" WidthRequest="24" HeightRequest="24"
-                               HorizontalOptions="CenterAndExpand" VerticalOptions="Center" />
-            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,0" HeightRequest="50"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,0" MinimumHeightRequest="50"
                     StrokeShape="RoundRectangle 25">
                 <Entry x:Name="MensajeEntry" Placeholder="Escribe tu mensaje aquí..." BackgroundColor="Transparent"
                        TextColor="{StaticResource TextMain}" PlaceholderColor="{StaticResource TextMuted}"
                        VerticalOptions="Center" Completed="Enviar_Click" />
             </Border>
             <controls:PulsarButton x:Name="BtnEnviar" Grid.Column="2" Text="➤" Style="{StaticResource PrimaryButton}"
-                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" Clicked="Enviar_Click" />
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25" Clicked="Enviar_Click"
+                    FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
             <controls:PulsarButton x:Name="BtnCancelar" Grid.Column="3" Text="✕" Style="{StaticResource GhostButton}"
-                    WidthRequest="42" HeightRequest="42" IsVisible="False" Clicked="Cancelar_Click" />
+                    WidthRequest="46" HeightRequest="46" Padding="0" IsVisible="False" Clicked="Cancelar_Click"
+                    ToolTipProperties.Text="Cancelar petición"
+                    FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
         </Grid>
     </Grid>
 </ContentView>
