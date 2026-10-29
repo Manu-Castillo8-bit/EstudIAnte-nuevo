@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls.Shapes;
 using System.Diagnostics;
+using EstudIAnte.Services;
 namespace EstudIAnte;
 
 public partial class IntroPage : ContentPage
@@ -157,6 +158,14 @@ public partial class IntroPage : ContentPage
         EnterBtn.IsEnabled = false;
         SkipBtn.IsEnabled = false;
 
+        // Espera a que App termine de restaurar la sesión local antes de decidir
+        // si el acceso lleva al login o directamente al panel principal.
+        if (Application.Current is App app)
+        {
+            try { await app.InicializacionSesion; }
+            catch (Exception ex) { Debug.WriteLine("Error al inicializar la sesión: " + ex.Message); }
+        }
+
         // 1) Se oscurece la pantalla y aparece "Bienvenido a EstudIAnte"
         Welcome.InputTransparent = false;
         await Welcome.FadeTo(1, 900);
@@ -168,10 +177,11 @@ public partial class IntroPage : ContentPage
 
         await Task.Delay(2200);   // tiempo para leer el mensaje
 
-        // 2) Desvanece todo y pasa al login
+        // 2) Desvanece todo y pasa al login o al panel si la sesión ya está iniciada
         await Root.FadeTo(0, 700);
 
         var window = Application.Current?.Windows.FirstOrDefault();
-        if (window != null) window.Page = new LoginWindow();
+        if (window != null)
+            window.Page = AuthService.UsuarioActual is not null ? new AppShell() : new LoginWindow();
     }
 }
