@@ -17,6 +17,37 @@ public partial class DocumentosView : ContentView
     {
         InitializeComponent();
         Loaded += (_, _) => _ = CargarDocumentosAsync();
+        AgregarPinchZoom();
+    }
+
+    double _pinchBaseZoom = 1;
+    void AgregarPinchZoom()
+    {
+        void adjuntarPinch(View vista)
+        {
+            var pinch = new PinchGestureRecognizer();
+            pinch.PinchUpdated += (_, e) =>
+            {
+                if (e.Status == GestureStatus.Started)
+                    _pinchBaseZoom = _zoomLectura;
+                else if (e.Status == GestureStatus.Running)
+                {
+                    var nuevo = Math.Clamp(Math.Round(_pinchBaseZoom * e.Scale, 1), 0.6, 2.5);
+                    if (Math.Abs(nuevo - _zoomLectura) > 0.0001)
+                    {
+                        _zoomLectura = nuevo;
+                        ZoomLectura.Text = $"{_zoomLectura:P0}";
+                        TextoLectura.FontSize = 15 * _zoomLectura;
+                        _ = AplicarZoomWebAsync(LecturaWeb);
+                    }
+                }
+            };
+            vista.GestureRecognizers.Add(pinch);
+        }
+
+        // Se aplica al lector de pantalla completa y al visor.
+        foreach (var vista in new View[] { PanelLectura, PanelVisor })
+            adjuntarPinch(vista);
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -73,6 +104,26 @@ public partial class DocumentosView : ContentView
     /// <summary>Recarga los documentos (la llama MainPage al volver a la sección).</summary>
     public async Task RefrescarAsync() => await CargarDocumentosAsync();
 
+    async void SincronizarDocs_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            BtnSincronizarDocs.IsBusy = true;
+            BtnSincronizarDocs.Text = "🔄 Sincronizando...";
+            var (ok, msg) = await SyncService.SincronizarTodoAsync();
+            BtnSincronizarDocs.Text = (ok ? "✅" : "⚠") + " Sincronizar";
+            await CargarDocumentosAsync();
+            await MostrarAsync("Sincronización", msg);
+        }
+        finally
+        {
+            BtnSincronizarDocs.IsBusy = false;
+        }
+    }
+
+    /// <summary>Abre el lector de pantalla completa de un documento por Id.</summary>
+    public async Task AbrirLecturaPorIdAsync(string? id) => await AbrirLecturaAsync(id);
+
     public async Task AbrirArchivoExternoAsync(string ruta, string nombre)
     {
         if (AuthService.UsuarioActual is not { } usuario)
@@ -98,7 +149,7 @@ public partial class DocumentosView : ContentView
                 Nombre = nombre,
                 Tipo = "pdf",
                 TamanoBytes = bytes.Length,
-                RutaStorage = $"{usuario.Id}/{Guid.NewGuid():N}{Path.GetExtension(nombre)}",
+                RutaStorage = null,
                 Texto = await DocumentExtractor.ExtraerAsync(bytes, "pdf"),
                 Estado = "subido"
             };
@@ -108,24 +159,12 @@ public partial class DocumentosView : ContentView
             Directory.CreateDirectory(Path.GetDirectoryName(rutaPersistente)!);
             await File.WriteAllBytesAsync(rutaPersistente, bytes);
             await conn.InsertAsync(doc);
+            _archivosExternos[doc.Id] = bytes;
             guardadoLocal = true;
 
-            var client = await SupabaseService.GetClientAsync();
-            if (client is not null)
-            {
-                try
-                {
-                    await client.Storage.From("documentos").Upload(
-                        bytes,
-                        doc.RutaStorage!,
-                        new Supabase.Storage.FileOptions { ContentType = "application/pdf", Upsert = true });
-                    await client.From<Documento>().Insert(doc);
-                }
-                catch (Exception ex)
-                {
-                    Diag("No se pudo sincronizar el PDF abierto externamente: " + ex.Message);
-                }
-            }
+            // El documento externo se lee localmente sin subirse a la nube:
+            // no se consume almacenamiento remoto ni se sincroniza.
+            // (Solo se guarda la copia local temporal para el lector.)
 
             await CargarDocumentosAsync();
             await AbrirLecturaAsync(doc.Id, bytes);
@@ -578,7 +617,17 @@ public partial class DocumentosView : ContentView
         TituloVisor.Text = doc.Nombre;
         MetaVisor.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)} · {(doc.Texto?.Length ?? 0)} caracteres";
 
-        await CargarContenidoAsync(doc, VisorWeb, VisorTextoScroll, TextoVisor);
+        byte[]? bytes = null;
+        if (_archivosExternos.TryGetValue(id, out var b))
+            bytes = b;
+        else
+        {
+            var rutaLocal = RutaDocumentoExterno(id);
+            if (File.Exists(rutaLocal))
+                bytes = await File.ReadAllBytesAsync(rutaLocal);
+        }
+
+        await CargarContenidoAsync(doc, VisorWeb, VisorTextoScroll, TextoVisor, bytes);
 
         PanelVisor.IsVisible = true;
     }
@@ -604,7 +653,7 @@ public partial class DocumentosView : ContentView
         _zoomLectura = 1;
         ZoomLectura.Text = "100%";
         TextoLectura.FontSize = 15;
-        OpcionesLectura.IsVisible = false;
+        OpcionesLectura.IsVisible = true;
         TituloLectura.Text = doc.Nombre;
         MetaLectura.Text = $"{doc.Tipo.ToUpperInvariant()} · {DocumentoItem.FormatearTamano(doc.TamanoBytes)}";
         if (bytesOriginales is null && !_archivosExternos.TryGetValue(id, out bytesOriginales))

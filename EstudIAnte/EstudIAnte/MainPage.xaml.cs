@@ -27,7 +27,10 @@ namespace EstudIAnte
             if (!string.IsNullOrWhiteSpace(error))
                 await DisplayAlertAsync("No se pudo abrir el documento", error, "OK");
             else if (archivo is not null)
+            {
+                IrA("documentos");
                 await VDocs.AbrirArchivoExternoAsync(archivo.Path, archivo.FileName);
+            }
         }
 
         protected override void OnDisappearing()
@@ -255,8 +258,15 @@ namespace EstudIAnte
             }
         }
 
-        public Task AbrirDocumentoExternoAsync(string ruta, string nombre) =>
-            VDocs.AbrirArchivoExternoAsync(ruta, nombre);
+        public Task AbrirDocumentoExternoAsync(string ruta, string nombre)
+        {
+            IrA("documentos");
+            return VDocs.AbrirArchivoExternoAsync(ruta, nombre);
+        }
+
+        public Task AbrirLecturaDocumentoAsync(string? id) => VDocs.AbrirLecturaPorIdAsync(id);
+
+        public Task AbrirCuestionarioAsync(string? id) => VQuiz.AbrirCuestionarioAsync(id);
 
         /// <summary>
         /// Cambia a la sección indicada: "inicio", "chat", "quiz", "diagramas", "documentos",

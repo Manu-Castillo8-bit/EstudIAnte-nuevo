@@ -8,6 +8,8 @@ public partial class MisArchivosView : ContentView
 {
     List<Documento> _docs = new();
     List<Diagrama> _diagramas = new();
+    List<Cuestionario> _quizzes = new();
+    string _filtro = "todos";
     bool _trabajando;
     bool? _compactLayout;
 
@@ -62,7 +64,12 @@ public partial class MisArchivosView : ContentView
             .OrderByDescending(d => d.CreadoEn)
             .ToListAsync();
 
-        Subtitulo.Text = $"{_docs.Count} documento(s) · {_diagramas.Count} diagrama(s)";
+        _quizzes = await conn.Table<Cuestionario>()
+            .Where(c => c.UsuarioId == usuario.Id)
+            .OrderByDescending(c => c.CreadoEn)
+            .ToListAsync();
+
+        Subtitulo.Text = $"{_docs.Count} documento(s) · {_diagramas.Count} diagrama(s) · {_quizzes.Count} cuestionario(s)";
         TituloDocs.Text = $"📄  Documentos ({_docs.Count})";
         TituloDiags.Text = $"🔀  Diagramas ({_diagramas.Count})";
 
@@ -78,16 +85,34 @@ public partial class MisArchivosView : ContentView
             : _docs.Where(d =>
                 d.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
                 d.Resumen.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-                d.Texto.Contains(texto, StringComparison.OrdinalIgnoreCase));
+                d.Texto.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToList();
 
         var diags = string.IsNullOrWhiteSpace(texto)
             ? _diagramas
             : _diagramas.Where(d =>
                 d.Titulo.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-                d.Fuente.Contains(texto, StringComparison.OrdinalIgnoreCase));
+                d.Fuente.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var quizzes = string.IsNullOrWhiteSpace(texto)
+            ? _quizzes
+            : _quizzes.Where(q =>
+                q.Titulo.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToList();
 
         ListaDocumentos.ItemsSource = docs.Select(d => new DocumentoItem(d)).ToList();
         ListaDiagramas.ItemsSource = diags.Select(d => new DiagramaItem(d)).ToList();
+        ListaCuestionarios.ItemsSource = quizzes.Select(q => new CuestionarioArchivoItem(q)).ToList();
+
+        // Visibilidad de las secciones según el filtro elegido.
+        var mostrarDocs = _filtro is "todos" or "documentos";
+        var mostrarDiags = _filtro is "todos" or "diagramas";
+        var mostrarQuizzes = _filtro is "todos" or "cuestionarios";
+
+        TituloDocs.IsVisible = mostrarDocs;
+        ListaDocumentos.IsVisible = mostrarDocs;
+        TituloDiags.IsVisible = mostrarDiags;
+        ListaDiagramas.IsVisible = mostrarDiags;
+        TituloQuizzes.IsVisible = mostrarQuizzes;
+        ListaCuestionarios.IsVisible = mostrarQuizzes;
     }
 
     void Buscador_TextChanged(object? sender, TextChangedEventArgs e) => AplicarFiltro();
@@ -322,6 +347,63 @@ public partial class MisArchivosView : ContentView
     {
         var limpio = string.Join("_", (titulo ?? "diagrama").Split(Path.GetInvalidFileNameChars()));
         return string.IsNullOrWhiteSpace(limpio) ? "diagrama" : limpio;
+    }
+
+    async void FiltroTodos_Click(object? sender, EventArgs e) { _filtro = "todos"; AplicarFiltro(); }
+    async void FiltroDocs_Click(object? sender, EventArgs e) { _filtro = "documentos"; AplicarFiltro(); }
+    async void FiltroDiags_Click(object? sender, EventArgs e) { _filtro = "diagramas"; AplicarFiltro(); }
+    async void FiltroQuizzes_Click(object? sender, EventArgs e) { _filtro = "cuestionarios"; AplicarFiltro(); }
+
+    async void VerArchivo_Click(object? sender, EventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string id)
+            return;
+        try
+        {
+            var mp = MainPage.Actual;
+            if (mp is null)
+                return;
+            mp.IrA("documentos");
+            await mp.AbrirLecturaDocumentoAsync(id);
+        }
+        catch (Exception ex)
+        {
+            await MostrarAsync("Error", ex.Message);
+        }
+    }
+
+    async void AbrirCuestionario_Click(object? sender, EventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string id)
+            return;
+        try
+        {
+            var mp = MainPage.Actual;
+            if (mp is null)
+                return;
+            mp.IrA("quiz");
+            await mp.AbrirCuestionarioAsync(id);
+        }
+        catch (Exception ex)
+        {
+            await MostrarAsync("Error", ex.Message);
+        }
+    }
+
+    public class CuestionarioArchivoItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Detalle { get; set; } = string.Empty;
+
+        public CuestionarioArchivoItem() { }
+
+        public CuestionarioArchivoItem(Cuestionario c)
+        {
+            Id = c.Id;
+            Titulo = c.Titulo;
+            Detalle = $"{c.TotalPreguntas} preguntas · nivel {c.Nivel}";
+        }
     }
 
     Task MostrarAsync(string titulo, string mensaje)

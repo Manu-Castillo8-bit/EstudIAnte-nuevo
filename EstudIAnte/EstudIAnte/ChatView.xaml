@@ -31,6 +31,10 @@
                         IsVisible="False" Margin="0,0,8,4"
                         MinimumHeightRequest="40" LineBreakMode="WordWrap"
                         FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
+                <controls:PulsarButton x:Name="BtnSincronizarChat" Text="🔄 Sincronizar"
+                        Style="{StaticResource GhostButton}" Clicked="SincronizarChat_Click"
+                        Margin="0,0,8,4"
+                        MinimumHeightRequest="40" LineBreakMode="WordWrap" />
             </FlexLayout>
         </VerticalStackLayout>
 
@@ -77,7 +81,8 @@
         <!-- Opciones (se acomodan en varias líneas si no caben) -->
         <FlexLayout Grid.Row="3" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
             <HorizontalStackLayout Spacing="6" VerticalOptions="Center" Margin="0,0,8,4">
-                <CheckBox x:Name="BuscarActualizado" Color="{StaticResource Cyan}" IsChecked="True" />
+                <CheckBox x:Name="BuscarActualizado" Color="{StaticResource Cyan}" IsChecked="False"
+                        CheckedChanged="BuscarActualizado_CheckedChanged" />
                 <Label Text="Buscar información actualizada (web)" FontSize="12"
                        TextColor="{StaticResource TextMuted}" VerticalOptions="Center"
                        LineBreakMode="WordWrap" />

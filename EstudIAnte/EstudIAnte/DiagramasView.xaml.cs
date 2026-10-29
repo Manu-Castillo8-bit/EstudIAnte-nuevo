@@ -39,6 +39,24 @@ public partial class DiagramasView : ContentView
         Loaded += (_, _) => _ = CargarHistorialAsync();
     }
 
+    async void SincronizarDiags_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            BtnSincronizarDiags.IsBusy = true;
+            var (ok, msg) = await SyncService.SincronizarTodoAsync();
+            await RefrescarAsync();
+            await DisplayAlertAsync("Sincronización", msg, "OK");
+        }
+        finally
+        {
+            BtnSincronizarDiags.IsBusy = false;
+        }
+    }
+
+    Task DisplayAlertAsync(string titulo, string mensaje, string boton) =>
+        Application.Current?.Windows.FirstOrDefault()?.Page?.DisplayAlertAsync(titulo, mensaje, boton) ?? Task.CompletedTask;
+
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);

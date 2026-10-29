@@ -30,6 +30,23 @@ public partial class CuestionarioView : ContentView
         Loaded += (_, _) => _ = InicializarAsync();
     }
 
+    async void SincronizarQuiz_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            BtnSincronizarQuiz.IsBusy = true;
+            var (ok, msg) = await SyncService.SincronizarTodoAsync();
+            await CargarFuenteAsync();
+            if (_cuestionario is not null)
+                await CargarPreguntasAsync();
+            await MostrarAsync("Sincronización", msg);
+        }
+        finally
+        {
+            BtnSincronizarQuiz.IsBusy = false;
+        }
+    }
+
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
@@ -303,6 +320,20 @@ public partial class CuestionarioView : ContentView
     }
 
     // ---------------- CUESTIONARIO ----------------
+
+    /// <summary>Abre un cuestionario existente por su Id.</summary>
+    public async Task AbrirCuestionarioAsync(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+        var conn = await LocalDatabase.GetAsync();
+        var quiz = await conn.Table<Cuestionario>().Where(c => c.Id == id).FirstOrDefaultAsync();
+        if (quiz is null)
+            return;
+        _cuestionario = quiz;
+        ResumenIA.Text = string.Empty;
+        await CargarPreguntasAsync();
+    }
 
     async Task CargarPreguntasAsync()
     {

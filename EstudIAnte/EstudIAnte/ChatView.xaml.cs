@@ -20,8 +20,36 @@ public partial class ChatView : ContentView
 
     public ChatView()
     {
+        _omitirConfirmacionBusqueda = true;
         InitializeComponent();
+        _omitirConfirmacionBusqueda = false;
         Loaded += (_, _) => _ = RefrescarTemasAsync();
+    }
+
+    bool _omitirConfirmacionBusqueda;
+    async void BuscarActualizado_CheckedChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        if (_omitirConfirmacionBusqueda)
+            return;
+
+        if (!e.Value)
+            return;
+
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is null)
+            return;
+
+        var confirmar = await page.DisplayAlertAsync(
+            "Búsqueda web",
+            "Esta opción tiene límite de uso, puedes usarlo de forma gratuita, pero al usarlo mucho se acabara el límite de uso por un tiempo, solo activala si deseas buscar información super reciente, ¿Estas seguro que deseas activarlo?",
+            "Sí", "No");
+
+        if (!confirmar)
+        {
+            _omitirConfirmacionBusqueda = true;
+            BuscarActualizado.IsChecked = false;
+            _omitirConfirmacionBusqueda = false;
+        }
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -196,6 +224,23 @@ public partial class ChatView : ContentView
         _temaActual = tema;
         await RefrescarTemasAsync();
         await SeleccionarTemaAsync(tema);
+    }
+
+    async void SincronizarChat_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            BtnSincronizarChat.IsBusy = true;
+            Subtitulo.Text = "Sincronizando...";
+            var (ok, msg) = await SyncService.SincronizarTodoAsync();
+            Subtitulo.Text = (ok ? "✅ " : "⚠ ") + msg;
+            await RefrescarTemasAsync();
+            await CargarMensajesAsync();
+        }
+        finally
+        {
+            BtnSincronizarChat.IsBusy = false;
+        }
     }
 
     async void EliminarTema_Click(object? sender, EventArgs e)

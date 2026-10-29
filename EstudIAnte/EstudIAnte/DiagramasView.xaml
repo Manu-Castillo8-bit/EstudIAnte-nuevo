@@ -25,6 +25,10 @@
                 </Border>
             </Grid>
 
+            <controls:PulsarButton x:Name="BtnSincronizarDiags" Text="🔄 Sincronizar"
+                    Style="{StaticResource GhostButton}" Clicked="SincronizarDiags_Click"
+                    HorizontalOptions="End" />
+
             <!-- Generador -->
             <Border Style="{StaticResource Card}" Padding="20">
                 <VerticalStackLayout Spacing="12">
