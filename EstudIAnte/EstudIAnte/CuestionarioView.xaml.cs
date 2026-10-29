@@ -231,6 +231,15 @@ public partial class CuestionarioView : ContentView
             fuenteTexto = $"Documento: {doc.Nombre}";
         }
 
+        var consumo = await UsoIAService.ConsumirAsync(usuario.Id, AccionIA.Cuestionario);
+        if (!consumo.Permitido)
+        {
+            await MostrarAsync("Límite de IA", consumo.Mensaje);
+            return;
+        }
+
+        var completado = false;
+
         _generando = true;
         BtnGenerar.IsBusy = true;
         BtnCancelarGen.IsVisible = true;
@@ -242,6 +251,7 @@ public partial class CuestionarioView : ContentView
         {
             var (quiz, ia) = await QuizGenerator.GenerarAsync(
                 usuario.Id, nombre, fuenteTexto, material, documentoId, cantidad, _generacionCts.Token);
+            completado = true;
             _cuestionario = quiz;
             ResumenIA.Text = ia;
             LblEstadoGen.Text = $"Cuestionario generado con {ia}.";
@@ -264,6 +274,8 @@ public partial class CuestionarioView : ContentView
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
             _generacionCts?.Dispose();
             _generacionCts = null;
+            if (!completado)
+                await consumo.DevolverAsync();
         }
     }
 

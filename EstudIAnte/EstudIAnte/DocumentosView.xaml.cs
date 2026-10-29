@@ -388,6 +388,19 @@ public partial class DocumentosView : ContentView
         if (doc is null)
             return;
 
+        var usuario = AuthService.UsuarioActual;
+        if (usuario is null)
+            return;
+
+        var consumo = await UsoIAService.ConsumirAsync(usuario.Id, AccionIA.Documento);
+        if (!consumo.Permitido)
+        {
+            await MostrarAsync("Límite de IA", consumo.Mensaje);
+            return;
+        }
+
+        var completado = false;
+
         doc.Estado = "analizando";
         await conn.UpdateAsync(doc);
         await CargarDocumentosAsync();
@@ -400,6 +413,7 @@ public partial class DocumentosView : ContentView
         {
             var (resumen, ia) = await DocumentoAnalysisService.AnalizarAsync(
                 doc, claveTamano, _analisisCts.Token);
+            completado = true;
             await CargarDocumentosAsync();
             ActualizarDetalle();
             await MostrarAsync("Análisis completo", $"Resumen ({claveTamano}) generado con {ia}:\n\n{resumen}");
@@ -425,6 +439,8 @@ public partial class DocumentosView : ContentView
             SpinnerAnalisis.IsRunning = false;
             _analisisCts?.Dispose();
             _analisisCts = null;
+            if (!completado)
+                await consumo.DevolverAsync();
         }
     }
 
@@ -484,10 +500,19 @@ public partial class DocumentosView : ContentView
         if (eleccion is null || eleccion == "Cancelar" || !int.TryParse(eleccion, out var cantidad))
             return;
 
+        var consumo = await UsoIAService.ConsumirAsync(usuario.Id, AccionIA.Cuestionario);
+        if (!consumo.Permitido)
+        {
+            await page.DisplayAlertAsync("Límite de IA", consumo.Mensaje, "OK");
+            return;
+        }
+
+        var completado = false;
         try
         {
             var (quiz, ia) = await QuizGenerator.GenerarAsync(
                 usuario.Id, doc.Nombre, $"Documento: {doc.Nombre}", doc.Texto, doc.Id, cantidad);
+            completado = true;
 
             await page.DisplayAlertAsync("Cuestionario listo",
                 $"Se creó «{quiz.Titulo}» con {quiz.TotalPreguntas} preguntas usando {ia}.\n\nVe a la sección Cuestionarios para responderlo.", "OK");
@@ -495,6 +520,11 @@ public partial class DocumentosView : ContentView
         catch (Exception ex)
         {
             await page.DisplayAlertAsync("No se pudo crear", ex.Message, "OK");
+        }
+        finally
+        {
+            if (!completado)
+                await consumo.DevolverAsync();
         }
     }
 

@@ -140,6 +140,9 @@ public static class AdminService
         var temas = await conn.Table<Tema>().Where(t => t.UsuarioId == u.Id).ToListAsync();
         await BorrarFilaAsync(conn, "temas", temas, t => t.Id);
 
+        var usosIA = await conn.Table<UsoIA>().Where(x => x.UsuarioId == u.Id).ToListAsync();
+        await BorrarFilaAsync(conn, "usos_ia", usosIA, x => x.UsuarioId);
+
         // El usuario al final.
         await SyncService.MarcarBorradoAsync("usuarios", u.Id);
         await conn.DeleteAsync(u);

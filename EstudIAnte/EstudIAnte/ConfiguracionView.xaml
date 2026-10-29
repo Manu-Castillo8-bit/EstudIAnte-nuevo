@@ -38,6 +38,13 @@
                         <Label x:Name="LblRol" Grid.Column="2" Text="—" FontAttributes="Bold"
                                TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
                     </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Label Text="✨" FontSize="20" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="Consultas IA hoy" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                        <Label x:Name="LblUsoIA" Grid.Column="2" Text="—" FontAttributes="Bold"
+                               TextColor="{StaticResource TextMain}" VerticalOptions="Center" />
+                    </Grid>
+                    <Label x:Name="LblUsoIADetalle" Text="" FontSize="12" TextColor="{StaticResource TextMuted}" />
                 </VerticalStackLayout>
             </Border>
 

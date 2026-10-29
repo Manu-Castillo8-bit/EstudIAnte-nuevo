@@ -238,6 +238,15 @@ public partial class DiagramasView : ContentView
             fuenteTexto = $"Tema: {nombre}";
         }
 
+        var consumo = await UsoIAService.ConsumirAsync(usuario.Id, AccionIA.Diagrama);
+        if (!consumo.Permitido)
+        {
+            await MostrarAsync("Límite de IA", consumo.Mensaje);
+            return;
+        }
+
+        var completado = false;
+
         _generando = true;
         BtnGenerar.IsBusy = true;
         BtnCancelarGen.IsVisible = true;
@@ -249,6 +258,7 @@ public partial class DiagramasView : ContentView
         {
             var (diagrama, ia) = await DiagramaGenerator.GenerarAsync(
                 usuario.Id, nombre, fuenteTexto, material, documentoId, _tipo, _generacionCts.Token);
+            completado = true;
 
             _actual = diagrama;
             LblEstadoGen.Text = $"Diagrama generado con {ia}.";
@@ -272,6 +282,8 @@ public partial class DiagramasView : ContentView
             SpinnerGen.IsRunning = SpinnerGen.IsVisible = false;
             _generacionCts?.Dispose();
             _generacionCts = null;
+            if (!completado)
+                await consumo.DevolverAsync();
         }
     }
 

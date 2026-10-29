@@ -39,7 +39,34 @@ public partial class ConfiguracionView : ContentView
             LblRol.Text = u.Rol == "admin" ? "Administrador" : "Estudiante";
         }
 
+        await ActualizarUsoIAAsync();
         await ActualizarAsync();
+    }
+
+    async Task ActualizarUsoIAAsync()
+    {
+        var usuario = AuthService.UsuarioActual;
+        if (usuario is null)
+        {
+            LblUsoIA.Text = "—";
+            LblUsoIADetalle.Text = string.Empty;
+            return;
+        }
+
+        try
+        {
+            var estado = await UsoIAService.ObtenerEstadoAsync(usuario.Id);
+            LblUsoIA.Text = estado.Texto.Replace("IA: ", string.Empty);
+            LblUsoIA.TextColor = estado.Agotado
+                ? Color.FromArgb("#F87171")
+                : Color.FromArgb("#E2E8F0");
+            LblUsoIADetalle.Text = estado.Detalle;
+        }
+        catch (Exception ex)
+        {
+            LblUsoIA.Text = "—";
+            LblUsoIADetalle.Text = "No se pudo cargar el consumo de IA: " + ex.Message;
+        }
     }
 
     async Task ActualizarAsync()
@@ -66,8 +93,9 @@ public partial class ConfiguracionView : ContentView
         try
         {
             var (ok, mensaje) = await SyncService.SincronizarTodoAsync();
-            LblResultadoSync.Text = (ok ? "✅ " : "⚠ ") + mensaje;
+            LblResultadoSync.Text = (ok ? "�o. " : "�s� ") + mensaje;
             LblResultadoSync.TextColor = Color.FromArgb(ok ? "#34D399" : "#FBBF24");
+            await ActualizarUsoIAAsync();
         }
         finally
         {

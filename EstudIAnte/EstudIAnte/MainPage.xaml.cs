@@ -10,11 +10,15 @@ namespace EstudIAnte
             InitializeComponent();
             ActualizarUsuario();
             VDocs.LecturaCompletaChanged += (_, abierta) => TopBar.IsVisible = !abierta;
+            _ = ActualizarUsoIAAsync();
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            UsoIAService.EstadoCambiado -= MostrarEstadoUsoIA;
+            UsoIAService.EstadoCambiado += MostrarEstadoUsoIA;
+            _ = ActualizarUsoIAAsync();
             var solicitud = ExternalDocumentRequest.TakeAsync();
             if (solicitud is null)
                 return;
@@ -24,6 +28,12 @@ namespace EstudIAnte
                 await DisplayAlertAsync("No se pudo abrir el documento", error, "OK");
             else if (archivo is not null)
                 await VDocs.AbrirArchivoExternoAsync(archivo.Path, archivo.FileName);
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            UsoIAService.EstadoCambiado -= MostrarEstadoUsoIA;
         }
 
         bool _compactLayout;
@@ -123,6 +133,38 @@ namespace EstudIAnte
             var inicial = string.IsNullOrEmpty(nombre) ? "?" : nombre[..1].ToUpperInvariant();
             AvatarInicial.Text = inicial;
             AvatarSuperior.Text = inicial;
+        }
+
+        async Task ActualizarUsoIAAsync()
+        {
+            var usuario = AuthService.UsuarioActual;
+            if (usuario is null)
+            {
+                UsoIABadge.IsVisible = false;
+                return;
+            }
+
+            try
+            {
+                var estado = await UsoIAService.ObtenerEstadoAsync(usuario.Id);
+                MostrarEstadoUsoIA(estado);
+            }
+            catch
+            {
+                UsoIABadge.IsVisible = false;
+            }
+        }
+
+        void MostrarEstadoUsoIA(EstadoUsoIA estado)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UsoIABadge.IsVisible = AuthService.UsuarioActual is not null;
+                UsoIATexto.Text = estado.Texto;
+                UsoIATexto.TextColor = estado.Agotado
+                    ? Color.FromArgb("#F87171")
+                    : Color.FromArgb("#E2E8F0");
+            });
         }
 
         private void OnNavChanged(object? sender, CheckedChangedEventArgs e)

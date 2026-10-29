@@ -119,6 +119,31 @@ create table if not exists resultados (
     fecha           timestamptz not null default now()
 );
 
+-- ---------- CONFIGURACION GLOBAL DE IA ----------
+create table if not exists configuracion_ia (
+    id               text primary key,
+    limite_habilitado boolean not null default true,
+    limite_diario    int not null default 3
+                     check (limite_diario between 1 and 10000),
+    actualizado_en   timestamptz not null default now()
+);
+
+insert into configuracion_ia (id, limite_habilitado, limite_diario)
+values ('global', true, 3)
+on conflict (id) do nothing;
+
+-- ---------- USO DIARIO DE IA POR USUARIO ----------
+create table if not exists usos_ia (
+    usuario_id          text primary key references usuarios (id) on delete cascade,
+    fecha               date not null default current_date,
+    consultas_usadas    int not null default 0
+                        check (consultas_usadas >= 0),
+    limite_personalizado int
+                        check (limite_personalizado is null
+                               or limite_personalizado between 0 and 10000),
+    actualizado_en      timestamptz not null default now()
+);
+
 -- ---------- INDICES ----------
 create index if not exists idx_documentos_usuario  on documentos (usuario_id);
 create index if not exists idx_temas_usuario       on temas (usuario_id);

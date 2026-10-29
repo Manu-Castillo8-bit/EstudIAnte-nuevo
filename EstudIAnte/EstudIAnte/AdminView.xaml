@@ -53,7 +53,26 @@
 
             <!-- USUARIOS -->
             <VerticalStackLayout x:Name="PanelUsuarios" Spacing="10">
-                <controls:PulsarButton Text="＋  Crear usuario" Style="{StaticResource PrimaryButton}"
+                <Border Style="{StaticResource Card}" Padding="16">
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="10" ColumnSpacing="14">
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
+                            <Label Text="Límite diario de consultas IA" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextMain}" />
+                            <Label x:Name="LblConfigIA" Text="Se aplica a todos los usuarios sin límite personalizado."
+                                   FontSize="12" TextColor="{StaticResource TextMuted}" />
+                        </VerticalStackLayout>
+                        <Switch x:Name="SwitchLimiteIA" Grid.Row="0" Grid.Column="1" VerticalOptions="Center"
+                                OnColor="{StaticResource Cyan}" Toggled="SwitchLimiteIA_Toggled" />
+                        <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="10">
+                            <Entry x:Name="EntryLimiteIA" Keyboard="Numeric" WidthRequest="90"
+                                   Placeholder="3" TextColor="{StaticResource TextMain}"
+                                   PlaceholderColor="{StaticResource TextMuted}" />
+                            <controls:PulsarButton x:Name="BtnGuardarConfigIA" Text="Guardar límite"
+                                    Style="{StaticResource PrimaryButton}" Clicked="GuardarConfigIA_Click" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                </Border>
+                <controls:PulsarButton Text="+  Crear usuario" Style="{StaticResource PrimaryButton}"
                         HorizontalOptions="Start" Clicked="CrearUsuario_Click" />
                 <CollectionView x:Name="ListaUsuarios">
                     <CollectionView.EmptyView>
@@ -277,6 +296,22 @@
                         </Border>
 
                         <!-- Botones de gestión -->
+                        <Border Style="{StaticResource Card}" Padding="16">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Consultas de IA" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextMain}" />
+                                    <Label x:Name="DetUsoIA" Text="Cargando..."
+                                           FontSize="12" TextColor="{StaticResource TextMuted}" />
+                                    <Label x:Name="DetLimiteIA" Text=""
+                                           FontSize="12" TextColor="{StaticResource Cyan}" />
+                                </VerticalStackLayout>
+                                <controls:PulsarButton Grid.Column="1" Text="Cambiar límite"
+                                        Style="{StaticResource GhostButton}" VerticalOptions="Center"
+                                        Clicked="CambiarLimiteUsuario_Click" />
+                            </Grid>
+                        </Border>
+
                         <HorizontalStackLayout Spacing="8">
                             <controls:PulsarButton x:Name="BtnDetClave" Text="🔐  Cambiar clave" Style="{StaticResource PrimaryButton}"
                                     Clicked="Clave_Click" CommandParameter="" />

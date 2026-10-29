@@ -9,6 +9,7 @@ public partial class AdminView : ContentView
     string _tab = "usuarios";
     bool _trabajando;
     bool? _compactLayout;
+    bool _cargandoConfigIA;
 
     public AdminView()
     {
@@ -211,6 +212,8 @@ public partial class AdminView : ContentView
 
     async Task CargarContenidoUsuarioAsync(Usuario u)
     {
+        await CargarUsoUsuarioAsync(u.Id);
+
         var documentos = (await AdminService.ListarDocumentosAsync()).Where(d => d.UsuarioId == u.Id).ToList();
         var cuestionarios = (await AdminService.ListarCuestionariosAsync()).Where(c => c.UsuarioId == u.Id).ToList();
         var diagramas = (await AdminService.ListarDiagramasAsync()).Where(d => d.UsuarioId == u.Id).ToList();
@@ -375,6 +378,8 @@ public partial class AdminView : ContentView
         ListaUsuarios.ItemsSource = usuarios
             .Select(u => new UsuarioAdminItem(u))
             .ToList();
+
+        await CargarConfiguracionIAAsync();
     }
 
     async Task CargarDocumentosAsync()
@@ -408,6 +413,131 @@ public partial class AdminView : ContentView
             $"{r.Puntaje} / {r.Total} correctas",
             $"{titulos.GetValueOrDefault(r.CuestionarioId ?? "", "Cuestionario")} · {r.TiempoSegundos}s · {FormatearFecha(r.Fecha)}",
             string.Empty)).ToList();
+    }
+
+    // ---------------- CONFIGURACION DE IA ----------------
+
+    async Task CargarConfiguracionIAAsync()
+    {
+        try
+        {
+            _cargandoConfigIA = true;
+            var config = await UsoIAService.ObtenerConfiguracionAsync();
+            SwitchLimiteIA.IsToggled = config.LimiteHabilitado;
+            EntryLimiteIA.Text = config.LimiteDiario.ToString();
+            EntryLimiteIA.IsEnabled = config.LimiteHabilitado;
+            BtnGuardarConfigIA.IsEnabled = true;
+            ActualizarConfigIAVisual(config.LimiteHabilitado, config.LimiteDiario);
+        }
+        finally
+        {
+            _cargandoConfigIA = false;
+        }
+    }
+
+    void ActualizarConfigIAVisual(bool habilitado, int limite)
+    {
+        LblConfigIA.Text = habilitado
+            ? $"Activo: {limite} consulta(s) por usuario al día."
+            : "Desactivado: los usuarios no tienen límite de consultas IA.";
+    }
+
+    void SwitchLimiteIA_Toggled(object? sender, ToggledEventArgs e)
+    {
+        if (_cargandoConfigIA)
+            return;
+
+        EntryLimiteIA.IsEnabled = e.Value;
+        BtnGuardarConfigIA.IsEnabled = true;
+
+        if (int.TryParse(EntryLimiteIA.Text, out var limite))
+            ActualizarConfigIAVisual(e.Value, limite);
+        else
+            ActualizarConfigIAVisual(e.Value, UsoIAService.LimitePorDefecto);
+    }
+
+    async void GuardarConfigIA_Click(object? sender, EventArgs e)
+    {
+        var page = Pagina();
+        if (page is null)
+            return;
+
+        if (!int.TryParse(EntryLimiteIA.Text?.Trim(), out var limite))
+        {
+            await page.DisplayAlertAsync("Límite inválido", "Escribe un número entero de consultas diarias.", "OK");
+            return;
+        }
+
+        var (ok, error) = await UsoIAService.GuardarConfiguracionAsync(SwitchLimiteIA.IsToggled, limite);
+        if (!ok)
+        {
+            await page.DisplayAlertAsync("No se pudo guardar", error, "OK");
+            return;
+        }
+
+        await CargarConfiguracionIAAsync();
+        await page.DisplayAlertAsync("Configuración IA", "El límite diario fue actualizado.", "OK");
+    }
+
+    async Task CargarUsoUsuarioAsync(string usuarioId)
+    {
+        try
+        {
+            var estado = await UsoIAService.ObtenerEstadoAsync(usuarioId);
+            DetUsoIA.Text = estado.Detalle;
+            DetLimiteIA.Text = estado.Personalizado
+                ? $"Límite personalizado: {estado.Limite} consulta(s) al día."
+                : !estado.LimiteHabilitado
+                    ? "El límite global está desactivado."
+                    : $"Límite general: {estado.Limite} consulta(s) al día.";
+        }
+        catch (Exception ex)
+        {
+            DetUsoIA.Text = "No se pudo cargar el consumo de IA: " + ex.Message;
+            DetLimiteIA.Text = string.Empty;
+        }
+    }
+
+    async void CambiarLimiteUsuario_Click(object? sender, EventArgs e)
+    {
+        if (BtnDetClave.CommandParameter is not string id || Pagina() is not { } page)
+            return;
+
+        var (usuarios, _) = await AdminService.ListarUsuariosAsync();
+        var usuario = usuarios.FirstOrDefault(u => u.Id == id);
+        if (usuario is null)
+            return;
+
+        var estado = await UsoIAService.ObtenerEstadoAsync(id);
+        var inicial = estado.Personalizado ? estado.Limite.ToString() : string.Empty;
+        var texto = await page.DisplayPromptAsync(
+            "Límite personalizado de IA",
+            $"Límite para «{usuario.NombreUsuario}».\nEscribe un número (0 = sin consultas) o deja vacío para usar el límite general.",
+            "Guardar", "Cancelar", initialValue: inicial, keyboard: Keyboard.Numeric);
+
+        if (texto is null)
+            return;
+
+        int? limite = null;
+        texto = texto.Trim();
+        if (texto.Length > 0)
+        {
+            if (!int.TryParse(texto, out var valor))
+            {
+                await page.DisplayAlertAsync("Límite inválido", "Escribe un número entero o deja el campo vacío.", "OK");
+                return;
+            }
+            limite = valor;
+        }
+
+        var (ok, error) = await UsoIAService.AsignarLimitePersonalizadoAsync(id, limite);
+        if (!ok)
+        {
+            await page.DisplayAlertAsync("No se pudo guardar", error, "OK");
+            return;
+        }
+
+        await CargarUsoUsuarioAsync(id);
     }
 
     // ---------------- ACCIONES: USUARIOS ----------------

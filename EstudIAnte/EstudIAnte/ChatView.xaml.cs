@@ -251,6 +251,23 @@ public partial class ChatView : ContentView
             return;
         }
 
+        if (texto.Length > UsoIAService.MaximoCaracteresChat)
+        {
+            await MostrarAsync("Mensaje demasiado largo",
+                $"Tu mensaje tiene {texto.Length} caracteres. El máximo permitido es " +
+                $"{UsoIAService.MaximoCaracteresChat}. Acórtalo y vuelve a intentarlo.");
+            return;
+        }
+
+        var consumo = await UsoIAService.ConsumirAsync(usuario.Id, AccionIA.Chat);
+        if (!consumo.Permitido)
+        {
+            await MostrarAsync("Límite de IA", consumo.Mensaje);
+            return;
+        }
+
+        var completado = false;
+
         if (editarId is null)
         {
             var mensajeUsuario = new Mensaje { ChatId = _chatActual.Id, Rol = "user", Contenido = texto };
@@ -262,7 +279,10 @@ public partial class ChatView : ContentView
             var conn = await LocalDatabase.GetAsync();
             var mensajeUsuario = await conn.Table<Mensaje>().Where(m => m.Id == editarId).FirstOrDefaultAsync();
             if (mensajeUsuario is null)
+            {
+                await consumo.DevolverAsync();
                 return;
+            }
 
             var respuestasAnteriores = await conn.Table<Mensaje>()
                 .Where(m => m.ChatId == mensajeUsuario.ChatId && m.Rol == "assistant")
@@ -327,8 +347,9 @@ public partial class ChatView : ContentView
             {
                 ChatId = _chatActual.Id,
                 Rol = "assistant",
-                Contenido = $"{respuesta}\n\n— {proveedor}"
+                Contenido = $"{respuesta}\n\nIA: {proveedor}"
             });
+            completado = true;
             Subtitulo.Text = subtituloOriginal;
         }
         catch (OperationCanceledException) when (_envioCts?.IsCancellationRequested == true)
@@ -354,6 +375,8 @@ public partial class ChatView : ContentView
             SpinnerIA.IsRunning = SpinnerIA.IsVisible = false;
             _envioCts?.Dispose();
             _envioCts = null;
+            if (!completado)
+                await consumo.DevolverAsync();
             await CargarMensajesAsync();
         }
     }

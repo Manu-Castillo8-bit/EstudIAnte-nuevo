@@ -53,6 +53,7 @@ public static class SyncService
                         case "preguntas": await client.From<Pregunta>().Where(x => x.Id == b.RegistroId).Delete(); break;
                         case "diagramas": await client.From<Diagrama>().Where(x => x.Id == b.RegistroId).Delete(); break;
                         case "resultados": await client.From<Resultado>().Where(x => x.Id == b.RegistroId).Delete(); break;
+                        case "usos_ia": await client.From<UsoIA>().Where(x => x.UsuarioId == b.RegistroId).Delete(); break;
                         case "usuarios": await client.From<Usuario>().Where(x => x.Id == b.RegistroId).Delete(); break;
                     }
 
@@ -74,7 +75,73 @@ public static class SyncService
                 try { await client.From<Usuario>().Insert(u); subidos++; } catch { }
             }
 
-            // 3) Documentos: inserta los faltantes y actualiza estado/resumen si difieren.
+            // 3) Configuración global y contadores diarios de IA.
+            var usuarioActual = AuthService.UsuarioActual;
+            var esAdmin = usuarioActual?.Rol == "admin";
+
+            var configIA = await conn.Table<ConfiguracionIA>()
+                .Where(c => c.Id == ConfiguracionIA.IdGlobal)
+                .FirstOrDefaultAsync();
+            if (esAdmin && configIA is not null)
+            {
+                try
+                {
+                    var respuesta = await client.From<ConfiguracionIA>()
+                        .Where(c => c.Id == ConfiguracionIA.IdGlobal)
+                        .Get();
+                    var remoto = respuesta?.Models?.FirstOrDefault();
+                    if (remoto is null)
+                    {
+                        await client.From<ConfiguracionIA>().Insert(configIA);
+                        subidos++;
+                    }
+                    else if (!EsRemotoMasNuevo(remoto.ActualizadoEn, configIA.ActualizadoEn))
+                    {
+                        await client.From<ConfiguracionIA>().Update(configIA);
+                        subidos++;
+                    }
+                }
+                catch { }
+            }
+
+            foreach (var uso in await conn.Table<UsoIA>().ToListAsync())
+            {
+                if (!esAdmin && uso.UsuarioId != usuarioActual?.Id)
+                    continue;
+
+                try
+                {
+                    var respuesta = await client.From<UsoIA>()
+                        .Where(u => u.UsuarioId == uso.UsuarioId)
+                        .Get();
+                    var remoto = respuesta?.Models?.FirstOrDefault();
+
+                    if (remoto is not null)
+                    {
+                        if (string.CompareOrdinal(remoto.Fecha, uso.Fecha) > 0)
+                            continue;
+
+                        if (remoto.Fecha == uso.Fecha && remoto.ConsultasUsadas > uso.ConsultasUsadas)
+                            uso.ConsultasUsadas = remoto.ConsultasUsadas;
+
+                        if (EsRemotoMasNuevo(remoto.ActualizadoEn, uso.ActualizadoEn))
+                            uso.LimitePersonalizado = remoto.LimitePersonalizado;
+
+                        uso.ActualizadoEn = DateTime.UtcNow.ToString("o");
+                        await conn.InsertOrReplaceAsync(uso);
+                        await client.From<UsoIA>().Update(uso);
+                    }
+                    else
+                    {
+                        await client.From<UsoIA>().Insert(uso);
+                    }
+
+                    subidos++;
+                }
+                catch { }
+            }
+
+            // 4) Documentos: inserta los faltantes y actualiza estado/resumen si difieren.
             var idsDocs = await IdsEnNubeAsync<Documento>(client);
             foreach (var d in await conn.Table<Documento>().ToListAsync())
             {
@@ -137,6 +204,8 @@ public static class SyncService
             await PullTable<Pregunta>(client, conn);
             await PullTable<Diagrama>(client, conn);
             await PullTable<Resultado>(client, conn);
+            await PullTable<ConfiguracionIA>(client, conn);
+            await PullTable<UsoIA>(client, conn);
 
             return true;
         }
@@ -174,6 +243,15 @@ public static class SyncService
         }
 
         return subidos;
+    }
+
+    static bool EsRemotoMasNuevo(string? remoto, string? local)
+    {
+        return DateTimeOffset.TryParse(remoto, System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.RoundtripKind, out var fechaRemota)
+               && DateTimeOffset.TryParse(local, System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.RoundtripKind, out var fechaLocal)
+               && fechaRemota > fechaLocal;
     }
 
     static async Task<HashSet<string>> IdsEnNubeAsync<T>(Supabase.Client client) where T : BaseModel, new()
