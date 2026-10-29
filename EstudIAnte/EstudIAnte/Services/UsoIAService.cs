@@ -103,7 +103,6 @@ public static class UsoIAService
         {
             // No se bloquea la generación si falla el registro local.
             Diag("local error capturado: " + ex);
-            _ = NotificarAsync("ERROR registro local: " + ex.Message);
             return;
         }
 
@@ -149,17 +148,6 @@ public static class UsoIAService
             // Sin conexión o tabla inexistente: queda local.
             Diag("cloud error: " + ex.Message);
         }
-    }
-
-    static async Task NotificarAsync(string msg)
-    {
-        try
-        {
-            var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-            if (page is not null)
-                await page.DisplayAlertAsync("Uso IA", msg, "OK");
-        }
-        catch { }
     }
 
     static void Diag(string msg)
