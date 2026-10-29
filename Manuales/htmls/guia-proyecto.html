@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Guía para entender, sin conocimientos de programación, cómo está construido EstudIAnte.">
+  <title>EstudIAnte — Guía del proyecto</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --surface: #121a2e;
+      --surface-2: #18233b;
+      --text: #edf3ff;
+      --muted: #a7b5cf;
+      --line: #2a3855;
+      --cyan: #62e2dc;
+      --blue: #8db4ff;
+      --violet: #c3a4ff;
+      --yellow: #ffda8a;
+      --green: #88e0aa;
+      --pink: #ff9fc4;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 12% 0%, #263c6a66, transparent 38rem),
+        radial-gradient(ellipse at 90% 12%, #402d6b55, transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    a { color: var(--cyan); text-underline-offset: 3px; }
+    a:hover { color: white; }
+    code, pre { font-family: Consolas, "Courier New", monospace; }
+    code {
+      color: #d7e5ff;
+      background: #0a1120;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: .08rem .36rem;
+      overflow-wrap: anywhere;
+    }
+    .wrap { width: min(1160px, calc(100% - 34px)); margin: 0 auto; }
+    .hero { padding: 58px 0 34px; }
+    .eyebrow {
+      display: inline-flex; gap: 8px; align-items: center;
+      color: var(--cyan); font-size: .82rem; font-weight: 750;
+      letter-spacing: .12em; text-transform: uppercase;
+    }
+    h1 { max-width: 900px; margin: 12px 0; font-size: clamp(2.5rem, 7vw, 5rem); line-height: 1.03; letter-spacing: -.055em; }
+    .hero p { max-width: 800px; color: var(--muted); font-size: 1.12rem; }
+    .hero-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 18px; align-items: stretch; margin-top: 28px; }
+    .hero-card, .card, .navbox {
+      background: linear-gradient(145deg, #17233c, #10182b);
+      border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: 0 18px 50px #00000022;
+    }
+    .hero-card { padding: 20px 22px; }
+    .hero-card strong { color: white; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+    .tag { border: 1px solid #38506e; color: #c8d7f0; border-radius: 99px; padding: 4px 11px; font-size: .85rem; }
+    .stat { display: flex; gap: 12px; align-items: center; margin: 9px 0; color: var(--muted); }
+    .stat b { color: var(--text); font-size: 1.15rem; min-width: 74px; }
+    .layout { display: grid; grid-template-columns: 255px minmax(0, 1fr); gap: 24px; padding-bottom: 70px; }
+    .navbox { position: sticky; top: 16px; align-self: start; padding: 17px; max-height: calc(100vh - 32px); overflow: auto; }
+    .navbox h2 { margin: 0 0 10px; font-size: .95rem; }
+    .navbox a { display: block; padding: 5px 0; color: var(--muted); text-decoration: none; font-size: .88rem; }
+    .navbox a:hover { color: var(--cyan); }
+    main { min-width: 0; }
+    section { scroll-margin-top: 22px; margin-bottom: 22px; }
+    .card { padding: clamp(19px, 3vw, 30px); }
+    h2 { margin: 0 0 13px; font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.025em; }
+    h3 { margin: 22px 0 8px; font-size: 1.15rem; color: #dce8ff; }
+    p { margin: 8px 0 14px; }
+    .muted, .caption { color: var(--muted); }
+    .caption { font-size: .9rem; }
+    .callout { padding: 14px 16px; border-left: 3px solid var(--cyan); background: #102837; border-radius: 0 12px 12px 0; margin: 16px 0; }
+    .callout.warn { border-color: var(--yellow); background: #2b2517; }
+    .grid-2, .grid-3 { display: grid; gap: 12px; margin: 15px 0; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mini { background: var(--surface-2); border: 1px solid var(--line); border-radius: 13px; padding: 15px; }
+    .mini h3 { margin: 0 0 6px; font-size: 1rem; }
+    .mini p { margin: 0; color: var(--muted); font-size: .94rem; }
+    .flow { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin: 17px 0; }
+    .flow span { background: #1b2944; border: 1px solid #38506e; padding: 8px 12px; border-radius: 10px; }
+    .flow b { color: var(--cyan); }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: .94rem; }
+    th, td { padding: 10px 11px; vertical-align: top; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--cyan); font-size: .83rem; text-transform: uppercase; letter-spacing: .06em; }
+    td:first-child { width: 31%; }
+    .tree { white-space: pre-wrap; overflow-wrap: anywhere; background: #090f1d; border: 1px solid var(--line); border-radius: 12px; padding: 16px; color: #d5e0f6; font-size: .87rem; line-height: 1.6; }
+    details { border: 1px solid var(--line); border-radius: 12px; background: #111a2c; padding: 12px 15px; margin: 10px 0; }
+    summary { cursor: pointer; color: #e2ecff; font-weight: 700; }
+    details p { color: var(--muted); margin-bottom: 0; }
+    .pill { display: inline-block; font-size: .78rem; border-radius: 99px; padding: 2px 8px; color: #09121e; background: var(--cyan); font-weight: 750; margin-right: 5px; }
+    footer { border-top: 1px solid var(--line); color: var(--muted); padding: 24px 0 36px; font-size: .9rem; }
+    @media (max-width: 850px) {
+      .layout { grid-template-columns: 1fr; }
+      .navbox { position: static; max-height: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+      .navbox h2 { grid-column: 1 / -1; }
+      .hero-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .navbox { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+      .hero { padding-top: 38px; }
+    }
+    @media print {
+      :root { color-scheme: light; --bg: white; --surface: white; --surface-2: #f3f5f8; --text: #182033; --muted: #4c5870; --line: #ccd3df; }
+      body { background: white; color: #182033; }
+      .navbox { position: static; }
+      .hero-card, .card, .navbox, .mini, details { background: white; box-shadow: none; }
+      .layout { display: block; }
+      .navbox { display: none; }
+      a { color: #075e70; }
+      .tree, code { color: #202b40; background: #f5f7fa; }
+      .callout, .callout.warn { background: #f4f7fa; }
+      section, details { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero wrap">
+    <div class="eyebrow">📚 Guía para personas curiosas, no programadoras</div>
+    <h1>¿Cómo está hecho EstudIAnte?</h1>
+    <p>Una explicación visual y en lenguaje sencillo de las piezas que forman el proyecto: la aplicación, sus pantallas, los datos, la inteligencia artificial y los servicios que trabajan detrás.</p>
+    <div class="hero-grid">
+      <div class="hero-card">
+        <strong>La idea en una frase</strong>
+        <p>EstudIAnte es una aplicación de escritorio y móvil para estudiar con documentos: los guarda, permite conversar sobre ellos y crea resúmenes, cuestionarios y diagramas.</p>
+        <div class="tag-row"><span class="tag">.NET MAUI</span><span class="tag">C# y XAML</span><span class="tag">SQLite local</span><span class="tag">Supabase en la nube</span><span class="tag">IA mediante servidor</span></div>
+      </div>
+      <div class="hero-card">
+        <div class="stat"><b>Interfaz</b><span>Ventanas y controles que ve la persona.</span></div>
+        <div class="stat"><b>Servicios</b><span>Reglas y tareas que conectan las piezas.</span></div>
+        <div class="stat"><b>Datos</b><span>Información local y sincronizada en la nube.</span></div>
+        <div class="stat"><b>Plataformas</b><span>Android, iOS, Mac y Windows.</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap layout">
+    <nav class="navbox" aria-label="Contenido">
+      <h2>En esta guía</h2>
+      <a href="#idea">1. Qué hace</a>
+      <a href="#mapa">2. Mapa general</a>
+      <a href="#flujo">3. Qué ocurre al usarla</a>
+      <a href="#pantallas">4. Pantallas</a>
+      <a href="#servicios">5. Módulos de trabajo</a>
+      <a href="#datos">6. Datos y almacenamiento</a>
+      <a href="#ia">7. Inteligencia artificial</a>
+      <a href="#paquetes">8. Paquetes y tecnologías</a>
+      <a href="#plataformas">9. Plataformas y recursos</a>
+      <a href="#carpetas">10. Carpetas del repositorio</a>
+      <a href="#limites">11. Consideraciones</a>
+      <a href="#glosario">12. Glosario sencillo</a>
+    </nav>
+
+    <main>
+      <section id="idea" class="card">
+        <h2>1. ¿Qué problema resuelve?</h2>
+        <p>La aplicación busca convertir documentos académicos o de investigación en material de estudio más fácil de usar. En lugar de limitarse a mostrar un archivo, permite guardar documentos, obtener un resumen, hacer preguntas sobre el contenido, generar cuestionarios y representar ideas mediante diagramas.</p>
+        <div class="grid-2">
+          <div class="mini"><h3>Para quien estudia</h3><p>Puede organizar materiales, consultar el contenido como si hablara con un tutor, practicar con preguntas y revisar resultados.</p></div>
+          <div class="mini"><h3>Para quien administra</h3><p>Existe un panel para consultar usuarios, documentos, cuestionarios, diagramas, resultados y ciertos límites de uso de IA.</p></div>
+        </div>
+        <p class="caption">La descripción funcional se basa en el README del proyecto y en las pantallas y servicios del código. La aplicación principal es nativa/multiplataforma; esta guía, en cambio, sí es una página HTML que se abre en un navegador.</p>
+      </section>
+
+      <section id="mapa" class="card">
+        <h2>2. El mapa general: piezas como un equipo</h2>
+        <p>Imagina un restaurante: la pantalla es el mostrador, los servicios son el personal que prepara las solicitudes, la base de datos es la despensa y el servidor de IA es un proveedor externo especializado.</p>
+        <div class="flow" aria-label="Flujo general">
+          <span>Persona</span><b>→</b><span>Pantalla de la app</span><b>→</b><span>Servicio de la app</span><b>→</b><span>SQLite o Supabase</span>
+        </div>
+        <div class="flow">
+          <span>Servicio de IA</span><b>→</b><span>Función segura de Supabase</span><b>→</b><span>Proveedor de IA</span><b>→</b><span>Respuesta a la app</span>
+        </div>
+        <div class="callout"><strong>Qué significa:</strong> las pantallas no deberían tener que saber cómo se conecta la nube o cómo se lee un PDF. Piden ese trabajo a un módulo especializado, que devuelve el resultado para mostrarlo.</div>
+        <h3>Tres grandes capas</h3>
+        <div class="grid-3">
+          <div class="mini"><h3>1 · Presentación</h3><p>Archivos <code>.xaml</code> definen el aspecto y los controles; archivos <code>.xaml.cs</code> conectan botones y eventos con las acciones.</p></div>
+          <div class="mini"><h3>2 · Lógica</h3><p>Los servicios hacen tareas como iniciar sesión, analizar documentos, generar cuestionarios y sincronizar.</p></div>
+          <div class="mini"><h3>3 · Persistencia e integración</h3><p>Los modelos describen los datos; SQLite los guarda en el dispositivo y Supabase puede almacenar y compartir datos por internet.</p></div>
+        </div>
+      </section>
+
+      <section id="flujo" class="card">
+        <h2>3. ¿Qué pasa cuando alguien la usa?</h2>
+        <h3>Al abrir la aplicación</h3>
+        <p><code>App.xaml.cs</code> decide la primera ventana. Intenta restaurar una sesión recordada con <code>AuthService</code>. Si hay usuario, abre la aplicación principal y lanza una sincronización en segundo plano; si no, muestra la pantalla de introducción.</p>
+        <h3>Al trabajar con un documento</h3>
+        <ol>
+          <li>La persona selecciona o administra sus archivos desde las pantallas de documentos.</li>
+          <li>Los servicios de documentos extraen o preparan el contenido; el proyecto incluye una herramienta específica para analizar PDF.</li>
+          <li>Se guarda información como nombre, tipo, tamaño, resumen y estado.</li>
+          <li>La IA puede ayudar a resumir, responder preguntas o crear ejercicios a partir del contenido disponible.</li>
+          <li>La información se conserva localmente y puede sincronizarse con Supabase cuando hay conexión.</li>
+        </ol>
+        <h3>Al completar un cuestionario</h3>
+        <p>El generador produce las preguntas; el modelo de cuestionario y el modelo de pregunta guardan su estructura. Los resultados pueden registrar la puntuación, el total y el tiempo empleado.</p>
+        <h3>Al quedarse sin conexión</h3>
+        <p>SQLite permite conservar datos en el equipo. <code>SyncService</code> mantiene cambios pendientes —incluidos borrados— y trata de enviarlos o actualizar los datos al sincronizar con la nube. Las funciones que dependen de internet, como solicitar una respuesta nueva a un proveedor remoto de IA, sí requieren conexión.</p>
+      </section>
+
+      <section id="pantallas" class="card">
+        <h2>4. Las pantallas principales</h2>
+        <p>En MAUI, la interfaz se describe normalmente en XAML, un formato legible parecido a una receta de componentes visuales. El código C# de acompañamiento responde a clics, carga información y coordina servicios.</p>
+        <table>
+          <thead><tr><th>Pantalla o archivo</th><th>Qué representa para la persona</th></tr></thead>
+          <tbody>
+            <tr><td><code>IntroPage.xaml</code></td><td>Entrada o presentación inicial para quien todavía no tiene una sesión restaurada.</td></tr>
+            <tr><td><code>LoginWindow.xaml</code></td><td>Interfaz relacionada con el acceso a la cuenta.</td></tr>
+            <tr><td><code>InicioView.xaml</code></td><td>Vista de inicio dentro de la aplicación.</td></tr>
+            <tr><td><code>DocumentosView.xaml</code></td><td>Zona para trabajar con documentos y sus acciones.</td></tr>
+            <tr><td><code>MisArchivosView.xaml</code></td><td>Vista de archivos personales guardados o disponibles.</td></tr>
+            <tr><td><code>ChatView.xaml</code></td><td>Conversación con la IA sobre materiales o dudas.</td></tr>
+            <tr><td><code>CuestionarioView.xaml</code></td><td>Presenta cuestionarios y permite responderlos.</td></tr>
+            <tr><td><code>DiagramasView.xaml</code></td><td>Área para crear o visualizar diagramas de estudio.</td></tr>
+            <tr><td><code>ConfiguracionView.xaml</code></td><td>Opciones de configuración de la aplicación.</td></tr>
+            <tr><td><code>AdminView.xaml</code></td><td>Panel administrativo con pestañas de usuarios, documentos, cuestionarios, diagramas y resultados.</td></tr>
+            <tr><td><code>AppShell.xaml</code></td><td>Estructura de navegación que organiza las vistas principales.</td></tr>
+          </tbody>
+        </table>
+        <p class="caption">Las vistas suelen tener un archivo C# con el mismo nombre más <code>.cs</code>. Ese archivo es el “detrás del escenario”: enlaza la vista con los servicios y maneja eventos.</p>
+      </section>
+
+      <section id="servicios" class="card">
+        <h2>5. Módulos que hacen el trabajo</h2>
+        <p>La carpeta <code>EstudIAnte\EstudIAnte\Services\</code> agrupa servicios. “Servicio” aquí significa una pieza de código que ofrece una tarea para que otras partes no tengan que repetirla.</p>
+        <table>
+          <thead><tr><th>Módulo</th><th>En palabras sencillas</th></tr></thead>
+          <tbody>
+            <tr><td><code>AuthService</code></td><td>Gestiona la sesión y las operaciones de acceso; también se usa para restaurar la sesión guardada al iniciar.</td></tr>
+            <tr><td><code>LocalDatabase</code></td><td>Prepara y proporciona la base de datos SQLite que vive en el dispositivo.</td></tr>
+            <tr><td><code>SyncService</code></td><td>Coordina la subida de cambios y la descarga de datos entre el dispositivo y Supabase; conserva borrados pendientes para aplicarlos después.</td></tr>
+            <tr><td><code>SupabaseService</code></td><td>Inicializa el cliente de Supabase y permite comprobar que la conexión y las tablas respondan.</td></tr>
+            <tr><td><code>DocumentoAnalysisService</code></td><td>Concentra tareas de análisis del contenido de documentos.</td></tr>
+            <tr><td><code>DocumentoHtmlService</code></td><td>Ayuda con la representación o preparación de contenido de documentos HTML.</td></tr>
+            <tr><td><code>TemasService</code></td><td>Organiza operaciones relacionadas con temas o material de estudio.</td></tr>
+            <tr><td><code>QuizGenerator</code></td><td>Construye cuestionarios a partir de contenido de estudio.</td></tr>
+            <tr><td><code>DiagramaGenerator</code></td><td>Prepara diagramas, incluidos formatos Mermaid para flujos o mapas conceptuales.</td></tr>
+            <tr><td><code>AIProviderManager</code></td><td>Coordina los proveedores disponibles, la elección de IA y el tratamiento de límites o saturación.</td></tr>
+            <tr><td><code>SupabaseGeminiProvider</code></td><td>Envía solicitudes de IA a la función remota de Supabase, indicando el proveedor y si se solicita búsqueda web.</td></tr>
+            <tr><td><code>UsoIAService</code></td><td>Registra o consulta el uso y los límites diarios de IA.</td></tr>
+            <tr><td><code>AdminService</code></td><td>Proporciona al panel administrativo datos y operaciones sobre las entidades del sistema.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><strong>Ventaja:</strong> si mañana cambia la forma de guardar los datos, tener un servicio central evita tener que reescribir cada botón y cada pantalla.</div>
+      </section>
+
+      <section id="datos" class="card">
+        <h2>6. Qué información guarda y dónde</h2>
+        <p>Un <em>modelo</em> es la ficha que define qué datos tiene una cosa. Por ejemplo, un documento tiene identificador, nombre y estado; una pregunta pertenece a un cuestionario.</p>
+        <div class="grid-2">
+          <div class="mini"><h3>SQLite: el cuaderno del dispositivo</h3><p>Base de datos local, útil para conservar información en el equipo y trabajar con algunos datos sin conexión.</p></div>
+          <div class="mini"><h3>Supabase: el archivador en la nube</h3><p>Servicio alojado que ofrece PostgreSQL (base de datos) y otros componentes. La aplicación lo usa para guardar, consultar y sincronizar información entre instalaciones.</p></div>
+        </div>
+        <h3>Modelos identificados</h3>
+        <table>
+          <thead><tr><th>Modelo</th><th>Qué describe</th></tr></thead>
+          <tbody>
+            <tr><td><code>Usuario</code></td><td>Una cuenta y sus datos asociados, como identificador, nombre y rol.</td></tr>
+            <tr><td><code>Documento</code></td><td>Un archivo de estudio y sus metadatos, como tipo, tamaño, estado y resumen.</td></tr>
+            <tr><td><code>Tema</code></td><td>Un tema o agrupación para organizar el material.</td></tr>
+            <tr><td><code>Chat</code> y <code>Mensaje</code></td><td>Una conversación y cada intervención que contiene.</td></tr>
+            <tr><td><code>Cuestionario</code> y <code>Pregunta</code></td><td>Un ejercicio de evaluación y sus preguntas.</td></tr>
+            <tr><td><code>Resultado</code></td><td>El resultado de responder un cuestionario.</td></tr>
+            <tr><td><code>Diagrama</code></td><td>Un diagrama guardado y su información descriptiva.</td></tr>
+            <tr><td><code>UsoIA</code> y <code>ConfiguracionIA</code></td><td>Contadores de uso y configuración de límites de IA.</td></tr>
+            <tr><td><code>SyncBorrado</code></td><td>Una nota local de qué registro hay que borrar en la nube durante la próxima sincronización.</td></tr>
+            <tr><td><code>SyncModel</code></td><td>Base común para modelos compartidos entre SQLite y Supabase, evitando que campos técnicos de la nube se guarden como columnas locales.</td></tr>
+          </tbody>
+        </table>
+        <p>El archivo <code>supabase\schema.sql</code> documenta las tablas remotas. El esquema incluye entidades de usuarios, documentos, temas, chats y mensajes, cuestionarios y preguntas, resultados, diagramas y uso/configuración de IA. Algunas entidades se relacionan entre sí por identificadores: por ejemplo, los mensajes con su chat y las preguntas con su cuestionario.</p>
+        <h3>Cómo se sincroniza</h3>
+        <p>El flujo general es “subir los cambios locales” y “bajar la versión de la nube”. La sincronización también registra eliminaciones para que un elemento borrado sin conexión no reaparezca al actualizar. El código intenta evitar duplicar filas y trata de comparar ciertos cambios antes de actualizarlos.</p>
+      </section>
+
+      <section id="ia" class="card">
+        <h2>7. Cómo se conecta con inteligencia artificial</h2>
+        <p>La aplicación separa la conversación de la infraestructura del proveedor. En vez de poner las claves privadas de Gemini o Groq dentro de la aplicación, el diseño descrito por el proyecto envía la solicitud a una <em>Edge Function</em> de Supabase. Esa función del servidor se comunica con el proveedor de IA.</p>
+        <div class="flow">
+          <span>Pregunta o instrucción</span><b>→</b><span>App</span><b>→</b><span><code>functions/v1/gemini</code></span><b>→</b><span>Proveedor elegido</span>
+        </div>
+        <p>La función se encuentra en <code>supabase\functions\gemini\index.ts</code>. Recibe datos como el texto de la instrucción, el proveedor solicitado y la opción de búsqueda web, y devuelve el resultado o un error. El gestor puede informar cuando hay saturación o se agotó la cuota; según el README, la app pregunta a la persona si desea intentar con el siguiente proveedor, en vez de cambiar silenciosamente.</p>
+        <h3>Proveedores descritos por el proyecto</h3>
+        <ol>
+          <li><strong>Google Gemini</strong>, primera opción descrita.</li>
+          <li><strong>Groq</strong>, alternativa de servidor.</li>
+          <li><strong>OpenRouter</strong>, otra alternativa que el README describe con modelos gratuitos.</li>
+          <li><strong>Gemini local</strong>, opción documentada para usar una clave propia configurada localmente.</li>
+          <li><strong>Exa</strong> aparece en el código como proveedor relacionado con búsqueda web.</li>
+        </ol>
+        <p class="caption">La disponibilidad real de cada proveedor depende de la configuración de Supabase, sus secretos, cuotas y del código desplegado. El README describe el orden de respaldo, mientras que los proveedores concretos pueden cambiar con las versiones.</p>
+        <div class="callout warn"><strong>Sobre las claves:</strong> las claves privadas de proveedores deben mantenerse en el servidor como secretos y no publicarse en esta guía ni en el repositorio. La clave pública de Supabase que una aplicación cliente utiliza no equivale por sí sola a una clave privada de proveedor; las reglas de acceso de la base de datos siguen siendo importantes.</div>
+        <h3>Otros usos de IA</h3>
+        <p>El README describe generación de resúmenes, preguntas de repaso, respuestas a dudas, cuestionarios de 5, 10, 15 o 20 preguntas y diagramas Mermaid de flujo o mapas mentales. El usuario puede estudiar a partir de documentos o de conversaciones, según la función.</p>
+      </section>
+
+      <section id="paquetes" class="card">
+        <h2>8. Tecnologías y paquetes del proyecto</h2>
+        <p>El archivo <code>EstudIAnte\EstudIAnte\EstudIAnte.csproj</code> es la lista de instrucciones del proyecto .NET: define cómo compilarlo y qué bibliotecas externas utilizar.</p>
+        <table>
+          <thead><tr><th>Paquete / tecnología</th><th>Para qué se usa</th></tr></thead>
+          <tbody>
+            <tr><td><strong>.NET MAUI</strong> (<code>Microsoft.Maui.Controls</code>)</td><td>Construye interfaces de aplicación para varias plataformas a partir de un mismo proyecto.</td></tr>
+            <tr><td><strong>C#</strong></td><td>Lenguaje que implementa el comportamiento, las reglas y las llamadas a servicios.</td></tr>
+            <tr><td><strong>XAML</strong></td><td>Formato declarativo para describir pantallas, estilos, controles y su distribución.</td></tr>
+            <tr><td><code>sqlite-net-pcl</code> <span class="caption">1.11.285</span></td><td>Permite leer y escribir datos en una base SQLite local desde C#.</td></tr>
+            <tr><td><code>supabase-csharp</code> <span class="caption">0.16.2</span></td><td>Cliente C# para comunicarse con servicios de Supabase, incluidas consultas a tablas.</td></tr>
+            <tr><td><code>UglyToad.PdfPig</code> <span class="caption">1.7.0-custom-5</span></td><td>Biblioteca para leer o extraer contenido de archivos PDF.</td></tr>
+            <tr><td><code>Microsoft.Extensions.Logging.Debug</code> <span class="caption">10.0.0</span></td><td>Facilita mensajes de diagnóstico durante el desarrollo.</td></tr>
+            <tr><td><strong>Supabase Edge Functions</strong> (TypeScript/Deno)</td><td>Ejecuta la función de servidor que intermedia las solicitudes a IA.</td></tr>
+            <tr><td><strong>PostgreSQL y SQL</strong></td><td>Definen y almacenan las tablas remotas mediante <code>supabase\schema.sql</code>.</td></tr>
+          </tbody>
+        </table>
+        <p>El proyecto activa las referencias anulables de C# para detectar posibles valores vacíos, compila XAML y configura MAUI como aplicación única con varios destinos. Los detalles de plataforma se declaran en el archivo del proyecto.</p>
+      </section>
+
+      <section id="plataformas" class="card">
+        <h2>9. Plataformas, arranque y recursos visuales</h2>
+        <p>El proyecto apunta a Android, iOS, Mac Catalyst y Windows, sujeto a las condiciones de compilación y a los requisitos de cada sistema. Las carpetas dentro de <code>Platforms\</code> contienen el arranque y metadatos específicos que cada sistema operativo exige.</p>
+        <ul>
+          <li><strong>Android:</strong> manifiesto, actividad principal y clase de aplicación.</li>
+          <li><strong>iOS y Mac Catalyst:</strong> delegados, archivos de configuración y punto de entrada.</li>
+          <li><strong>Windows:</strong> manifiesto, recursos y arranque de la ventana.</li>
+        </ul>
+        <p><code>MauiProgram.cs</code> configura la aplicación MAUI; <code>App.xaml</code> y <code>Resources\Styles\</code> definen estilos y temas compartidos. <code>Resources\AppIcon\</code>, <code>Resources\Splash\</code>, <code>Resources\Images\</code> y <code>Resources\Fonts\</code> contienen icono, pantalla de inicio, imágenes y tipografías.</p>
+        <p>El repositorio también incluye manuales en HTML, PDF y texto bajo <code>EstudIAnte\Manuales\</code>, además de un diagrama entidad-relación editable en <code>Diagramas\</code>.</p>
+      </section>
+
+      <section id="carpetas" class="card">
+        <h2>10. Cómo orientarse por las carpetas</h2>
+        <p>Este es un mapa resumido del repositorio; no enumera cada imagen o archivo generado:</p>
+        <div class="tree">EstudIAnte-nuevo\
+├─ readme.md                         Explicación funcional y configuración general
+├─ guia-proyecto.html                Esta guía para personas no programadoras
+├─ EstudIAnte\
+│  ├─ EstudIAnte.slnx                Archivo de solución para abrir el proyecto
+│  ├─ EstudIAnte\
+│  │  ├─ EstudIAnte.csproj           Plataformas, bibliotecas y opciones de compilación
+│  │  ├─ App.xaml / App.xaml.cs       Recursos iniciales y decisión de pantalla al abrir
+│  │  ├─ AppShell.xaml                Organización de la navegación
+│  │  ├─ *View.xaml / *.xaml.cs       Pantallas y su comportamiento
+│  │  ├─ Models\                      Formas de los datos (usuario, documento, chat...)
+│  │  ├─ Services\                    Acceso, documentos, IA, base local y sincronización
+│  │  ├─ Platforms\                   Adaptaciones para cada sistema operativo
+│  │  └─ Resources\                   Iconos, imágenes, fuentes y estilos
+│  └─ Manuales\                       Manuales de uso y del sistema
+├─ supabase\
+│  ├─ schema.sql                      Tablas y estructura de la base remota
+│  ├─ config.toml                     Configuración local de Supabase
+│  └─ functions\gemini\index.ts       Función de servidor para solicitudes de IA
+└─ Diagramas\                         Diagramas del sistema y datos</div>
+        <p class="caption">Las rutas mostradas son relativas a la carpeta principal del repositorio. Para orientarse, busque primero una carpeta por tema: pantallas en la raíz del proyecto MAUI, entidades en <code>Models</code>, tareas compartidas en <code>Services</code> y base remota en <code>supabase</code>.</p>
+      </section>
+
+      <section id="limites" class="card">
+        <h2>11. Consideraciones importantes al interpretar el proyecto</h2>
+        <ul>
+          <li><strong>No es solo un sitio web:</strong> la aplicación de estudio está escrita con MAUI y se instala como app; el HTML de esta guía es documentación separada.</li>
+          <li><strong>La nube requiere configuración:</strong> Supabase debe tener las tablas esperadas por <code>schema.sql</code> y la función de IA desplegada. Las claves de los proveedores se configuran como secretos del servidor.</li>
+          <li><strong>Sincronizar no es lo mismo que respaldar:</strong> la sincronización intenta igualar datos entre dispositivo y nube, pero la política de conflictos y el estado de conexión afectan el resultado.</li>
+          <li><strong>Hay dependencias de conexión:</strong> las consultas a IA remota y la sincronización necesitan acceso a internet.</li>
+          <li><strong>Revisar el manejo de credenciales:</strong> el código del panel administrativo contiene una indicación de que, al mostrar datos de usuarios desde Supabase, las contraseñas se presentan en texto legible por requisito del proyecto. Esto es una decisión sensible: no debe interpretarse como una práctica segura; conviene revisar cómo se almacenan, quién puede verlas y migrar a autenticación y almacenamiento con contraseñas protegidas antes de un uso con cuentas reales.</li>
+          <li><strong>La configuración local puede variar:</strong> el resultado depende de las versiones instaladas, secretos del entorno y configuración del proyecto Supabase desplegado.</li>
+        </ul>
+        <div class="callout warn">Esta guía describe la organización observada y los objetivos declarados en los archivos del repositorio; no certifica que un servicio externo esté configurado o disponible en este momento.</div>
+      </section>
+
+      <section id="glosario" class="card">
+        <h2>12. Glosario para empezar</h2>
+        <details><summary>Aplicación multiplataforma</summary><p>Un mismo proyecto que puede prepararse para ejecutarse en más de un sistema operativo, adaptando ciertas partes a cada plataforma.</p></details>
+        <details><summary>API</summary><p>Una puerta de comunicación acordada: la aplicación envía una solicitud con un formato esperado y recibe una respuesta.</p></details>
+        <details><summary>Base de datos</summary><p>Un sistema organizado para guardar y buscar información en lugar de depender de una colección desordenada de archivos.</p></details>
+        <details><summary>Edge Function</summary><p>Un pequeño programa que se ejecuta en la infraestructura del servicio en la nube. En este proyecto, hace de intermediario entre la app y ciertos proveedores de IA.</p></details>
+        <details><summary>Modelo</summary><p>Una definición de qué datos tiene una entidad, como un usuario, un documento o un cuestionario.</p></details>
+        <details><summary>Paquete o biblioteca</summary><p>Código reutilizable creado por otros equipos. El proyecto lo incorpora para no tener que construir desde cero funciones como leer PDF o hablar con una base de datos.</p></details>
+        <details><summary>Sincronización</summary><p>El proceso de intercambiar cambios entre el dispositivo y la nube para que ambos tengan información coherente.</p></details>
+        <details><summary>SQLite / PostgreSQL</summary><p>Dos tecnologías de base de datos: SQLite suele guardarse dentro del dispositivo; PostgreSQL se usa aquí como base de datos de Supabase en la nube.</p></details>
+        <details><summary>XAML / C#</summary><p>XAML describe el aspecto de la pantalla; C# implementa las acciones y la lógica que ocurre al interactuar con ella.</p></details>
+      </section>
+    </main>
+  </div>
+  <footer>
+    <div class="wrap">Guía de arquitectura de EstudIAnte · Contenido preparado a partir de los archivos del repositorio · Puede abrirse sin conexión y guardarse como PDF desde el navegador.</div>
+  </footer>
+</body>
+</html>
